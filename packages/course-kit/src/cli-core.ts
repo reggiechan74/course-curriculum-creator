@@ -5,6 +5,7 @@ import { type CommandTable, requireFlag, requirePositional, runCli } from './cli
 import { UsageError, ValidationError } from './errors.js';
 import { checkStale, hashFile, writeHashes } from './hash.js';
 import { InitOptionsSchema, initManifest, loadManifest, saveManifest, validateManifest } from './manifest/io.js';
+import { syncManifest } from './manifest/sync.js';
 
 export const coreCommands: CommandTable = {
   hash: (a) => ({ hash: hashFile(requirePositional(a, 0, 'file')) }),
@@ -33,6 +34,7 @@ export const coreCommands: CommandTable = {
     saveManifest(course, m);
     return { manifest: m };
   },
+  'manifest sync': (a) => syncManifest(requireFlag(a, 'course'), { write: a.flags.write === true }),
   'manifest validate': (a) => {
     const issues = validateManifest(loadManifest(requireFlag(a, 'course')));
     if (issues.some((i) => i.level === 'error')) throw new ValidationError(JSON.stringify({ issues }));
