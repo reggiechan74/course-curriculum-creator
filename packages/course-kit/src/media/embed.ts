@@ -54,6 +54,20 @@ function buildBlock(x: Asset | PlanItem, relPath: string): string {
   return lines.join('\n');
 }
 
+/** IDs of every media block already present in a file. */
+function embeddedIds(markdown: string): string[] {
+  return [...new Set([...markdown.matchAll(/<!-- media:([^\s]+) -->/g)].map((m) => m[1]))];
+}
+
+/** Replace an existing media block in place, keeping CRLF line endings when the file uses them. */
+function replaceBlock(markdown: string, block: string, id: string): string {
+  const crlf = markdown.includes('\r\n');
+  const md = markdown.replace(/\r\n/g, '\n');
+  const markers = new RegExp(`<!-- media:${esc(id)} -->[\\s\\S]*?<!-- /media:${esc(id)} -->`);
+  const out = md.replace(markers, () => block);
+  return crlf ? out.replace(/\n/g, '\r\n') : out;
+}
+
 const anchorRe = (id: string): RegExp => new RegExp(`^<!-- id: ${esc(id)} -->[ \\t]*$`, 'm');
 
 export function hasAnchor(markdown: string, anchorId: string): boolean {
@@ -100,6 +114,17 @@ export function embedAll(courseDir: string): EmbedReport[] {
     work.push({ id: a.id, module: a.module, item: a, files0: embedFileOf(a) });
   }
 
+  const workIds = new Set(work.map((w) => w.id));
+  const planById = new Map(plan.items.map((i) => [i.id, i]));
+  /** Placeholder source for a block that is no longer approved for embedding: plan item, else the asset, else a stub. */
+  const pendingOf = (id: string): Asset | PlanItem => {
+    const pi = planById.get(id);
+    if (pi) return pi;
+    const a = byId.get(id);
+    if (a) return { ...a, status: a.status === 'approved' ? 'generated' : a.status } as Asset;
+    return { id, description: 'no longer in the media plan or registry' } as PlanItem;
+  };
+
   const reports: EmbedReport[] = [];
   keepFresh(courseDir, () => {
     for (const parts of EMBED_FILES) {
@@ -114,6 +139,13 @@ export function embedAll(courseDir: string): EmbedReport[] {
         const item = isApprovedAsset(w.item) && !rel ? ({ ...w.item, status: 'generated' } as Asset) : w.item;
         text = embedAsset(text, item, w.module, rel);
         (isApprovedAsset(item) ? report.embedded : report.placeholders).push(w.id);
+      }
+      // Blocks already in the file whose media is no longer approved for embedding (revoked approval,
+      // rejected plan item, or removed entirely) go back to a placeholder so no unapproved image stays.
+      for (const id of embeddedIds(text)) {
+        if (workIds.has(id)) continue;
+        text = replaceBlock(text, buildBlock(pendingOf(id), ''), id);
+        report.placeholders.push(id);
       }
       if (text !== original) writeFileSync(file, text);
       reports.push(report);

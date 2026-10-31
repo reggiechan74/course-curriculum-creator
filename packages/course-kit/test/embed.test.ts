@@ -127,6 +127,48 @@ test('an approved registry asset not in the plan (migrated) embeds when it has a
   expect(embedAll(d)[0].embedded).toEqual(['IMG-9']);
 });
 
+describe('revoked or dropped media leaves the lessons', () => {
+  test('a migrated (registry-only) image whose approval is revoked returns to a placeholder', () => {
+    const mig: Asset = { ...approved, id: 'IMG-bmc', files: ['04-materials/bmc.png'], caption: 'Business model canvas' };
+    const d = course({ '02-design/lesson-plans.md': md }, [], [mig]);
+    embedAll(d);
+    expect(readFileSync(join(d, '02-design/lesson-plans.md'), 'utf8')).toContain('](../04-materials/bmc.png)');
+    saveRegistry(d, { schema: 'registry/v1', assets: [{ ...mig, status: 'rejected', approvedBy: undefined }] });
+    const rep = embedAll(d);
+    const text = readFileSync(join(d, '02-design/lesson-plans.md'), 'utf8');
+    expect(text).not.toContain('![');
+    expect(text).toContain('> **Media pending approval (IMG-bmc):** Business model canvas');
+    expect(text.match(/<!-- media:IMG-bmc -->/g)).toHaveLength(1);
+    expect(rep[0].placeholders).toEqual(['IMG-bmc']);
+    expect(embedAll(d)).toEqual(rep);
+  });
+  test('a plan item later rejected in the plan loses its embedded image', () => {
+    const d = course({ '02-design/lesson-plans.md': md }, [item('A-M1-01')], [approved]);
+    embedAll(d);
+    writeFileSync(join(d, '05-media', 'media-plan.yaml'), stringify({ schema: 'media-plan/v1', items: [item('A-M1-01', { status: 'rejected' })] }));
+    const rep = embedAll(d);
+    const text = readFileSync(join(d, '02-design/lesson-plans.md'), 'utf8');
+    expect(text).not.toContain('![');
+    expect(text).toContain('> **Media pending approval (A-M1-01):** Desc A-M1-01');
+    expect(rep[0].placeholders).toEqual(['A-M1-01']);
+  });
+  test('a block whose asset and plan item are both gone becomes a placeholder, not an image', () => {
+    const d = course({ '02-design/lesson-plans.md': md }, [item('A-M1-01')], [approved]);
+    embedAll(d);
+    writeFileSync(join(d, '05-media', 'media-plan.yaml'), stringify({ schema: 'media-plan/v1', items: [] }));
+    saveRegistry(d, { schema: 'registry/v1', assets: [] });
+    embedAll(d);
+    const text = readFileSync(join(d, '02-design/lesson-plans.md'), 'utf8');
+    expect(text).not.toContain('![');
+    expect(text).toContain('> **Media pending approval (A-M1-01):**');
+  });
+  test('rejected registry-only assets that were never embedded add nothing', () => {
+    const d = course({ '02-design/lesson-plans.md': md }, [], [{ ...generated, id: 'IMG-x', status: 'rejected' }]);
+    expect(embedAll(d)[0]).toEqual({ file: '02-design/lesson-plans.md', embedded: [], placeholders: [] });
+    expect(readFileSync(join(d, '02-design/lesson-plans.md'), 'utf8')).toBe(md);
+  });
+});
+
 test('embed CLI: single file and embed all', async () => {
   const d = course({ '02-design/lesson-plans.md': md }, [item('A-M1-01')], [approved]);
   const f = join(d, '02-design/lesson-plans.md');

@@ -28856,6 +28856,16 @@ ${close}`;
   lines.push(close);
   return lines.join("\n");
 }
+function embeddedIds(markdown) {
+  return [...new Set([...markdown.matchAll(/<!-- media:([^\s]+) -->/g)].map((m3) => m3[1]))];
+}
+function replaceBlock(markdown, block, id2) {
+  const crlf = markdown.includes("\r\n");
+  const md2 = markdown.replace(/\r\n/g, "\n");
+  const markers = new RegExp(`<!-- media:${esc2(id2)} -->[\\s\\S]*?<!-- /media:${esc2(id2)} -->`);
+  const out = md2.replace(markers, () => block);
+  return crlf ? out.replace(/\n/g, "\r\n") : out;
+}
 var anchorRe = (id2) => new RegExp(`^<!-- id: ${esc2(id2)} -->[ \\t]*$`, "m");
 function hasAnchor(markdown, anchorId) {
   return anchorRe(anchorId).test(markdown.replace(/\r\n/g, "\n"));
@@ -28894,6 +28904,15 @@ function embedAll(courseDir) {
     if (a3.status !== "approved" && a3.status !== "imported") continue;
     work.push({ id: a3.id, module: a3.module, item: a3, files0: embedFileOf(a3) });
   }
+  const workIds = new Set(work.map((w2) => w2.id));
+  const planById = new Map(plan.items.map((i) => [i.id, i]));
+  const pendingOf = (id2) => {
+    const pi6 = planById.get(id2);
+    if (pi6) return pi6;
+    const a3 = byId.get(id2);
+    if (a3) return { ...a3, status: a3.status === "approved" ? "generated" : a3.status };
+    return { id: id2, description: "no longer in the media plan or registry" };
+  };
   const reports = [];
   keepFresh(courseDir, () => {
     for (const parts of EMBED_FILES) {
@@ -28908,6 +28927,11 @@ function embedAll(courseDir) {
         const item = isApprovedAsset(w2.item) && !rel ? { ...w2.item, status: "generated" } : w2.item;
         text3 = embedAsset(text3, item, w2.module, rel);
         (isApprovedAsset(item) ? report.embedded : report.placeholders).push(w2.id);
+      }
+      for (const id2 of embeddedIds(text3)) {
+        if (workIds.has(id2)) continue;
+        text3 = replaceBlock(text3, buildBlock(pendingOf(id2), ""), id2);
+        report.placeholders.push(id2);
       }
       if (text3 !== original) writeFileSync7(file2, text3);
       reports.push(report);
