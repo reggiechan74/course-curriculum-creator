@@ -1,0 +1,23 @@
+name: CI
+on:
+  push:
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run check
+      - name: Validate marketplace and plugins
+        run: |
+          set -e
+          npx -y @anthropic-ai/claude-code plugin validate .
+          for d in plugins/*/; do
+            npx -y @anthropic-ai/claude-code plugin validate "$d"
+          done
