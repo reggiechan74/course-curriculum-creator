@@ -56,7 +56,8 @@ export type SourceRef = z.infer<typeof SourceRefSchema>;
 export type Manifest = z.infer<typeof ManifestSchema>;
 
 export interface ValidationIssue { level: 'error' | 'warning'; path: string; message: string }
-export interface InitOptions {
-  title: string; shape: Shape; delivery: Delivery; sessions: Session[];
-  audienceLevel: string; audienceSummary: string; budgetUsd: number; maxPlanImages: number;
-}
+export const InitOptionsSchema = z.object({
+  title: z.string().min(1), shape: ShapeSchema, delivery: DeliverySchema, sessions: z.array(SessionSchema),
+  audienceLevel: z.string(), audienceSummary: z.string(), budgetUsd: z.number(), maxPlanImages: z.number(),
+});
+export type InitOptions = z.infer<typeof InitOptionsSchema>;

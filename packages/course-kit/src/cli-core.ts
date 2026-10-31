@@ -1,9 +1,10 @@
-import { mkdirSync, realpathSync } from 'node:fs';
+import { existsSync, mkdirSync, realpathSync } from 'node:fs';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { type CommandTable, requireFlag, requirePositional, runCli } from './cli/args.js';
 import { UsageError, ValidationError } from './errors.js';
 import { checkStale, hashFile, writeHashes } from './hash.js';
-import { type InitOptions, initManifest, loadManifest, saveManifest, validateManifest } from './manifest/io.js';
+import { InitOptionsSchema, initManifest, loadManifest, saveManifest, validateManifest } from './manifest/io.js';
 
 export const coreCommands: CommandTable = {
   hash: (a) => ({ hash: hashFile(requirePositional(a, 0, 'file')) }),
@@ -14,9 +15,17 @@ export const coreCommands: CommandTable = {
   },
   'manifest init': (a) => {
     const course = requireFlag(a, 'course');
-    let opts: InitOptions;
-    try { opts = JSON.parse(requireFlag(a, 'json')) as InitOptions; }
+    let raw: unknown;
+    try { raw = JSON.parse(requireFlag(a, 'json')); }
     catch { throw new UsageError('--json must be valid JSON'); }
+    const parsed = InitOptionsSchema.safeParse(raw);
+    if (!parsed.success) {
+      throw new UsageError(`invalid --json: ${parsed.error.issues.map((i) => `${i.path.join('.') || '(root)'}: ${i.message}`).join('; ')}`);
+    }
+    if (existsSync(join(course, 'course.yaml')) && a.flags.force !== true) {
+      throw new UsageError(`course.yaml already exists in ${course}; pass --force to overwrite`);
+    }
+    const opts = parsed.data;
     const m = initManifest(opts, new Date().toISOString().slice(0, 10));
     const issues = validateManifest(m).filter((i) => i.level === 'error');
     if (issues.length) throw new ValidationError(JSON.stringify({ issues }));

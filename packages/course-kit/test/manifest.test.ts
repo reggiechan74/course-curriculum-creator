@@ -88,3 +88,35 @@ test('CLI manifest init and validate', async () => {
   expect(await runCli(['manifest', 'validate', '--course', dir], coreCommands)).toBe(2);
   vi.restoreAllMocks();
 });
+
+async function run(argv: string[]) {
+  const logs: string[] = [];
+  vi.spyOn(process.stdout, 'write').mockImplementation((s: string | Uint8Array) => { logs.push(String(s)); return true; });
+  const code = await runCli(argv, coreCommands);
+  vi.restoreAllMocks();
+  return { code, out: JSON.parse(logs.join('')) };
+}
+
+test('manifest init rejects missing sessions and bad shape without throwing raw errors', async () => {
+  const dir = tmp();
+  const { sessions: _s, ...noSessions } = opts;
+  const r1 = await run(['manifest', 'init', '--course', dir, '--json', JSON.stringify(noSessions)]);
+  expect(r1.code).toBe(1);
+  expect(r1.out.error).toMatch(/sessions/);
+  const r2 = await run(['manifest', 'init', '--course', dir, '--json', JSON.stringify({ ...opts, shape: 'bootcamp' })]);
+  expect(r2.code).not.toBe(0);
+  const r3 = await run(['manifest', 'init', '--course', dir, '--json', '{nope']);
+  expect(r3.code).toBe(1);
+});
+
+test('manifest init refuses to overwrite course.yaml unless --force', async () => {
+  const dir = tmp();
+  const p = join(dir, 'course.yaml');
+  writeFileSync(p, 'precious: true\n');
+  const r = await run(['manifest', 'init', '--course', dir, '--json', JSON.stringify(opts)]);
+  expect(r.code).toBe(1);
+  expect(readFileSync(p, 'utf8')).toBe('precious: true\n');
+  const f = await run(['manifest', 'init', '--course', dir, '--json', JSON.stringify(opts), '--force']);
+  expect(f.code).toBe(0);
+  expect(loadManifest(dir).id).toBe('proptech-fundamentals');
+});
