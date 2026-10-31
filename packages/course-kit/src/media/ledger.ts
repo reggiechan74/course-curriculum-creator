@@ -9,9 +9,9 @@ const LedgerEntrySchema = z.object({
   assetId: z.string(),
   provider: z.string(),
   model: z.string().optional(),
-  estimateUsd: z.number(),
-  actualUsd: z.number(),
-  quotaUnits: z.number(),
+  estimateUsd: z.number().nonnegative().finite(),
+  actualUsd: z.number().nonnegative().finite(),
+  quotaUnits: z.number().nonnegative().finite(),
 });
 export type LedgerEntry = z.infer<typeof LedgerEntrySchema>;
 
@@ -52,8 +52,11 @@ const usd2 = (usd: number): string => usd.toFixed(2);
 export function checkBudget(
   m: Manifest, totals: { spentUsd: number; quotaUsed: number }, request: { usd: number; quota: number },
 ): void {
+  for (const [k, v] of Object.entries(request)) {
+    if (!Number.isFinite(v) || v < 0) throw new ValidationError(`invalid budget request: ${k} must be a nonnegative finite number`);
+  }
   const cap = m.media.budgetUsd;
-  if (cents(totals.spentUsd) + cents(request.usd) > cents(cap)) {
+  if (cents(totals.spentUsd + request.usd) > cents(cap)) {
     throw new BudgetExceededError(`Budget exceeded: cap $${usd2(cap)}, spent $${usd2(totals.spentUsd)}, request $${usd2(request.usd)}`);
   }
   const maxQ = m.media.maxPlanImages;

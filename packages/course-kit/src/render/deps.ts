@@ -1,0 +1,32 @@
+import { execFileSync } from 'node:child_process';
+import { existsSync, mkdirSync } from 'node:fs';
+import { join } from 'node:path';
+import { UsageError } from '../errors.js';
+
+export type DepName = 'mermaid-cli' | 'excalidraw-to-svg';
+
+// excalidraw-to-svg@3.1.0 does not work on Node 22 (jsdom has no canvas; it also reads helper scripts from
+// cwd-relative paths). renderExcalidraw therefore exports through headless Chrome (puppeteer) using
+// @excalidraw/utils@0.1.2, which still ships the browser bundle. All three are installed together.
+const PACKAGES: Record<DepName, string[]> = {
+  'mermaid-cli': ['@mermaid-js/mermaid-cli@12.0.0'],
+  'excalidraw-to-svg': ['excalidraw-to-svg@3.1.0', '@excalidraw/utils@0.1.2', 'puppeteer@25.16.0'],
+};
+
+export function isDepName(n: string): n is DepName {
+  return Object.hasOwn(PACKAGES, n);
+}
+
+export function depPath(dataDir: string, dep: DepName): string | null {
+  const p = dep === 'mermaid-cli'
+    ? join(dataDir, 'node_modules', '.bin', 'mmdc')
+    : join(dataDir, 'node_modules', 'excalidraw-to-svg');
+  return existsSync(p) ? p : null;
+}
+
+export function installDeps(dataDir: string, deps: DepName[]): void {
+  for (const d of deps) if (!isDepName(d)) throw new UsageError(`unknown dependency: ${d}`);
+  mkdirSync(dataDir, { recursive: true });
+  const specs = deps.flatMap((d) => PACKAGES[d]);
+  execFileSync('npm', ['install', '--prefix', dataDir, '--no-audit', '--no-fund', ...specs], { stdio: ['ignore', 'ignore', 'inherit'] });
+}

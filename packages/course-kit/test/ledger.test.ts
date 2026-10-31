@@ -52,3 +52,20 @@ test('a damaged ledger line is a ValidationError, not a zero total', () => {
 test('recordSpend rejects an invalid entry', () => {
   expect(() => recordSpend(dir(), { ...entry(), actualUsd: 'x' } as unknown as LedgerEntry)).toThrow(ValidationError);
 });
+test('checkBudget rejects NaN, negative and non-finite requests', () => {
+  const t = { spentUsd: 0, quotaUsed: 0 };
+  for (const bad of [NaN, -1, Infinity]) {
+    expect(() => checkBudget(m, t, { usd: bad, quota: 0 })).toThrow(ValidationError);
+    expect(() => checkBudget(m, t, { usd: 0, quota: bad })).toThrow(ValidationError);
+  }
+});
+test('ledger entries require nonnegative finite numbers', () => {
+  expect(() => recordSpend(dir(), entry({ actualUsd: -0.1 }))).toThrow(ValidationError);
+  expect(() => recordSpend(dir(), entry({ quotaUnits: Infinity }))).toThrow(ValidationError);
+  expect(() => recordSpend(dir(), entry({ estimateUsd: NaN }))).toThrow(ValidationError);
+});
+test('cap comparison rounds the sum once', () => {
+  // 0.004 + 0.004 rounds to 0.01 once; separately rounded cents would give 0
+  const tiny = { media: { budgetUsd: 0.0, maxPlanImages: 2, approvalRequired: true } } as Manifest;
+  expect(() => checkBudget(tiny, { spentUsd: 0.004, quotaUsed: 0 }, { usd: 0.004, quota: 0 })).toThrow(BudgetExceededError);
+});

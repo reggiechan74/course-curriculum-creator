@@ -7373,8 +7373,7 @@ var require_dist = __commonJS({
 });
 
 // packages/course-kit/src/cli-core.ts
-import { existsSync as existsSync6, mkdirSync as mkdirSync3, realpathSync } from "node:fs";
-import { join as join6 } from "node:path";
+import { realpathSync as realpathSync2 } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 // packages/course-kit/src/errors.ts
@@ -7456,6 +7455,10 @@ async function runCli(argv, commands) {
     return 1;
   }
 }
+
+// packages/course-kit/src/commands-core.ts
+import { existsSync as existsSync6, mkdirSync as mkdirSync3 } from "node:fs";
+import { join as join6 } from "node:path";
 
 // packages/course-kit/src/hash.ts
 var import_yaml2 = __toESM(require_dist(), 1);
@@ -27812,7 +27815,7 @@ function setStatus(r, id, to, opts = {}) {
   return { ...r, assets: r.assets.map((x) => x.id === id ? next : x) };
 }
 
-// packages/course-kit/src/cli-core.ts
+// packages/course-kit/src/commands-core.ts
 function jsonFlag(raw, flag) {
   try {
     return JSON.parse(raw);
@@ -27901,9 +27904,11 @@ var coreCommands = {
     return estimatePlan(loadPlan(course), loadPricing(dir), q);
   }
 };
+
+// packages/course-kit/src/cli-core.ts
 var isMain = (() => {
   try {
-    return !!process.argv[1] && realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url));
+    return !!process.argv[1] && realpathSync2(process.argv[1]) === realpathSync2(fileURLToPath(import.meta.url));
   } catch {
     return false;
   }
