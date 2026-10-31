@@ -7272,7 +7272,7 @@ var require_public_api = __commonJS({
       }
       return doc;
     }
-    function parse12(src, reviver, options) {
+    function parse13(src, reviver, options) {
       let _reviver = void 0;
       if (typeof reviver === "function") {
         _reviver = reviver;
@@ -7313,7 +7313,7 @@ var require_public_api = __commonJS({
         return value3.toString(options);
       return new Document.Document(value3, _replacer, options).toString(options);
     }
-    exports.parse = parse12;
+    exports.parse = parse13;
     exports.parseAllDocuments = parseAllDocuments;
     exports.parseDocument = parseDocument;
     exports.stringify = stringify5;
@@ -7832,7 +7832,7 @@ var require_topojson_client = __commonJS({
 });
 
 // packages/course-kit/src/cli.ts
-import { readFileSync as readFileSync10, realpathSync as realpathSync2, writeFileSync as writeFileSync9 } from "node:fs";
+import { readFileSync as readFileSync13, realpathSync as realpathSync2, writeFileSync as writeFileSync12 } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 // packages/course-kit/src/commands-core.ts
@@ -9879,18 +9879,18 @@ var validateAsync = async (schema, value3, _ctx) => {
   return result.issues.length === 0;
 };
 var _encode = (_Err) => {
-  const parse12 = _parse(_Err);
+  const parse13 = _parse(_Err);
   const fn = (schema, value3, _ctx, _params) => {
     const ctx = _ctx ? { ..._ctx, direction: "backward" } : { direction: "backward" };
-    return parse12(schema, value3, ctx, finalizeParams(fn, _params));
+    return parse13(schema, value3, ctx, finalizeParams(fn, _params));
   };
   return fn;
 };
 var encode = /* @__PURE__ */ _encode($ZodRealError);
 var _decode = (_Err) => {
-  const parse12 = _parse(_Err);
+  const parse13 = _parse(_Err);
   const fn = (schema, value3, _ctx, _params) => {
-    return parse12(schema, value3, _ctx, finalizeParams(fn, _params));
+    return parse13(schema, value3, _ctx, finalizeParams(fn, _params));
   };
   return fn;
 };
@@ -11385,7 +11385,7 @@ function capSize(inst, size) {
   if (!caps.length)
     return;
   const cap = Math.min(...caps.map((c3) => c3[0]));
-  const parse12 = inst._zod.parse;
+  const parse13 = inst._zod.parse;
   inst._zod.parse = (payload, ctx) => {
     const n = size(payload.value);
     if (n > cap && !ctx?.skipChecks && ctx?.direction !== "backward") {
@@ -11399,7 +11399,7 @@ function capSize(inst, size) {
         }
       }
     }
-    return parse12(payload, ctx);
+    return parse13(payload, ctx);
   };
 }
 var arraySize = (input2) => Array.isArray(input2) ? input2.length : -1;
@@ -27524,7 +27524,7 @@ function visit(schema, fnOrHandlers) {
     return h2 ? h2(node2, rewritten) : node2;
   };
   const cache2 = /* @__PURE__ */ new Map();
-  function run2(s) {
+  function run3(s) {
     const cached2 = cache2.get(s);
     if (cached2 === RESOLVING) {
       return new $ZodLazy({
@@ -27550,21 +27550,21 @@ function visit(schema, fnOrHandlers) {
         let changed = false;
         const newShape = {};
         for (const k of keys4) {
-          const mapped = run2(oldShape[k]);
+          const mapped = run3(oldShape[k]);
           if (mapped !== oldShape[k])
             changed = true;
           newShape[k] = mapped;
         }
         let newCatchall = def2.catchall;
         if (def2.catchall) {
-          newCatchall = run2(def2.catchall);
+          newCatchall = run3(def2.catchall);
           if (newCatchall !== def2.catchall)
             changed = true;
         }
         return changed ? clone(s, { ...def2, shape: newShape, catchall: newCatchall }) : s;
       }
       case "array": {
-        const mapped = run2(def2.element);
+        const mapped = run3(def2.element);
         return mapped === def2.element ? s : clone(s, { ...def2, element: mapped });
       }
       case "tuple": {
@@ -27572,14 +27572,14 @@ function visit(schema, fnOrHandlers) {
         let changed = false;
         const newItems = [];
         for (const item of oldItems) {
-          const mapped = run2(item);
+          const mapped = run3(item);
           if (mapped !== item)
             changed = true;
           newItems.push(mapped);
         }
         let newRest = def2.rest;
         if (def2.rest) {
-          newRest = run2(def2.rest);
+          newRest = run3(def2.rest);
           if (newRest !== def2.rest)
             changed = true;
         }
@@ -27587,12 +27587,12 @@ function visit(schema, fnOrHandlers) {
       }
       case "record":
       case "map": {
-        const newKey = run2(def2.keyType);
-        const newVal = run2(def2.valueType);
+        const newKey = run3(def2.keyType);
+        const newVal = run3(def2.valueType);
         return newKey === def2.keyType && newVal === def2.valueType ? s : clone(s, { ...def2, keyType: newKey, valueType: newVal });
       }
       case "set": {
-        const newVal = run2(def2.valueType);
+        const newVal = run3(def2.valueType);
         return newVal === def2.valueType ? s : clone(s, { ...def2, valueType: newVal });
       }
       case "union": {
@@ -27600,7 +27600,7 @@ function visit(schema, fnOrHandlers) {
         let changed = false;
         const newOptions = [];
         for (const opt of oldOptions) {
-          const mapped = run2(opt);
+          const mapped = run3(opt);
           if (mapped !== opt)
             changed = true;
           newOptions.push(mapped);
@@ -27608,8 +27608,8 @@ function visit(schema, fnOrHandlers) {
         return changed ? clone(s, { ...def2, options: newOptions }) : s;
       }
       case "intersection": {
-        const newLeft = run2(def2.left);
-        const newRight = run2(def2.right);
+        const newLeft = run3(def2.left);
+        const newRight = run3(def2.right);
         return newLeft === def2.left && newRight === def2.right ? s : clone(s, { ...def2, left: newLeft, right: newRight });
       }
       case "optional":
@@ -27621,23 +27621,23 @@ function visit(schema, fnOrHandlers) {
       case "nonoptional":
       case "promise":
       case "success": {
-        const newInner = run2(def2.innerType);
+        const newInner = run3(def2.innerType);
         return newInner === def2.innerType ? s : clone(s, { ...def2, innerType: newInner });
       }
       case "pipe": {
-        const newIn = run2(def2.in);
-        const newOut = run2(def2.out);
+        const newIn = run3(def2.in);
+        const newOut = run3(def2.out);
         return newIn === def2.in && newOut === def2.out ? s : clone(s, { ...def2, in: newIn, out: newOut });
       }
       case "function": {
-        const newInput = run2(def2.input);
-        const newOutput = run2(def2.output);
+        const newInput = run3(def2.input);
+        const newOutput = run3(def2.output);
         return newInput === def2.input && newOutput === def2.output ? s : clone(s, { ...def2, input: newInput, output: newOutput });
       }
       case "lazy": {
         const original = def2.getter;
         const { _cachedInner, ...rest } = def2;
-        return clone(s, { ...rest, getter: () => run2(original()) });
+        return clone(s, { ...rest, getter: () => run3(original()) });
       }
       // A leaf by choice: `parts` are regex fragments, not data positions.
       case "template_literal":
@@ -27668,7 +27668,7 @@ function visit(schema, fnOrHandlers) {
       }
     }
   }
-  return run2(schema);
+  return run3(schema);
 }
 
 // node_modules/zod/v4/classic/deep-partial.js
@@ -28432,11 +28432,259 @@ function checkBudget(m3, totals, request2) {
     throw new BudgetExceededError(`Plan image cap exceeded: cap ${maxQ}, used ${totals.quotaUsed}, request ${request2.quota}`);
   }
 }
+function recordSpend(courseDir, e) {
+  const r = LedgerEntrySchema.safeParse(e);
+  if (!r.success) {
+    throw new ValidationError(`invalid ledger entry: ${r.error.issues.map((x5) => `${x5.path.join(".") || "(root)"}: ${x5.message}`).join("; ")}`);
+  }
+  mkdirSync4(join7(courseDir, DIR), { recursive: true });
+  appendFileSync(join7(courseDir, DIR, FILE4), JSON.stringify(r.data) + "\n");
+}
+
+// packages/course-kit/src/providers/codex.ts
+import { execFile } from "node:child_process";
+import { existsSync as existsSync8, mkdirSync as mkdirSync5, statSync } from "node:fs";
+import { basename as basename2, dirname } from "node:path";
+var TIMEOUT_MS = 5 * 6e4;
+function run(bin3, args, opts = {}) {
+  return new Promise((resolve5) => {
+    execFile(bin3, args, { ...opts, maxBuffer: 64 * 1024 * 1024, windowsHide: true }, (error64, _stdout, stderr) => {
+      if (!error64) return resolve5({ code: 0, stderr: String(stderr) });
+      const code = typeof error64.code === "number" ? error64.code : null;
+      resolve5({ code, stderr: String(stderr), error: error64 });
+    });
+  });
+}
+async function probeCodex(codexBin = "codex") {
+  const available = (await run(codexBin, ["--version"], { timeout: 3e4 })).code === 0;
+  if (!available) return { available, loggedIn: false };
+  const loggedIn = (await run(codexBin, ["login", "status"], { timeout: 3e4 })).code === 0;
+  return { available, loggedIn };
+}
+function fileStamp(p) {
+  if (!existsSync8(p)) return null;
+  const s = statSync(p);
+  return `${s.mtimeMs}:${s.size}`;
+}
+async function generateImageCodex(o) {
+  const dir = dirname(o.outPath);
+  const name = basename2(o.outPath);
+  mkdirSync5(dir, { recursive: true });
+  const before = fileStamp(o.outPath);
+  const args = [
+    "exec",
+    "--skip-git-repo-check",
+    "--sandbox",
+    "workspace-write",
+    "-C",
+    dir,
+    `$imagegen ${o.prompt} Save the image as ${name}.`
+  ];
+  const r = await run(o.codexBin ?? "codex", args, { cwd: dir, timeout: TIMEOUT_MS });
+  if (r.error) {
+    if (r.error.code === "ENOENT") throw new ProviderUnavailableError(`codex not found (${o.codexBin ?? "codex"}); install the Codex CLI or use --provider openai`);
+    if (r.error.killed) throw new ProviderUnavailableError("codex exec timed out after 5 minutes");
+    const tail = r.stderr.trim().split("\n").slice(-5).join("\n");
+    throw new ProviderUnavailableError(`codex exec failed (exit ${r.code ?? "unknown"})${tail ? `: ${tail}` : ""}`);
+  }
+  const after = fileStamp(o.outPath);
+  if (after === null || after === before) {
+    throw new ProviderUnavailableError(`codex finished but did not write ${name}`);
+  }
+}
+
+// packages/course-kit/src/providers/generate.ts
+import { createHash as createHash2 } from "node:crypto";
+import { existsSync as existsSync10, mkdirSync as mkdirSync7, readFileSync as readFileSync10, writeFileSync as writeFileSync7 } from "node:fs";
+import { join as join9 } from "node:path";
+
+// packages/course-kit/src/providers/openai.ts
+import { existsSync as existsSync9, mkdirSync as mkdirSync6, readFileSync as readFileSync9, writeFileSync as writeFileSync6 } from "node:fs";
+import { dirname as dirname2, join as join8 } from "node:path";
+var URL2 = "https://api.openai.com/v1/images/generations";
+var MODEL = "gpt-image-2";
+var API_QUALITY = { draft: "low", standard: "medium", high: "high" };
+var TIMEOUT_MS2 = 5 * 6e4;
+function resolveOpenAIKey(env, dataDir2) {
+  for (const v2 of [env.COURSE_MEDIA_OPENAI_KEY, env.OPENAI_API_KEY]) {
+    if (v2 && v2.trim()) return v2.trim();
+  }
+  if (dataDir2) {
+    const f = join8(dataDir2, "openai.key");
+    if (existsSync9(f)) {
+      const v2 = readFileSync9(f, "utf8").trim();
+      if (v2) return v2;
+    }
+  }
+  return null;
+}
+function redact(text3, key2) {
+  return key2 ? text3.split(key2).join("[redacted]") : text3;
+}
+function openaiPrice(pricing, quality) {
+  const price = pricing.image[`openai:${MODEL}`]?.[quality];
+  if (price === void 0) throw new ValidationError(`pricing has no entry for openai:${MODEL}`);
+  return price;
+}
+async function generateImageOpenAI(o) {
+  const usd = openaiPrice(o.pricing ?? loadPricing(), o.quality);
+  const doFetch = o.fetchImpl ?? fetch;
+  let res;
+  try {
+    res = await doFetch(URL2, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${o.apiKey}` },
+      body: JSON.stringify({ model: MODEL, prompt: o.prompt, size: "1024x1024", quality: API_QUALITY[o.quality], n: 1 }),
+      signal: AbortSignal.timeout(TIMEOUT_MS2)
+    });
+  } catch (e) {
+    throw new ProviderUnavailableError(redact(`OpenAI request failed: ${e instanceof Error ? e.message : String(e)}`, o.apiKey));
+  }
+  const text3 = await res.text().catch(() => "");
+  let body = {};
+  try {
+    body = JSON.parse(text3);
+  } catch {
+  }
+  if (!res.ok) {
+    const msg = redact(body.error?.message ?? (text3.slice(0, 200) || res.statusText), o.apiKey);
+    if (res.status === 400) throw new ValidationError(`OpenAI rejected the request (400): ${msg}`);
+    throw new ProviderUnavailableError(`OpenAI image API unavailable (${res.status}): ${msg}`);
+  }
+  const b64 = body.data?.[0]?.b64_json;
+  if (!b64) throw new ProviderUnavailableError("OpenAI response had no image data (data[0].b64_json)");
+  mkdirSync6(dirname2(o.outPath), { recursive: true });
+  writeFileSync6(o.outPath, Buffer.from(b64, "base64"));
+  return { usd, model: MODEL };
+}
+
+// packages/course-kit/src/providers/prompt.ts
+var NO_TEXT_RULE = "No text, letters, numbers, logos, or watermarks anywhere in the image.";
+function composeImagePrompt(anchors, scene) {
+  return `${anchors.trim()}
+
+${scene.trim()}
+
+${NO_TEXT_RULE}`;
+}
+
+// packages/course-kit/src/providers/generate.ts
+var IMAGE_PROVIDERS = ["codex", "openai"];
+var IMAGE_QUALITIES = ["draft", "standard", "high"];
+var SAFE_ID = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
+async function generateAssetImage(courseDir, assetId, provider, o) {
+  if (!SAFE_ID.test(assetId)) throw new ValidationError(`invalid asset id ${JSON.stringify(assetId)}`);
+  if (!IMAGE_PROVIDERS.includes(provider)) throw new ValidationError(`unknown image provider ${provider}`);
+  if (!IMAGE_QUALITIES.includes(o.quality)) throw new ValidationError(`unknown quality ${o.quality}`);
+  const manifest = loadManifest(courseDir);
+  const item = loadPlan(courseDir).items.find((it) => it.id === assetId);
+  if (!item) throw new ValidationError(`No plan item ${assetId} in 05-media/media-plan.yaml`);
+  if (item.status !== "approved") throw new ValidationError(`Plan item ${assetId} is ${item.status}; approve it in the media plan first`);
+  if (item.kind !== "image") throw new ValidationError(`Plan item ${assetId} has kind ${item.kind}; only kind image can be generated as an image`);
+  const registry2 = loadRegistry(courseDir);
+  const prior = registry2.assets.find((a3) => a3.id === assetId);
+  if (prior && (prior.status === "approved" || prior.status === "imported")) {
+    throw new ValidationError(`Asset ${assetId} is ${prior.status}; reject it first to regenerate`);
+  }
+  const anchorsFile = join9(courseDir, "05-media", "style", "prompt-anchors.md");
+  if (!existsSync10(anchorsFile)) throw new ValidationError("Run generate-style-guide first.");
+  const anchors = readFileSync10(anchorsFile, "utf8");
+  const prompt = composeImagePrompt(anchors, item.description);
+  const source3 = `05-media/src/${assetId}.prompt.txt`;
+  mkdirSync7(join9(courseDir, "05-media", "src"), { recursive: true });
+  writeFileSync7(join9(courseDir, source3), prompt);
+  const pricing = provider === "openai" ? loadPricing(o.dataDir) : void 0;
+  const estimate2 = pricing ? { usd: openaiPrice(pricing, o.quality), quota: 0 } : { usd: 0, quota: 1 };
+  checkBudget(manifest, ledgerTotals(courseDir), estimate2);
+  const file2 = `05-media/out/${assetId}.png`;
+  const outPath = join9(courseDir, file2);
+  let model;
+  if (provider === "openai") {
+    const apiKey = resolveOpenAIKey(o.env ?? process.env, o.dataDir);
+    if (!apiKey) throw new ProviderUnavailableError("OpenAI API key not configured: set COURSE_MEDIA_OPENAI_KEY or OPENAI_API_KEY, or write <data-dir>/openai.key");
+    model = (await generateImageOpenAI({ prompt, outPath, quality: o.quality, apiKey, fetchImpl: o.fetchImpl, pricing })).model;
+  } else {
+    await generateImageCodex({ prompt, outPath, codexBin: o.codexBin });
+  }
+  recordSpend(courseDir, {
+    at: (/* @__PURE__ */ new Date()).toISOString(),
+    assetId,
+    provider,
+    ...model ? { model } : {},
+    estimateUsd: estimate2.usd,
+    actualUsd: estimate2.usd,
+    quotaUnits: estimate2.quota
+  });
+  const asset = {
+    id: assetId,
+    kind: "image",
+    function: item.function,
+    objectives: item.objectives,
+    module: item.module,
+    provider,
+    source: source3,
+    files: [file2],
+    alt: "",
+    status: "generated",
+    costUsd: estimate2.usd,
+    quotaUnits: estimate2.quota,
+    sha256: createHash2("sha256").update(readFileSync10(outPath)).digest("hex"),
+    createdAt: (/* @__PURE__ */ new Date()).toISOString()
+  };
+  const rest = { ...registry2, assets: registry2.assets.filter((a3) => a3.id !== assetId) };
+  saveRegistry(courseDir, addAsset(rest, asset));
+  return asset;
+}
+
+// packages/course-kit/src/providers/record.ts
+var import_yaml5 = __toESM(require_dist(), 1);
+import { existsSync as existsSync11, mkdirSync as mkdirSync8, readFileSync as readFileSync11, writeFileSync as writeFileSync8 } from "node:fs";
+import { join as join10 } from "node:path";
+
+// packages/course-kit/data/providers.yaml
+var providers_default = '# Name patterns (glob, * = any text) that identify detected tools and skills for each capability.\nimage: ["*generate_image*", "*image_gen*"]\ndiagram: ["*Excalidraw*", "*Mermaid*"]\ndesignSkills: ["impeccable*", "design-taste-frontend*", "ui-ux-pro-max*", "frontend-design*"]\n';
+
+// packages/course-kit/src/providers/record.ts
+var DetectedProvidersSchema = external_exports.object({
+  detectedAt: external_exports.string(),
+  image: external_exports.array(external_exports.string()),
+  diagram: external_exports.array(external_exports.string()),
+  designSkills: external_exports.array(external_exports.string()),
+  codex: external_exports.object({ available: external_exports.boolean(), loggedIn: external_exports.boolean() })
+});
+var PatternsSchema = external_exports.object({ image: external_exports.array(external_exports.string()), diagram: external_exports.array(external_exports.string()), designSkills: external_exports.array(external_exports.string()) });
+var FILE5 = [".course", "providers.json"];
+function parseDetectedProviders(raw, what = "detected providers") {
+  const r = DetectedProvidersSchema.safeParse(raw);
+  if (!r.success) {
+    throw new ValidationError(`invalid ${what}: ${r.error.issues.map((i) => `${i.path.join(".") || "(root)"}: ${i.message}`).join("; ")}`);
+  }
+  return r.data;
+}
+function recordProviders(courseDir, d) {
+  const data3 = parseDetectedProviders(d);
+  mkdirSync8(join10(courseDir, FILE5[0]), { recursive: true });
+  writeFileSync8(join10(courseDir, ...FILE5), JSON.stringify(data3, null, 2) + "\n");
+}
+function loadProviders(courseDir) {
+  const f = join10(courseDir, ...FILE5);
+  if (!existsSync11(f)) return null;
+  let raw;
+  try {
+    raw = JSON.parse(readFileSync11(f, "utf8"));
+  } catch {
+    throw new ValidationError(`cannot parse ${f}`);
+  }
+  return parseDetectedProviders(raw, f);
+}
+function providerPatterns() {
+  return PatternsSchema.parse((0, import_yaml5.parse)(providers_default));
+}
 
 // packages/course-kit/src/render/deps.ts
 import { execFileSync } from "node:child_process";
-import { existsSync as existsSync8, mkdirSync as mkdirSync5 } from "node:fs";
-import { join as join8 } from "node:path";
+import { existsSync as existsSync12, mkdirSync as mkdirSync9 } from "node:fs";
+import { join as join11 } from "node:path";
 var PACKAGES = {
   "mermaid-cli": ["@mermaid-js/mermaid-cli@12.0.0"],
   "excalidraw-to-svg": ["excalidraw-to-svg@3.1.0", "@excalidraw/utils@0.1.2", "puppeteer@25.16.0"]
@@ -28445,26 +28693,26 @@ function isDepName(n) {
   return Object.hasOwn(PACKAGES, n);
 }
 function depPath(dataDir2, dep) {
-  const nm = join8(dataDir2, "node_modules");
+  const nm = join11(dataDir2, "node_modules");
   if (dep === "mermaid-cli") {
-    const p2 = join8(nm, ".bin", "mmdc");
-    return existsSync8(p2) ? p2 : null;
+    const p2 = join11(nm, ".bin", "mmdc");
+    return existsSync12(p2) ? p2 : null;
   }
-  const p = join8(nm, "excalidraw-to-svg");
-  const needed = [p, join8(nm, "@excalidraw", "utils", "dist", "excalidraw-utils.min.js"), join8(nm, "puppeteer")];
-  return needed.every((f) => existsSync8(f)) ? p : null;
+  const p = join11(nm, "excalidraw-to-svg");
+  const needed = [p, join11(nm, "@excalidraw", "utils", "dist", "excalidraw-utils.min.js"), join11(nm, "puppeteer")];
+  return needed.every((f) => existsSync12(f)) ? p : null;
 }
 function installDeps(dataDir2, deps) {
   for (const d of deps) if (!isDepName(d)) throw new UsageError(`unknown dependency: ${d}`);
-  mkdirSync5(dataDir2, { recursive: true });
+  mkdirSync9(dataDir2, { recursive: true });
   const specs = deps.flatMap((d) => PACKAGES[d]);
   execFileSync("npm", ["install", "--prefix", dataDir2, "--no-audit", "--no-fund", ...specs], { stdio: ["ignore", "ignore", "inherit"] });
 }
 
 // packages/course-kit/src/render/excalidraw.ts
-import { readFileSync as readFileSync9, writeFileSync as writeFileSync6 } from "node:fs";
+import { readFileSync as readFileSync12, writeFileSync as writeFileSync9 } from "node:fs";
 import { createRequire } from "node:module";
-import { join as join9, resolve as resolve3 } from "node:path";
+import { join as join12, resolve as resolve3 } from "node:path";
 var CHROME_FAILURE = /Target closed|Protocol error|Session closed|Execution context was destroyed|crash|disconnected/i;
 function classifyEvaluateError(err, ctx = {}) {
   const msg = err instanceof Error ? err.message : String(err);
@@ -28476,7 +28724,7 @@ function classifyEvaluateError(err, ctx = {}) {
 async function renderExcalidraw(srcPath, outSvg, dataDir2) {
   let diagram;
   try {
-    diagram = JSON.parse(readFileSync9(srcPath, "utf8"));
+    diagram = JSON.parse(readFileSync12(srcPath, "utf8"));
   } catch (e) {
     throw new ValidationError(`cannot read excalidraw source ${srcPath}: ${e instanceof Error ? e.message : String(e)}`);
   }
@@ -28484,10 +28732,10 @@ async function renderExcalidraw(srcPath, outSvg, dataDir2) {
     throw new ProviderUnavailableError("excalidraw-to-svg is not installed; run: deps install excalidraw-to-svg --data-dir <dir>");
   }
   const root = resolve3(dataDir2);
-  const bundle2 = join9(root, "node_modules", "@excalidraw", "utils", "dist", "excalidraw-utils.min.js");
+  const bundle2 = join12(root, "node_modules", "@excalidraw", "utils", "dist", "excalidraw-utils.min.js");
   let puppeteer;
   try {
-    puppeteer = createRequire(join9(root, "noop.js"))("puppeteer");
+    puppeteer = createRequire(join12(root, "noop.js"))("puppeteer");
   } catch {
     throw new ProviderUnavailableError("puppeteer is not installed; run: deps install excalidraw-to-svg --data-dir <dir>");
   }
@@ -28502,7 +28750,7 @@ async function renderExcalidraw(srcPath, outSvg, dataDir2) {
     try {
       page = await browser.newPage();
       await page.setContent("<html><body></body></html>");
-      await page.addScriptTag({ content: readFileSync9(bundle2, "utf8") });
+      await page.addScriptTag({ content: readFileSync12(bundle2, "utf8") });
     } catch (e) {
       throw new ProviderUnavailableError(`Chrome page setup failed: ${e instanceof Error ? e.message : String(e)}`);
     }
@@ -28515,7 +28763,7 @@ async function renderExcalidraw(srcPath, outSvg, dataDir2) {
     } catch (e) {
       throw classifyEvaluateError(e, { browserConnected: browser.connected, pageClosed: page.isClosed?.() });
     }
-    writeFileSync6(outSvg, svg);
+    writeFileSync9(outSvg, svg);
   } finally {
     try {
       await browser.close();
@@ -28526,13 +28774,13 @@ async function renderExcalidraw(srcPath, outSvg, dataDir2) {
 
 // packages/course-kit/src/render/mermaid.ts
 import { execFileSync as execFileSync2 } from "node:child_process";
-import { existsSync as existsSync9, mkdtempSync, rmSync, writeFileSync as writeFileSync7 } from "node:fs";
+import { existsSync as existsSync13, mkdtempSync, rmSync, writeFileSync as writeFileSync10 } from "node:fs";
 import { tmpdir } from "node:os";
-import { join as join10 } from "node:path";
+import { join as join13 } from "node:path";
 async function renderMermaid(srcPath, outSvg, dataDir2, tokens = {}) {
   const mmdc = depPath(dataDir2, "mermaid-cli");
   if (!mmdc) throw new ProviderUnavailableError("mermaid-cli is not installed; run: deps install mermaid-cli --data-dir <dir>");
-  const tmp = mkdtempSync(join10(tmpdir(), "ck-mmd-"));
+  const tmp = mkdtempSync(join13(tmpdir(), "ck-mmd-"));
   try {
     const c3 = tokens.color ?? {};
     const themeVariables = {};
@@ -28541,11 +28789,11 @@ async function renderMermaid(srcPath, outSvg, dataDir2, tokens = {}) {
     if (c3.fg) themeVariables.lineColor = c3.fg;
     if (c3.bg) themeVariables.background = c3.bg;
     if (tokens.font?.body) themeVariables.fontFamily = tokens.font.body;
-    const cfg = join10(tmp, "config.json");
-    writeFileSync7(cfg, JSON.stringify({ theme: "base", themeVariables }));
-    const pup = join10(tmp, "puppeteer.json");
-    writeFileSync7(pup, JSON.stringify({ args: ["--no-sandbox"] }));
-    if (!existsSync9(srcPath)) throw new ValidationError(`mermaid source not found: ${srcPath}`);
+    const cfg = join13(tmp, "config.json");
+    writeFileSync10(cfg, JSON.stringify({ theme: "base", themeVariables }));
+    const pup = join13(tmp, "puppeteer.json");
+    writeFileSync10(pup, JSON.stringify({ args: ["--no-sandbox"] }));
+    if (!existsSync13(srcPath)) throw new ValidationError(`mermaid source not found: ${srcPath}`);
     try {
       execFileSync2(mmdc, ["-i", srcPath, "-o", outSvg, "-c", cfg, "-p", pup, ...c3.bg ? ["-b", c3.bg] : []], { stdio: ["ignore", "ignore", "pipe"] });
     } catch (e) {
@@ -28577,7 +28825,7 @@ function buildLabelOverlay(imageHref, width2, height2, labels2, tokens = {}) {
 }
 
 // packages/course-kit/src/render/vegalite.ts
-import { writeFileSync as writeFileSync8 } from "node:fs";
+import { writeFileSync as writeFileSync11 } from "node:fs";
 
 // node_modules/vega-util/build/accessor.js
 function accessor(fn, fields, name) {
@@ -29413,7 +29661,7 @@ function formatDate(date6) {
 }
 function dsv_default(delimiter) {
   var reFormat = new RegExp('["' + delimiter + "\n\r]"), DELIMITER = delimiter.charCodeAt(0);
-  function parse12(text3, f) {
+  function parse13(text3, f) {
     var convert, columns, rows = parseRows(text3, function(row, i) {
       if (convert) return convert(row, i - 1);
       columns = row, convert = f ? customConverter(row, f) : objectConverter(row);
@@ -29482,7 +29730,7 @@ function dsv_default(delimiter) {
     return value3 == null ? "" : value3 instanceof Date ? formatDate(value3) : reFormat.test(value3 += "") ? '"' + value3.replace(/"/g, '""') + '"' : value3;
   }
   return {
-    parse: parse12,
+    parse: parse13,
     parseRows,
     format: format5,
     formatBody,
@@ -31143,14 +31391,14 @@ function formatLocale(locale4) {
     };
   }
   function parseSpecifier(d, specifier, string4, j) {
-    var i = 0, n = specifier.length, m3 = string4.length, c3, parse12;
+    var i = 0, n = specifier.length, m3 = string4.length, c3, parse13;
     while (i < n) {
       if (j >= m3) return -1;
       c3 = specifier.charCodeAt(i++);
       if (c3 === 37) {
         c3 = specifier.charAt(i++);
-        parse12 = parses[c3 in pads ? specifier.charAt(i++) : c3];
-        if (!parse12 || (j = parse12(d, string4, j)) < 0) return -1;
+        parse13 = parses[c3 in pads ? specifier.charAt(i++) : c3];
+        if (!parse13 || (j = parse13(d, string4, j)) < 0) return -1;
       } else if (c3 != string4.charCodeAt(j++)) {
         return -1;
       }
@@ -31781,14 +32029,14 @@ function inferTypes(data3, fields) {
   }, {});
 }
 function delimitedFormat(delimiter) {
-  const parse12 = function(data3, format5) {
+  const parse13 = function(data3, format5) {
     const delim = {
       delimiter
     };
     return dsv(data3, format5 ? extend2(format5, delim) : delim);
   };
-  parse12.responseType = "text";
-  return parse12;
+  parse13.responseType = "text";
+  return parse13;
 }
 function dsv(data3, format5) {
   if (format5.header) {
@@ -31856,11 +32104,11 @@ function read(data3, schema, timeParser, utcParser) {
   const reader = formats(schema.type || "json");
   if (!reader) error62("Unknown data format type: " + schema.type);
   data3 = reader(data3, schema);
-  if (schema.parse) parse6(data3, schema.parse, timeParser, utcParser);
+  if (schema.parse) parse7(data3, schema.parse, timeParser, utcParser);
   if (hasOwnProperty(data3, "columns")) delete data3.columns;
   return data3;
 }
-function parse6(data3, types, timeParser, utcParser) {
+function parse7(data3, types, timeParser, utcParser) {
   if (!data3.length) return;
   const locale4 = timeFormatDefaultLocale();
   timeParser = timeParser || locale4.timeParse;
@@ -31877,8 +32125,8 @@ function parse6(data3, types, timeParser, utcParser) {
       if (pattern[0] === "'" && pattern[pattern.length - 1] === "'" || pattern[0] === '"' && pattern[pattern.length - 1] === '"') {
         pattern = pattern.slice(1, -1);
       }
-      const parse12 = parts[0] === "utc" ? utcParser : timeParser;
-      return parse12(pattern);
+      const parse13 = parts[0] === "utc" ? utcParser : timeParser;
+      return parse13(pattern);
     }
     if (!typeParsers[type3]) {
       throw Error("Illegal format pattern: " + field4 + ":" + type3);
@@ -32490,7 +32738,7 @@ function events(source3, type3, filter3, apply2) {
   }
   return s;
 }
-function parse7(data3, format5) {
+function parse8(data3, format5) {
   const locale4 = this.locale();
   return read(data3, format5, locale4.timeParse, locale4.utcParse);
 }
@@ -33088,7 +33336,7 @@ async function runAsync(encode4, prerun, postrun) {
   (this._running = this.evaluate(encode4, prerun, postrun)).then(clear2, clear2);
   return this._running;
 }
-function run(encode4, prerun, postrun) {
+function run2(encode4, prerun, postrun) {
   return this._pulse ? reentrant(this) : (this.evaluate(encode4, prerun, postrun), this);
 }
 function runAfter(callback, enqueue2, priority) {
@@ -33347,7 +33595,7 @@ Dataflow.prototype = {
   changeset,
   // DATA LOADING
   ingest,
-  parse: parse7,
+  parse: parse8,
   preload,
   request,
   // EVENT HANDLING
@@ -33355,7 +33603,7 @@ Dataflow.prototype = {
   on,
   // PULSE PROPAGATION
   evaluate,
-  run,
+  run: run2,
   runAsync,
   runAfter,
   _enqueue: enqueue,
@@ -35259,7 +35507,7 @@ var Distributions = {
 var DISTRIBUTIONS = "distributions";
 var FUNCTION = "function";
 var FIELD = "field";
-function parse8(def2, data3) {
+function parse9(def2, data3) {
   const func = def2[FUNCTION];
   if (!hasOwnProperty(Distributions, func)) {
     error62("Unknown distribution function: " + func);
@@ -35269,7 +35517,7 @@ function parse8(def2, data3) {
     if (name === FIELD) {
       d.data((def2.from || data3()).map(def2[name]));
     } else if (name === DISTRIBUTIONS) {
-      d[name](def2[name].map((_) => parse8(_, data3)));
+      d[name](def2[name].map((_) => parse9(_, data3)));
     } else if (typeof d[name] === FUNCTION) {
       d[name](def2[name]);
     }
@@ -35391,7 +35639,7 @@ inherits_default(Density, Transform, {
   transform(_, pulse2) {
     const out = pulse2.fork(pulse2.NO_SOURCE | pulse2.NO_FIELDS);
     if (!this.value || pulse2.changed() || _.modified()) {
-      const dist2 = parse8(_.distribution, source(pulse2)), minsteps = _.steps || _.minsteps || 25, maxsteps = _.steps || _.maxsteps || 200;
+      const dist2 = parse9(_.distribution, source(pulse2)), minsteps = _.steps || _.minsteps || 25, maxsteps = _.steps || _.maxsteps || 200;
       let method2 = _.method || "pdf";
       if (method2 !== "pdf" && method2 !== "cdf") {
         error62("Invalid density method: " + method2);
@@ -36815,8 +37063,8 @@ function Values(params2) {
 }
 inherits_default(Values, Transform, {
   transform(_, pulse2) {
-    const run2 = !this.value || _.modified("field") || _.modified("sort") || pulse2.changed() || _.sort && pulse2.modified(_.sort.fields);
-    if (run2) {
+    const run3 = !this.value || _.modified("field") || _.modified("sort") || pulse2.changed() || _.sort && pulse2.modified(_.sort.fields);
+    if (run3) {
       this.value = (_.sort ? pulse2.source.slice().sort(stableCompare(_.sort)) : pulse2.source).map(_.field);
     }
   }
@@ -39380,7 +39628,7 @@ function parseSvg(value3) {
 }
 
 // node_modules/d3-interpolate/src/transform/index.js
-function interpolateTransform(parse12, pxComma, pxParen, degParen) {
+function interpolateTransform(parse13, pxComma, pxParen, degParen) {
   function pop(s) {
     return s.length ? s.pop() + " " : "";
   }
@@ -39418,7 +39666,7 @@ function interpolateTransform(parse12, pxComma, pxParen, degParen) {
   }
   return function(a3, b10) {
     var s = [], q = [];
-    a3 = parse12(a3), b10 = parse12(b10);
+    a3 = parse13(a3), b10 = parse13(b10);
     translate4(a3.translateX, a3.translateY, b10.translateX, b10.translateY, s, q);
     rotate2(a3.rotate, b10.rotate, s, q);
     skewX(a3.skewX, b10.skewX, s, q);
@@ -41001,7 +41249,7 @@ var commandPattern = /[mlhvzcsqta]([^mlhvzcsqta]*)/gi;
 var numberPattern = /^[+-]?(([0-9]*\.[0-9]+)|([0-9]+\.)|([0-9]+))([eE][+-]?[0-9]+)?/;
 var spacePattern = /^((\s+,?\s*)|(,\s*))/;
 var flagPattern = /^[01]/;
-function parse9(path3) {
+function parse10(path3) {
   const commands = [];
   const matches = path3.match(commandPattern) || [];
   matches.forEach((str) => {
@@ -41052,9 +41300,9 @@ var Tau = Math.PI * 2;
 var HalfSqrt3 = Math.sqrt(3) / 2;
 var segmentCache = {};
 var bezierCache = {};
-var join11 = [].join;
+var join14 = [].join;
 function segments(x5, y5, rx, ry, large, sweep, rotateX, ox, oy) {
-  const key2 = join11.call(arguments);
+  const key2 = join14.call(arguments);
   if (segmentCache[key2]) {
     return segmentCache[key2];
   }
@@ -41104,7 +41352,7 @@ function segments(x5, y5, rx, ry, large, sweep, rotateX, ox, oy) {
   return segmentCache[key2] = result;
 }
 function bezier(params2) {
-  const key2 = join11.call(params2);
+  const key2 = join14.call(params2);
   if (bezierCache[key2]) {
     return bezierCache[key2];
   }
@@ -41469,7 +41717,7 @@ function symbols2(_) {
 var custom9 = {};
 function customSymbol(path3) {
   if (!hasOwnProperty(custom9, path3)) {
-    const parsed = parse9(path3);
+    const parsed = parse10(path3);
     custom9[path3] = {
       draw: function(context3, size) {
         pathRender(context3, parsed, 0, 0, Math.sqrt(size) / 2);
@@ -42669,7 +42917,7 @@ function path$1(context3, item) {
   if (path3 == null) return true;
   var x5 = item.x || 0, y5 = item.y || 0, sx = item.scaleX || 1, sy = item.scaleY || 1, a3 = (item.angle || 0) * DegToRad, cache2 = item.pathCache;
   if (!cache2 || cache2.path !== path3) {
-    (item.pathCache = cache2 = parse9(path3)).path = path3;
+    (item.pathCache = cache2 = parse10(path3)).path = path3;
   }
   if (a3 && context3.rotate && context3.translate) {
     context3.translate(x5, y5);
@@ -52533,9 +52781,9 @@ inherits_default(Stratify, Transform, {
       error62("Stratify transform requires an upstream data source.");
     }
     let tree = this.value;
-    const mod = _.modified(), out = pulse2.fork(pulse2.ALL).materialize(pulse2.SOURCE), run2 = !tree || mod || pulse2.changed(pulse2.ADD_REM) || pulse2.modified(_.key.fields) || pulse2.modified(_.parentKey.fields);
+    const mod = _.modified(), out = pulse2.fork(pulse2.ALL).materialize(pulse2.SOURCE), run3 = !tree || mod || pulse2.changed(pulse2.ADD_REM) || pulse2.modified(_.key.fields) || pulse2.modified(_.parentKey.fields);
     out.source = out.source.slice();
-    if (run2) {
+    if (run3) {
       tree = out.source.length ? lookup3(stratify_default().id(_.key).parentId(_.parentKey)(out.source), _.key, truthy) : lookup3(stratify_default()([{}]), _.key, _.key);
     }
     out.source.root = this.value = tree;
@@ -57957,7 +58205,7 @@ function array3(seq) {
 function sequence2(seq) {
   return array3(seq) || (isString(seq) ? seq : null);
 }
-function join12(seq, ...args) {
+function join15(seq, ...args) {
   return array3(seq).join(...args);
 }
 function indexof(seq, ...args) {
@@ -58033,7 +58281,7 @@ function geoShape(projection3, geojson, group2) {
 function pathShape(path3) {
   let p = null;
   return function(context3) {
-    return context3 ? pathRender(context3, p = p || parse9(path3)) : path3;
+    return context3 ? pathRender(context3, p = p || parse10(path3)) : path3;
   };
 }
 var datum = (d) => d.data;
@@ -58152,7 +58400,7 @@ var functionContext = {
   toNumber,
   toString,
   indexof,
-  join: join12,
+  join: join15,
   lastindexof,
   replace: replace2,
   reverse,
@@ -58316,7 +58564,7 @@ function parser2(expr2, scope) {
 }
 
 // node_modules/vega-runtime/build/vega-runtime.js
-function parse10(spec) {
+function parse11(spec) {
   const ctx = this, operators = spec.operators || [];
   if (spec.background) {
     ctx.background = spec.background;
@@ -58771,7 +59019,7 @@ Context.prototype = Subcontext.prototype = {
     return this.expr.encode(this, encode4);
   },
   // parse methods
-  parse: parse10,
+  parse: parse11,
   parseOperator,
   parseOperatorParameters,
   parseParameters,
@@ -63173,7 +63421,7 @@ function defaults() {
     }
   };
 }
-function parse11(spec, config2, options) {
+function parse12(spec, config2, options) {
   if (!isObject2(spec)) {
     error62("Input Vega specification must be an object.");
   }
@@ -63602,7 +63850,7 @@ var DETAIL = "detail";
 var KEY = "key";
 var TOOLTIP = "tooltip";
 var HREF = "href";
-var URL2 = "url";
+var URL3 = "url";
 var DESCRIPTION = "description";
 var POSITION_CHANNEL_INDEX = {
   x: 1,
@@ -63990,7 +64238,7 @@ function getSupportedMark(channel) {
       return { text: "always" };
     case ANGLE:
       return { point: "always", square: "always", text: "always" };
-    case URL2:
+    case URL3:
       return { image: "always" };
     case THETA:
       return { text: "always", arc: "always" };
@@ -64031,7 +64279,7 @@ function rangeType(channel) {
     case TEXT$1:
     case TOOLTIP:
     case HREF:
-    case URL2:
+    case URL3:
     case DESCRIPTION:
       return "discrete";
     // Color can be either continuous or discrete, depending on scale type.
@@ -66621,7 +66869,7 @@ function channelCompatibility(fieldDef, channel) {
     case KEY:
     case TOOLTIP:
     case HREF:
-    case URL2:
+    case URL3:
     case ANGLE:
     case THETA:
     case RADIUS:
@@ -67017,9 +67265,9 @@ function isUnitSpec(spec) {
 var CompositeMarkNormalizer = class {
   name;
   run;
-  constructor(name, run2) {
+  constructor(name, run3) {
     this.name = name;
-    this.run = run2;
+    this.run = run3;
   }
   hasMatchingType(spec) {
     if (isUnitSpec(spec)) {
@@ -67335,7 +67583,7 @@ function pathGroupingFields(mark, encoding) {
       case Y3:
       case HREF:
       case DESCRIPTION:
-      case URL2:
+      case URL3:
       case X23:
       case Y23:
       case XOFFSET:
@@ -68191,8 +68439,8 @@ function normalizeErrorBand(spec, { config: config2 }) {
   };
 }
 var compositeMarkRegistry = {};
-function add5(mark, run2, parts) {
-  const normalizer = new CompositeMarkNormalizer(mark, run2);
+function add5(mark, run3, parts) {
+  const normalizer = new CompositeMarkNormalizer(mark, run3);
   compositeMarkRegistry[mark] = { normalizer, parts };
 }
 function getAllCompositeMarks() {
@@ -74943,26 +75191,26 @@ function unquote(pattern) {
   }
   return pattern;
 }
-function parseExpression2(field3, parse12) {
+function parseExpression2(field3, parse13) {
   const f = accessPathWithDatum(field3);
-  if (parse12 === "number") {
+  if (parse13 === "number") {
     return `toNumber(${f})`;
-  } else if (parse12 === "boolean") {
+  } else if (parse13 === "boolean") {
     return `toBoolean(${f})`;
-  } else if (parse12 === "string") {
+  } else if (parse13 === "string") {
     return `toString(${f})`;
-  } else if (parse12 === "date") {
+  } else if (parse13 === "date") {
     return `toDate(${f})`;
-  } else if (parse12 === "flatten") {
+  } else if (parse13 === "flatten") {
     return f;
-  } else if (parse12.startsWith("date:")) {
-    const specifier = unquote(parse12.slice(5, parse12.length));
+  } else if (parse13.startsWith("date:")) {
+    const specifier = unquote(parse13.slice(5, parse13.length));
     return `timeParse(${f},'${specifier}')`;
-  } else if (parse12.startsWith("utc:")) {
-    const specifier = unquote(parse12.slice(4, parse12.length));
+  } else if (parse13.startsWith("utc:")) {
+    const specifier = unquote(parse13.slice(4, parse13.length));
     return `utcParse(${f},'${specifier}')`;
   } else {
-    warn2(unrecognizedParse(parse12));
+    warn2(unrecognizedParse(parse13));
     return null;
   }
 }
@@ -75065,9 +75313,9 @@ var ParseNode = class _ParseNode extends DataFlowNode {
   clone() {
     return new _ParseNode(null, duplicate(this._parse));
   }
-  constructor(parent, parse12) {
+  constructor(parent, parse13) {
     super(parent);
-    this._parse = parse12;
+    this._parse = parse13;
   }
   hash() {
     return `Parse ${hash2(this._parse)}`;
@@ -75107,11 +75355,11 @@ var ParseNode = class _ParseNode extends DataFlowNode {
         }
       }
     }
-    const parse12 = new Split(explicit, implicit2);
-    ancestorParse.copyAll(parse12);
+    const parse13 = new Split(explicit, implicit2);
+    ancestorParse.copyAll(parse13);
     const p = {};
-    for (const key2 of keys3(parse12.combine())) {
-      const val = parse12.get(key2);
+    for (const key2 of keys3(parse13.combine())) {
+      const val = parse13.get(key2);
       if (val !== null) {
         p[key2] = val;
       }
@@ -75466,11 +75714,11 @@ var MergeParse = class extends BottomUpOptimizer {
       const commonParse = {};
       const conflictingParse = /* @__PURE__ */ new Set();
       for (const parseNode of parseChildren) {
-        const parse12 = parseNode.parse;
-        for (const k of keys3(parse12)) {
+        const parse13 = parseNode.parse;
+        for (const k of keys3(parse13)) {
           if (!(k in commonParse)) {
-            commonParse[k] = parse12[k];
-          } else if (commonParse[k] !== parse12[k]) {
+            commonParse[k] = parse13[k];
+          } else if (commonParse[k] !== parse13[k]) {
             conflictingParse.add(k);
           }
         }
@@ -78187,8 +78435,8 @@ var Model = class {
   /**
    * @return scale name for a given channel after the scale has been parsed and named.
    */
-  scaleName(originalScaleName, parse12) {
-    if (parse12) {
+  scaleName(originalScaleName, parse13) {
+    if (parse13) {
       return this.getName(originalScaleName);
     }
     if (
@@ -78203,8 +78451,8 @@ var Model = class {
   /**
    * @return projection name after the projection has been parsed and named.
    */
-  projectionName(parse12) {
-    if (parse12) {
+  projectionName(parse13) {
+    if (parse13) {
       return this.getName("projection");
     }
     if (this.component.projection && !this.component.projection.merged || this.projectionNameMap.has(this.getName("projection"))) {
@@ -81196,14 +81444,14 @@ async function renderVegaLite(spec, outSvg, tokens = {}) {
     ...tokens.font?.body ? { font: tokens.font.body } : {}
   };
   const vl = compile2({ ...spec, config: { ...config2, ...spec.config ?? {} } });
-  const view = new View(parse11(vl.spec), { renderer: "none" });
-  writeFileSync8(outSvg, await view.toSVG());
+  const view = new View(parse12(vl.spec), { renderer: "none" });
+  writeFileSync11(outSvg, await view.toSVG());
 }
 
 // packages/course-kit/src/cli.ts
 function readJson(path3, what) {
   try {
-    return JSON.parse(readFileSync10(path3, "utf8"));
+    return JSON.parse(readFileSync13(path3, "utf8"));
   } catch (e) {
     throw new ValidationError(`cannot read ${what} ${path3}: ${e instanceof Error ? e.message : String(e)}`);
   }
@@ -81219,6 +81467,11 @@ function num(a3, flag2) {
   const n = raw.trim() === "" ? NaN : Number(raw);
   if (!Number.isFinite(n)) throw new UsageError(`--${flag2} must be a number`);
   return n;
+}
+function oneOf(a3, flag2, allowed) {
+  const v2 = requireFlag(a3, flag2);
+  if (!allowed.includes(v2)) throw new UsageError(`--${flag2} must be one of ${allowed.join("|")}`);
+  return v2;
 }
 function optNum(a3, flag2) {
   return a3.flags[flag2] === void 0 ? void 0 : num(a3, flag2);
@@ -81254,7 +81507,7 @@ var studioCommands = {
     const out = requirePositional(a3, 2, "out");
     const width2 = optNum(a3, "width") ?? 1024;
     const height2 = optNum(a3, "height") ?? 1024;
-    writeFileSync9(out, buildLabelOverlay(image4, width2, height2, labels2, tokensOf(a3)));
+    writeFileSync12(out, buildLabelOverlay(image4, width2, height2, labels2, tokensOf(a3)));
     return { out };
   },
   "ledger totals": (a3) => ledgerTotals(requireFlag(a3, "course")),
@@ -81263,7 +81516,30 @@ var studioCommands = {
     const request2 = { usd: num(a3, "usd"), quota: num(a3, "quota") };
     checkBudget(loadManifest(course), ledgerTotals(course), request2);
     return { ok: true };
-  }
+  },
+  "gen image": async (a3) => {
+    const course = requireFlag(a3, "course");
+    const assetId = requireFlag(a3, "asset");
+    const provider = oneOf(a3, "provider", IMAGE_PROVIDERS);
+    const quality = oneOf(a3, "quality", IMAGE_QUALITIES);
+    const dataDirFlag = typeof a3.flags["data-dir"] === "string" ? a3.flags["data-dir"] : void 0;
+    return { asset: await generateAssetImage(course, assetId, provider, { quality, dataDir: dataDirFlag }) };
+  },
+  "providers probe-codex": () => probeCodex(),
+  "providers record": (a3) => {
+    const course = requireFlag(a3, "course");
+    let raw;
+    try {
+      raw = JSON.parse(requireFlag(a3, "json"));
+    } catch (e) {
+      if (e instanceof UsageError) throw e;
+      throw new ValidationError("--json is not valid JSON");
+    }
+    recordProviders(course, parseDetectedProviders(raw));
+    return { ok: true };
+  },
+  "providers show": (a3) => loadProviders(requireFlag(a3, "course")) ?? { detected: null },
+  "providers patterns": () => providerPatterns()
 };
 var isMain = (() => {
   try {

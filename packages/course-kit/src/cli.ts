@@ -6,6 +6,10 @@ import { type CommandTable, type ParsedArgs, requireFlag, requirePositional, run
 import { UsageError, ValidationError } from './errors.js';
 import { loadManifest } from './manifest/io.js';
 import { checkBudget, ledgerTotals } from './media/ledger.js';
+import { probeCodex } from './providers/codex.js';
+import { generateAssetImage, IMAGE_PROVIDERS, IMAGE_QUALITIES, type ImageProvider } from './providers/generate.js';
+import type { ImageQuality } from './providers/openai.js';
+import { loadProviders, parseDetectedProviders, providerPatterns, recordProviders } from './providers/record.js';
 import { type DepName, installDeps, isDepName } from './render/deps.js';
 import { renderExcalidraw } from './render/excalidraw.js';
 import { renderMermaid } from './render/mermaid.js';
@@ -29,6 +33,11 @@ function num(a: ParsedArgs, flag: string): number {
   const n = raw.trim() === '' ? NaN : Number(raw);
   if (!Number.isFinite(n)) throw new UsageError(`--${flag} must be a number`);
   return n;
+}
+function oneOf<T extends string>(a: ParsedArgs, flag: string, allowed: readonly T[]): T {
+  const v = requireFlag(a, flag);
+  if (!(allowed as readonly string[]).includes(v)) throw new UsageError(`--${flag} must be one of ${allowed.join('|')}`);
+  return v as T;
 }
 function optNum(a: ParsedArgs, flag: string): number | undefined {
   return a.flags[flag] === undefined ? undefined : num(a, flag);
@@ -75,6 +84,28 @@ export const studioCommands: CommandTable = {
     checkBudget(loadManifest(course), ledgerTotals(course), request);
     return { ok: true };
   },
+  'gen image': async (a) => {
+    const course = requireFlag(a, 'course');
+    const assetId = requireFlag(a, 'asset');
+    const provider = oneOf<ImageProvider>(a, 'provider', IMAGE_PROVIDERS);
+    const quality = oneOf<ImageQuality>(a, 'quality', IMAGE_QUALITIES);
+    const dataDirFlag = typeof a.flags['data-dir'] === 'string' ? a.flags['data-dir'] : undefined;
+    return { asset: await generateAssetImage(course, assetId, provider, { quality, dataDir: dataDirFlag }) };
+  },
+  'providers probe-codex': () => probeCodex(),
+  'providers record': (a) => {
+    const course = requireFlag(a, 'course');
+    let raw: unknown;
+    try { raw = JSON.parse(requireFlag(a, 'json')); }
+    catch (e) {
+      if (e instanceof UsageError) throw e;
+      throw new ValidationError('--json is not valid JSON');
+    }
+    recordProviders(course, parseDetectedProviders(raw));
+    return { ok: true };
+  },
+  'providers show': (a) => loadProviders(requireFlag(a, 'course')) ?? { detected: null },
+  'providers patterns': () => providerPatterns(),
 };
 
 const isMain = (() => {

@@ -1,0 +1,4 @@
+# Name patterns (glob, * = any text) that identify detected tools and skills for each capability.
+image: ["*generate_image*", "*image_gen*"]
+diagram: ["*Excalidraw*", "*Mermaid*"]
+designSkills: ["impeccable*", "design-taste-frontend*", "ui-ux-pro-max*", "frontend-design*"]

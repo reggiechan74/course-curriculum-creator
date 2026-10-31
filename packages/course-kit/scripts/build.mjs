@@ -29,6 +29,7 @@ for (const [src, out] of ENTRIES) {
     format: 'esm',
     target: 'node20',
     legalComments: 'none',
+    loader: { '.yaml': 'text' },
     banner: {
       js: '#!/usr/bin/env node\n// GENERATED from packages/course-kit — do not edit\nimport { createRequire as __cr } from "node:module";\nconst require = __cr(import.meta.url);',
     },
