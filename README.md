@@ -38,17 +38,17 @@ This plugin helps independent consultants, trainers, and instructional designers
 
 ## Installation
 
-### From Marketplace
+### From GitHub
 ```
-/plugin marketplace add reggiechan74/cc-plugins
-/plugin install course-curriculum-creator@cc-plugins
+/plugin marketplace add reggiechan74/course-curriculum-creator
+/plugin install course-curriculum-creator@course-curriculum-creator
 ```
 
 ### Local Development
-Clone `reggiechan74/cc-plugins`, then from inside the clone:
+Clone `reggiechan74/course-curriculum-creator`, then from inside the clone:
 ```
 /plugin marketplace add .
-/plugin install course-curriculum-creator@cc-plugins
+/plugin install course-curriculum-creator@course-curriculum-creator
 ```
 
 ## Quick Start
@@ -399,4 +399,4 @@ Created by Reggie Chan for Tenebrus Capital Corp training programs.
 
 ## Support
 
-Issues and contributions: https://github.com/reggiechan74/cc-plugins/issues
+Issues and contributions: https://github.com/reggiechan74/course-curriculum-creator/issues
