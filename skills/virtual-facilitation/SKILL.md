@@ -1,6 +1,7 @@
 ---
 name: virtual-facilitation
-description: This skill should be used when the user asks to "design a virtual workshop", "create online training", "adapt for remote delivery", "plan a hybrid session", "facilitate via Zoom/Teams/Meet", or when course-positioning.md has deliveryMode set to "virtual" or "hybrid". Provides practical guidance for designing and facilitating effective virtual and hybrid learning experiences.
+description: "Designs and adapts workshops for virtual and hybrid delivery: timing, activity substitutions, platform tips, hybrid equity, and technology checklists."
+when_to_use: "Use when the user asks to \"design a virtual workshop\", \"create online training\", \"adapt for remote delivery\", \"plan a hybrid session\", or \"facilitate via Zoom/Teams/Meet\", or when course-positioning.md has deliveryMode set to \"virtual\" or \"hybrid\"."
 ---
 
 # Virtual Facilitation for Workshop Design
@@ -223,3 +224,7 @@ This spreads a 1-day workshop across 4 days, allowing practice between sessions.
 | Same timing as in-person | Exhaustion, poor retention | Reduce to 4 hrs/day, more breaks |
 | Skipping tech check | Wasted first 20 minutes troubleshooting | Require tech check day before or 30 min early |
 | No async component | No time for deeper reflection | Add pre-work and between-session assignments |
+
+## Additional Resources
+
+- **`${CLAUDE_SKILL_DIR}/examples/example-virtual-1day-workshop.md`** - A complete 1-day virtual workshop design

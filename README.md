@@ -44,12 +44,19 @@ This plugin helps independent consultants, trainers, and instructional designers
 /plugin install course-curriculum-creator@course-curriculum-creator
 ```
 
+When you install the plugin, Claude Code asks for your [settings](#configuration). Every one is optional.
+
 ### Local Development
-Clone `reggiechan74/course-curriculum-creator`, then from inside the clone:
+To load your working copy for a single session without installing:
+```
+claude --plugin-dir /path/to/course-curriculum-creator
+```
+Or register the clone as a local marketplace, so it loads in place and picks up edits on `/reload-plugins`:
 ```
 /plugin marketplace add .
 /plugin install course-curriculum-creator@course-curriculum-creator
 ```
+Check changes with `claude plugin validate .` before you commit.
 
 ## Quick Start
 
@@ -57,100 +64,100 @@ Clone `reggiechan74/course-curriculum-creator`, then from inside the clone:
 ```
 User: "Create a 2-day PropTech fundamentals workshop for real estate professionals"
 ```
-The `curriculum-architect` agent will automatically generate a complete curriculum.
+Claude delegates to the `curriculum-architect` agent, which generates the complete curriculum. To call it explicitly, use `@agent-course-curriculum-creator:curriculum-architect`.
 
 ### Step-by-Step Course Creation
 ```bash
 # 1. Initialize course project
-/create-course "PropTech Fundamentals"
+/course-curriculum-creator:create-course "PropTech Fundamentals"
 
 # 2. Generate core curriculum (backward design order)
-/generate-objectives          # Stage 1: Desired results
-/generate-rubrics             # Stage 2: Assessment evidence
-/generate-outline             # Stage 3: Learning plan
-/generate-lesson-plans        # Stage 3: Detailed activities
-/generate-description         # Student-facing description
+/course-curriculum-creator:generate-objectives          # Stage 1: Desired results
+/course-curriculum-creator:generate-rubrics             # Stage 2: Assessment evidence
+/course-curriculum-creator:generate-outline             # Stage 3: Learning plan
+/course-curriculum-creator:generate-lesson-plans        # Stage 3: Detailed activities
+/course-curriculum-creator:generate-description         # Student-facing description
 
 # 3. Create additional materials
-/generate-artifacts --type handout
-/generate-artifacts --type instructor-guide
-/generate-artifacts --type pre-work
-/generate-artifacts --type post-work
+/course-curriculum-creator:generate-artifacts --type handout
+/course-curriculum-creator:generate-artifacts --type instructor-guide
+/course-curriculum-creator:generate-artifacts --type pre-work
+/course-curriculum-creator:generate-artifacts --type post-work
 
 # 4. Review and export
-/review-curriculum
-/export-curriculum --format full
+/course-curriculum-creator:review-curriculum
+/course-curriculum-creator:export-curriculum --format full
 
 # 5. Prepare for delivery
-/generate-workshop-prep --date 2026-03-15
+/course-curriculum-creator:generate-workshop-prep --date 2026-03-15
 ```
 
-## Commands
+## Workflow Skills
 
-Commands are organized by curriculum development lifecycle stage:
+The workflow steps are skills you run as slash commands (`/course-curriculum-creator:<name>`). They are set to `disable-model-invocation: true`, so Claude never starts one on its own. They run only when you type the command or when one of the plugin's agents runs that step. They are grouped by curriculum development stage:
 
-### Stage 0: Analysis & Initialization (`commands/0-analysis/`)
-
-| Command | Description |
-|---------|-------------|
-| `/assess-needs` | Conduct a training needs assessment to determine if a course is the right intervention |
-| `/create-course` | Initialize new course project with directory structure |
-| `/design-series` | Design a leveled course series (101/201/301/401) |
-| `/generate-learner-profile` | Generate learner profile analyzing prior knowledge, motivations, constraints, and transfer environment |
-
-### Stage 1: Desired Results (`commands/1-desired-results/`)
+### Stage 0: Analysis & Initialization (`workflow/0-analysis/`)
 
 | Command | Description |
 |---------|-------------|
-| `/generate-objectives` | Create Bloom's-aligned learning objectives |
+| `/course-curriculum-creator:assess-needs` | Conduct a training needs assessment to determine if a course is the right intervention |
+| `/course-curriculum-creator:create-course` | Initialize new course project with directory structure |
+| `/course-curriculum-creator:design-series` | Design a leveled course series (101/201/301/401) |
+| `/course-curriculum-creator:generate-learner-profile` | Generate learner profile analyzing prior knowledge, motivations, constraints, and transfer environment |
 
-### Stage 2: Assessment Evidence (`commands/2-assessment-evidence/`)
-
-| Command | Description |
-|---------|-------------|
-| `/generate-rubrics` | Create 1-5 scale analytical assessment rubrics |
-| `/generate-evaluation-plan` | Generate Kirkpatrick L1-L4 evaluation plan with instruments, timelines, and success thresholds |
-
-### Stage 3: Learning Plan (`commands/3-learning-plan/`)
+### Stage 1: Desired Results (`workflow/1-desired-results/`)
 
 | Command | Description |
 |---------|-------------|
-| `/generate-outline` | Generate module structure with timing |
-| `/generate-lesson-plans` | Generate detailed module-level lesson plans |
-| `/generate-transfer-plan` | Generate post-workshop transfer plan with action items, manager briefings, job aids, and follow-up touchpoints |
-| `/generate-pre-work` | Design pre-workshop micro-learning units covering prerequisites |
+| `/course-curriculum-creator:generate-objectives` | Create Bloom's-aligned learning objectives |
 
-### Stage 4: Materials & Communication (`commands/4-materials/`)
+### Stage 2: Assessment Evidence (`workflow/2-assessment-evidence/`)
 
 | Command | Description |
 |---------|-------------|
-| `/generate-description` | Create student-facing course description |
-| `/generate-artifacts` | Generate student handouts, instructor guides, etc. |
-| `/adapt-for-virtual` | Adapt an existing in-person curriculum for virtual or hybrid delivery |
+| `/course-curriculum-creator:generate-rubrics` | Create 1-5 scale analytical assessment rubrics |
+| `/course-curriculum-creator:generate-evaluation-plan` | Generate Kirkpatrick L1-L4 evaluation plan with instruments, timelines, and success thresholds |
 
-### Stage 5: Quality Assurance & Approval (`commands/5-quality-and-review/`)
-
-| Command | Description |
-|---------|-------------|
-| `/review-curriculum` | Validate curriculum quality and alignment |
-| `/generate-review-package` | Generate stakeholder/SME review package for curriculum approval |
-| `/export-curriculum` | Export curriculum as combined document (full/summary/syllabus) |
-
-### Stage 6: Delivery & Iteration (`commands/6-delivery/`)
+### Stage 3: Learning Plan (`workflow/3-learning-plan/`)
 
 | Command | Description |
 |---------|-------------|
-| `/generate-workshop-prep` | Generate dated preparation checklist for delivery |
-| `/process-workshop-feedback` | Analyze feedback and generate improvement report |
-| `/generate-spaced-practice` | Generate post-workshop spaced retrieval practice sequence |
+| `/course-curriculum-creator:generate-outline` | Generate module structure with timing |
+| `/course-curriculum-creator:generate-lesson-plans` | Generate detailed module-level lesson plans |
+| `/course-curriculum-creator:generate-transfer-plan` | Generate post-workshop transfer plan with action items, manager briefings, job aids, and follow-up touchpoints |
+| `/course-curriculum-creator:generate-pre-work` | Design pre-workshop micro-learning units covering prerequisites |
 
-### Templates (`commands/7-templates/`)
+### Stage 4: Materials & Communication (`workflow/4-materials/`)
 
 | Command | Description |
 |---------|-------------|
-| `/save-as-template` | Save course structure as reusable template |
-| `/create-from-template` | Create new course from existing template |
-| `/list-templates` | List available course templates with details |
+| `/course-curriculum-creator:generate-description` | Create student-facing course description |
+| `/course-curriculum-creator:generate-artifacts` | Generate student handouts, instructor guides, etc. |
+| `/course-curriculum-creator:adapt-for-virtual` | Adapt an existing in-person curriculum for virtual or hybrid delivery |
+
+### Stage 5: Quality Assurance & Approval (`workflow/5-quality-and-review/`)
+
+| Command | Description |
+|---------|-------------|
+| `/course-curriculum-creator:review-curriculum` | Validate curriculum quality and alignment |
+| `/course-curriculum-creator:generate-review-package` | Generate stakeholder/SME review package for curriculum approval |
+| `/course-curriculum-creator:export-curriculum` | Export curriculum as combined document (full/summary/syllabus) |
+
+### Stage 6: Delivery & Iteration (`workflow/6-delivery/`)
+
+| Command | Description |
+|---------|-------------|
+| `/course-curriculum-creator:generate-workshop-prep` | Generate dated preparation checklist for delivery |
+| `/course-curriculum-creator:process-workshop-feedback` | Analyze feedback and generate improvement report |
+| `/course-curriculum-creator:generate-spaced-practice` | Generate post-workshop spaced retrieval practice sequence |
+
+### Templates (`workflow/7-templates/`)
+
+| Command | Description |
+|---------|-------------|
+| `/course-curriculum-creator:save-as-template` | Save course structure as reusable template |
+| `/course-curriculum-creator:create-from-template` | Create new course from existing template |
+| `/course-curriculum-creator:list-templates` | List available course templates with details |
 
 ## Skills
 
@@ -207,37 +214,42 @@ Validates curriculum quality by checking:
 - Assessment-objective correspondence
 - Overall pedagogical soundness
 
-Run automatically after generation or invoke with `/review-curriculum`.
+Run automatically after generation or invoke with `/course-curriculum-creator:review-curriculum`.
 
 ## Configuration
 
-Create `.claude/course-curriculum-creator.local.md` to customize defaults:
+Settings are native plugin options (`userConfig`). Claude Code asks for them when you enable the plugin. To change them later, run:
+
+```
+/plugin configure course-curriculum-creator@course-curriculum-creator
+```
+
+You can also edit them in `/config`.
+
+| Setting | Default | Used by |
+|---|---|---|
+| `instructor_name` | (empty) | Positioning, descriptions, guides, reports |
+| `instructor_bio` | (empty) | Course description, instructor sections |
+| `organization` | (empty) | Document headers |
+| `courses_directory` | `~/courses` | `create-course`, `design-series` |
+| `default_duration` | `2-day` | `create-course`, `design-series`, `generate-objectives` |
+| `default_audience_level` | `professional` | `create-course`, `design-series`, `generate-objectives` |
+| `rubric_scale` | `1-5` | `generate-rubrics` |
+| `rubric_type` | `analytical` | `generate-rubrics` |
+| `template_directory` | `~/.claude/course-templates` | Template commands |
+
+### Per-project overrides
+
+To override settings for one project, for example a client engagement with a different organization name, create `.claude/course-curriculum-creator.local.md` in that project with YAML frontmatter:
 
 ```yaml
 ---
-# Instructor Information
-instructor_name: "Your Name"
-instructor_bio: "Your credentials and experience"
-organization: "Your Organization"
-
-# Course Defaults
-default_duration: "2-day"
-default_activity_format: "lab-heavy"  # lab-heavy, lecture-heavy, balanced
-default_audience_level: "professional"  # beginner, intermediate, professional, expert
-
-# Output Configuration
-courses_directory: "~/courses"
-version_strategy: "semantic"  # semantic or date-based
-
-# Assessment Defaults
-rubric_scale: "1-5"
-rubric_type: "analytical"  # performance, analytical, holistic
-
-# Templates
-use_custom_templates: false
-template_directory: "~/.claude/course-templates"
+organization: "Client Co."
+default_duration: "1-day"
 ---
 ```
+
+Values in this file take precedence over your plugin settings. See `examples/course-curriculum-creator.local.md`.
 
 ## Course Directory Structure
 
@@ -270,10 +282,10 @@ Save successful courses as templates for reuse:
 
 ```bash
 # Save as template
-/save-as-template "PropTech-Fundamentals-2025-02-15"
+/course-curriculum-creator:save-as-template "PropTech-Fundamentals-2025-02-15"
 
 # Create variant from template
-/create-from-template PropTech-Fundamentals --variant "Commercial-Focus"
+/course-curriculum-creator:create-from-template PropTech-Fundamentals --variant "Commercial-Focus"
 ```
 
 Templates preserve structure, objectives, and pedagogical approach while allowing customization for different audiences or contexts.
@@ -284,17 +296,17 @@ Design progressive course series that build from foundational to advanced master
 
 ```bash
 # Design a 4-level series
-/design-series "PropTech" --levels 4
+/course-curriculum-creator:design-series "PropTech" --levels 4
 
 # Create individual courses linked to the series
-/create-course "PropTech 101" --series proptech --level 101
-/create-course "PropTech 201" --series proptech --level 201
+/course-curriculum-creator:create-course "PropTech 101" --series proptech --level 101
+/course-curriculum-creator:create-course "PropTech 201" --series proptech --level 201
 
 # Series plan enforces Bloom's bands during objective generation
-/generate-objectives    # warns if objectives outside level's bands
+/course-curriculum-creator:generate-objectives    # warns if objectives outside level's bands
 
 # Retrofit existing courses into a series
-/design-series "PropTech" --from-existing ./PropTech-Basics/ ./PropTech-Advanced/
+/course-curriculum-creator:design-series "PropTech" --from-existing ./PropTech-Basics/ ./PropTech-Advanced/
 ```
 
 Series use a **Bloom's Center-of-Gravity model** where each level has a primary Bloom's band (where 60-70% of objectives live), a stretch zone (higher levels with scaffolding), and an assumed floor (mastered in prior levels, not re-taught).
@@ -321,7 +333,7 @@ Update version in `course-positioning.md` frontmatter when making changes.
 ## Examples
 
 See `examples/` directory for:
-- `course-curriculum-creator.local.md` - Sample configuration file for customizing defaults
+- `course-curriculum-creator.local.md` - Sample per-project settings override
 
 See `skills/` subdirectories for worked examples:
 - `skills/blooms-taxonomy/examples/example-objectives-1day.md` - Complete 1-day workshop objective set
@@ -330,56 +342,66 @@ See `skills/` subdirectories for worked examples:
 
 ## What's New
 
+### v2.0.0 - Current Claude Code Plugin Spec
+- Changed: Workflow commands migrated from the legacy `commands/` format to skills under `workflow/<stage>/<name>/SKILL.md`. Command names are unchanged (`/course-curriculum-creator:<name>`)
+- Changed: Workflow skills set `disable-model-invocation: true`, so Claude doesn't start them unprompted
+- New: Native `userConfig` settings, prompted on install and editable via `/plugin configure`. `.claude/course-curriculum-creator.local.md` remains as a per-project override
+- Changed: Shorter agent descriptions; methodology skills use `description` + `when_to_use`
+- Fixed: Broken `references/assessment-design.md` path in generate-rubrics
+- Fixed: UDL and virtual-facilitation reference/example files are now linked from their skills
+- Changed: Bloom's affective domain and objective-writing mistakes moved to reference files (SKILL.md under 500 lines)
+- New: Plugin icon (`assets/icon.png`)
+
 ### v1.1.0 - Learner Analysis, Retention & Inclusivity
-- New: `/generate-learner-profile` command for audience analysis across 5 dimensions
-- New: `/generate-pre-work` command for micro-learning prerequisite coverage
-- New: `/generate-spaced-practice` command for post-workshop retrieval practice
+- New: `/course-curriculum-creator:generate-learner-profile` command for audience analysis across 5 dimensions
+- New: `/course-curriculum-creator:generate-pre-work` command for micro-learning prerequisite coverage
+- New: `/course-curriculum-creator:generate-spaced-practice` command for post-workshop retrieval practice
 - New: Formative assessment techniques reference with decision rules
 - New: WCAG 2.1 AA accessibility specifications reference
 - New: Cultural adaptation guide for cross-cultural delivery
 - New: Content curation guide with RARBA evaluation framework
 - New: Affective domain (Krathwohl's taxonomy) in Bloom's skill
-- Enhanced: Co-facilitation support in `/generate-lesson-plans` with role rotation and handoff protocols
-- Enhanced: Inter-course transition design in `/design-series` with retention bridges and placement assessments
+- Enhanced: Co-facilitation support in `/course-curriculum-creator:generate-lesson-plans` with role rotation and handoff protocols
+- Enhanced: Inter-course transition design in `/course-curriculum-creator:design-series` with retention bridges and placement assessments
 - Enhanced: Curriculum architect generates learner profiles, pre-work, and spaced practice
 - Enhanced: Quality reviewer validates learner profiles, affective objectives, pre-work, and spaced practice
 
 ### v1.0.0 - Polish & Completeness
-- Enhanced: `/process-workshop-feedback --pilot` flag for first-run pilot analysis with iteration planning
-- Enhanced: `/create-course` now generates `content-sources.md` for IP/licensing tracking
-- Enhanced: `/generate-lesson-plans` prompts for content source tracking after generation
+- Enhanced: `/course-curriculum-creator:process-workshop-feedback --pilot` flag for first-run pilot analysis with iteration planning
+- Enhanced: `/course-curriculum-creator:create-course` now generates `content-sources.md` for IP/licensing tracking
+- Enhanced: `/course-curriculum-creator:generate-lesson-plans` prompts for content source tracking after generation
 - Enhanced: Quality reviewer validates content licensing compliance
 - Enhanced: Curriculum architect tracks content sources in autonomous workflow
 
 ### v0.6.0 - Delivery & Process
-- New: `/adapt-for-virtual` command for converting in-person curricula to virtual/hybrid
-- New: `/generate-review-package` command for stakeholder/SME review workflow
+- New: `/course-curriculum-creator:adapt-for-virtual` command for converting in-person curricula to virtual/hybrid
+- New: `/course-curriculum-creator:generate-review-package` command for stakeholder/SME review workflow
 - New: `virtual-facilitation` skill with platform-specific guidance
-- Enhanced: `--mode` flag in `/create-course` for virtual/hybrid from the start
-- Enhanced: Delivery mode awareness in `/generate-outline` and `/generate-lesson-plans`
+- Enhanced: `--mode` flag in `/course-curriculum-creator:create-course` for virtual/hybrid from the start
+- Enhanced: Delivery mode awareness in `/course-curriculum-creator:generate-outline` and `/course-curriculum-creator:generate-lesson-plans`
 - Enhanced: Quality reviewer validates delivery mode compliance
 
 ### v0.5.0 - Learning Ecosystem
-- New: `/generate-transfer-plan` command for post-workshop learning transfer (action plans, manager briefings, job aids)
-- New: `/generate-evaluation-plan` command for Kirkpatrick L1-L4 evaluation design
+- New: `/course-curriculum-creator:generate-transfer-plan` command for post-workshop learning transfer (action plans, manager briefings, job aids)
+- New: `/course-curriculum-creator:generate-evaluation-plan` command for Kirkpatrick L1-L4 evaluation design
 - Enhanced: Differentiated instruction (floor/scaffold/extension tiers) in lesson plan template
 - Enhanced: Quality reviewer validates differentiation in activities
 - Enhanced: Curriculum architect includes transfer and evaluation planning
 - Enhanced: Transfer plan prerequisite hook
 
 ### v0.4.0 - Professional L&D Foundations
-- New: `/assess-needs` command for training needs assessment (TNA)
+- New: `/course-curriculum-creator:assess-needs` command for training needs assessment (TNA)
 - New: `universal-design-for-learning` skill with worked example
-- New: Pre-work and post-work artifact types in `/generate-artifacts`
-- Enhanced: UDL validation integrated into `/generate-outline`, `/generate-lesson-plans`, `/generate-rubrics`
+- New: Pre-work and post-work artifact types in `/course-curriculum-creator:generate-artifacts`
+- Enhanced: UDL validation integrated into `/course-curriculum-creator:generate-outline`, `/course-curriculum-creator:generate-lesson-plans`, `/course-curriculum-creator:generate-rubrics`
 - Enhanced: Quality reviewer agent now validates UDL compliance
 - Enhanced: Advisory TNA hook in prerequisite system
 
 ### v0.3.0 - Course Series
-- New: `/design-series` command for leveled course series (101/201/301/401)
-- New: `--series`/`--level` flags on `/create-course`
+- New: `/course-curriculum-creator:design-series` command for leveled course series (101/201/301/401)
+- New: `--series`/`--level` flags on `/course-curriculum-creator:create-course`
 - New: Bloom's band enforcement during objective generation
-- New: Series validation in `/review-curriculum`
+- New: Series validation in `/course-curriculum-creator:review-curriculum`
 
 ## Contributing
 

@@ -1,22 +1,14 @@
 {
   "name": "course-curriculum-creator",
-  "version": "1.1.0",
+  "displayName": "Course Curriculum Creator",
+  "version": "2.0.0",
   "description": "Create professional course curricula for 1-2 day workshops using backward design methodology and Bloom's taxonomy",
-  "commands": [
-    "./commands/0-analysis",
-    "./commands/1-desired-results",
-    "./commands/2-assessment-evidence",
-    "./commands/3-learning-plan",
-    "./commands/4-materials",
-    "./commands/5-quality-and-review",
-    "./commands/6-delivery",
-    "./commands/7-templates"
-  ],
   "author": {
     "name": "Reggie Chan"
   },
   "repository": "https://github.com/reggiechan74/course-curriculum-creator",
   "homepage": "https://github.com/reggiechan74/course-curriculum-creator",
+  "license": "MIT",
   "keywords": [
     "education",
     "curriculum",
@@ -26,5 +18,92 @@
     "workshop",
     "training"
   ],
-  "license": "MIT"
+  "icon": "./assets/icon.png",
+  "skills": [
+    "./workflow/0-analysis",
+    "./workflow/1-desired-results",
+    "./workflow/2-assessment-evidence",
+    "./workflow/3-learning-plan",
+    "./workflow/4-materials",
+    "./workflow/5-quality-and-review",
+    "./workflow/6-delivery",
+    "./workflow/7-templates"
+  ],
+  "userConfig": {
+    "instructor_name": {
+      "type": "string",
+      "title": "Instructor name",
+      "description": "Your name as it appears on course materials, instructor guides, and reports",
+      "default": ""
+    },
+    "instructor_bio": {
+      "type": "string",
+      "title": "Instructor bio",
+      "description": "Short credentials/experience statement for course descriptions and instructor guides",
+      "default": ""
+    },
+    "organization": {
+      "type": "string",
+      "title": "Organization",
+      "description": "Company or institution name used in document headers",
+      "default": ""
+    },
+    "courses_directory": {
+      "type": "string",
+      "title": "Courses directory",
+      "description": "Where new course projects are created when no --location is given (absolute or ~ path)",
+      "default": "~/courses"
+    },
+    "default_duration": {
+      "type": "string",
+      "title": "Default workshop duration",
+      "description": "Duration used when a command isn't given --duration",
+      "options": [
+        "1-day",
+        "2-day"
+      ],
+      "default": "2-day"
+    },
+    "default_audience_level": {
+      "type": "string",
+      "title": "Default audience level",
+      "description": "Target expertise level; shapes cognitive complexity and prerequisites",
+      "options": [
+        "beginner",
+        "intermediate",
+        "professional",
+        "expert"
+      ],
+      "default": "professional"
+    },
+    "rubric_scale": {
+      "type": "string",
+      "title": "Default rubric scale",
+      "description": "Scoring scale for generated rubrics",
+      "options": [
+        "1-4",
+        "1-5",
+        "letter-grades",
+        "pass-fail"
+      ],
+      "default": "1-5"
+    },
+    "rubric_type": {
+      "type": "string",
+      "title": "Default rubric type",
+      "description": "Rubric style used when generate-rubrics isn't given --type",
+      "options": [
+        "analytical",
+        "performance",
+        "holistic"
+      ],
+      "default": "analytical"
+    },
+    "template_directory": {
+      "type": "string",
+      "title": "Template directory",
+      "description": "Where course templates are saved and looked up",
+      "default": "~/.claude/course-templates"
+    }
+  }
 }

@@ -1,6 +1,6 @@
 ---
 name: quality-reviewer
-description: Use this agent when you need to validate curriculum quality, check backward design alignment, or review pedagogical soundness of course materials. Examples: <example>Context: User just finished generating a curriculum using curriculum-architect agent. assistant: "I'll now validate the curriculum quality using the quality-reviewer agent to ensure backward design alignment." <commentary>After curriculum generation, proactively trigger quality validation to catch issues before delivery.</commentary></example> <example>Context: User is preparing to deliver a course and wants to ensure quality. user: "Can you review my Building AI Agents curriculum and make sure it's pedagogically sound?" assistant: "I'll use the quality-reviewer agent to perform a comprehensive validation of your curriculum." <commentary>Explicit request for curriculum validation should trigger this agent.</commentary></example> <example>Context: User mentions concerns about alignment between objectives and assessments. user: "I'm not sure if my assessments actually test what the learning objectives promise" assistant: "Let me validate the backward design alignment using the quality-reviewer agent." <commentary>Questions about objective-assessment alignment indicate need for quality review.</commentary></example> <example>Context: User runs review command after curriculum updates. user: "/review-curriculum 021-2-201" assistant: "I'll perform a quality review of the 021-2-201 curriculum." <commentary>Direct command invocation should trigger quality validation process.</commentary></example>
+description: "Validates a course curriculum for backward-design alignment, Bloom's levels, assessment-objective fit, UDL/accessibility, and pedagogical soundness, and writes a quality report. Use proactively after curriculum-architect finishes, or when the user asks to review a curriculum or questions whether assessments match objectives."
 model: sonnet
 color: green
 tools: ["Read", "Write", "Skill", "Glob", "Bash"]
@@ -22,7 +22,7 @@ When validating a curriculum, follow this comprehensive process:
 
 ## 1. Curriculum Discovery and Loading
 
-Read `${CLAUDE_PLUGIN_ROOT}/commands/5-quality-and-review/review-curriculum.md` using the Read tool.
+Read `${CLAUDE_PLUGIN_ROOT}/workflow/5-quality-and-review/review-curriculum/SKILL.md` using the Read tool.
 Follow its curriculum discovery instructions to locate and load all curriculum files.
 
 The command provides the standard file patterns and directory structure to look for.
@@ -30,10 +30,10 @@ The command provides the standard file patterns and directory structure to look 
 **Load pedagogical reference materials:**
 
 Use the Skill tool to load:
-- `backward-design-methodology` skill (provides UbD framework guidance)
-- `blooms-taxonomy` skill (provides cognitive level guidance and verb lists)
-- `universal-design-for-learning` skill (provides UDL framework and accessibility validation guidance)
-- If course has `deliveryMode: virtual` or `deliveryMode: hybrid` in positioning frontmatter, also load `virtual-facilitation` skill
+- `course-curriculum-creator:backward-design-methodology` skill (provides UbD framework guidance)
+- `course-curriculum-creator:blooms-taxonomy` skill (provides cognitive level guidance and verb lists)
+- `course-curriculum-creator:universal-design-for-learning` skill (provides UDL framework and accessibility validation guidance)
+- If course has `deliveryMode: virtual` or `deliveryMode: hybrid` in positioning frontmatter, also load `course-curriculum-creator:virtual-facilitation` skill
 
 ## 2. Stage 1 Validation: Learning Outcomes
 

@@ -1,6 +1,7 @@
 ---
 name: backward-design-methodology
-description: This skill should be used when the user asks to "use backward design", "create curriculum using UbD", "design learning outcomes first", "start with desired results", "plan assessments before activities", "design assessments first", "create outcomes-based curriculum", or references Understanding by Design framework. Also applies when user mentions aligning outcomes with assessments or avoiding activity-first planning. Provides comprehensive guidance on applying backward design methodology to create effective curricula for 1-2 day intensive workshops.
+description: "Applies backward design (Understanding by Design) to 1-2 day workshops: define desired results first, then assessment evidence, then the learning plan, and validate alignment across all three stages."
+when_to_use: "Use when the user asks to \"use backward design\", \"create curriculum using UbD\", \"design learning outcomes first\", \"start with desired results\", \"plan assessments before activities\", \"design assessments first\", or \"create outcomes-based curriculum\", references the Understanding by Design framework, or mentions aligning outcomes with assessments or avoiding activity-first planning."
 ---
 
 # Backward Design Methodology
@@ -80,7 +81,7 @@ Each learning outcome must have corresponding assessment evidence. Use this vali
 - Outcome 2 (Evaluate solutions): Rank three PropTech tools using evaluation rubric in group activity
 - Outcome 3 (Create roadmaps): Develop 90-day implementation plan for selected PropTech solution
 
-Document assessments in `03-assessment/rubrics.md` with detailed evaluation criteria (see assessment design guidance in references/assessment-design.md).
+Document assessments in `03-assessment/rubrics.md` with detailed evaluation criteria (see assessment design guidance in `${CLAUDE_SKILL_DIR}/references/assessment-design.md`).
 
 ### Stage 3: Plan Learning Experiences and Instruction
 
@@ -185,22 +186,22 @@ Document detailed lesson plans in `02-design/lesson-plans.md` following this str
 
 When creating a course using this plugin, apply backward design systematically:
 
-**Step 1: Define outcomes** (`/generate-objectives`)
+**Step 1: Define outcomes** (`/course-curriculum-creator:generate-objectives`)
 - Use blooms-taxonomy skill to craft measurable objectives
 - Prioritize 3-8 outcomes based on workshop duration
 - Validate outcomes are achievable in timeframe
 
-**Step 2: Design assessments** (`/generate-rubrics`)
+**Step 2: Design assessments** (`/course-curriculum-creator:generate-rubrics`)
 - Create performance tasks aligned to each outcome
 - Develop evaluation criteria (1-5 scale analytical rubrics)
 - Ensure assessments are embedded in workshop activities
 
-**Step 3: Plan activities** (`/generate-lesson-plans`)
+**Step 3: Plan activities** (`/course-curriculum-creator:generate-lesson-plans`)
 - Design modules that prepare students for assessments
 - Structure activities using "I do, we do, you do" progression
 - Validate alignment: outcomes → assessments → activities
 
-**Step 4: Validate alignment** (`/review-curriculum` or quality-reviewer agent)
+**Step 4: Validate alignment** (`/course-curriculum-creator:review-curriculum` or quality-reviewer agent)
 - Check every outcome has corresponding assessment
 - Confirm activities support outcomes and assessments
 - Verify timing is realistic for intensive format
@@ -271,9 +272,13 @@ Use this checklist to validate backward design alignment:
 ### Reference Files
 
 For detailed guidance on specific aspects of backward design:
-- **`references/assessment-design.md`** - Comprehensive assessment planning strategies
+- **`${CLAUDE_SKILL_DIR}/references/assessment-design.md`** - Comprehensive assessment planning strategies
+- **`${CLAUDE_SKILL_DIR}/references/formative-assessment-techniques.md`** - In-session checks for understanding
+- **`${CLAUDE_SKILL_DIR}/references/content-curation.md`** - Selecting and sequencing content against outcomes
 
-_Additional reference files for activity patterns and timing guidelines are under development._
+### Example Files
+
+- **`${CLAUDE_SKILL_DIR}/examples/example-backward-design-1day.md`** - Complete three-stage design for a 1-day workshop
 
 ### Related Skills
 

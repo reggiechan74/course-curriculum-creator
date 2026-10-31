@@ -1,6 +1,7 @@
 ---
 name: universal-design-for-learning
-description: This skill should be used when the user asks to "design accessible curriculum", "apply UDL", "accommodate diverse learners", "create inclusive workshops", "ensure accessibility", or references Universal Design for Learning. Also applies when generating lesson plans, outlines, or activities to ensure multiple means of representation, engagement, and expression. Provides practical guidance for creating inclusive, accessible learning experiences in 1-2 day workshop contexts.
+description: "Applies Universal Design for Learning (multiple means of engagement, representation, and action/expression) and accessibility standards to workshop curricula, lesson plans, and activities."
+when_to_use: "Use when the user asks to \"design accessible curriculum\", \"apply UDL\", \"accommodate diverse learners\", \"create inclusive workshops\", or \"ensure accessibility\", references Universal Design for Learning, or when generating lesson plans, outlines, or activities that need inclusive design."
 ---
 
 # Universal Design for Learning (UDL) for Workshop Design
@@ -112,7 +113,7 @@ Many participants will not disclose needs. Design so that the most common accomm
 
 UDL is not a separate step; it integrates into every stage of curriculum creation. Below is how UDL applies to each command in this plugin.
 
-### During `/generate-outline`
+### During `/course-curriculum-creator:generate-outline`
 
 When generating the course outline, apply UDL by checking:
 - **Representation variety**: Does each module use at least 2 different content delivery modes? Flag any module that is lecture-only or text-only.
@@ -120,7 +121,7 @@ When generating the course outline, apply UDL by checking:
 - **Breaks and transitions**: Are breaks scheduled at least every 45-60 minutes? Is there transition time between modules for cognitive reset?
 - **Engagement scaffolding**: Does the outline progress from low-stakes to higher-stakes activities within each day? Are choice points identified?
 
-### During `/generate-lesson-plans`
+### During `/course-curriculum-creator:generate-lesson-plans`
 
 When generating detailed lesson plans for each module:
 - **Apply at least 2 UDL principles per module**: Each lesson plan should explicitly address representation (how content is presented) and at least one of engagement or expression.
@@ -128,7 +129,7 @@ When generating detailed lesson plans for each module:
 - **Facilitation notes for inclusion**: Include instructor guidance such as "read slide content aloud for participants who may not see the screen clearly" and "provide 30 seconds of think time before opening discussion."
 - **Multiple response formats**: For each activity, specify at least 2 acceptable ways participants can respond or demonstrate understanding.
 
-### During `/generate-artifacts --type handout`
+### During `/course-curriculum-creator:generate-artifacts --type handout`
 
 When generating handouts and participant materials:
 - **Readable formatting**: Use 12pt minimum font, sans-serif typeface, 1.15+ line spacing, adequate white space, left-aligned text (not justified).
@@ -136,14 +137,14 @@ When generating handouts and participant materials:
 - **Structured workspace**: Provide fillable fields, checkboxes, and guided prompts rather than blank space (blank space is overwhelming; structure enables participation).
 - **Reference sections**: Include glossaries, key concept summaries, and "what to do if stuck" guidance so participants can self-support.
 
-### During `/generate-rubrics`
+### During `/course-curriculum-creator:generate-rubrics`
 
 When generating assessment rubrics:
 - **Assess content, not format**: Rubric criteria should evaluate understanding and application, not presentation polish, grammar, or handwriting quality.
 - **Format-neutral criteria**: Use language like "demonstrates understanding of X through explanation, diagram, or example" rather than "writes a paragraph explaining X."
 - **"Demonstrates understanding through..." phrasing**: Frame criteria with this stem to signal that multiple expression modes are acceptable. Example: "Demonstrates understanding of the design tradeoffs through a comparison (written, verbal, or visual)."
 
-### During `/review-curriculum`
+### During `/course-curriculum-creator:review-curriculum`
 
 When reviewing curriculum for quality, add a UDL validation dimension:
 - **Representation coverage**: Does each module present key concepts in at least 2 modes? Flag modules with only one representation mode.
@@ -198,6 +199,12 @@ Use this checklist to validate UDL integration across the full curriculum before
 - [ ] Breaks are scheduled at least every 45-60 minutes
 - [ ] Buffer time (10-15% of schedule) is built into the workshop timeline for overruns and flexibility
 - [ ] Core pre-reading materials are sent to participants at least 48 hours before the workshop
+
+## Additional Resources
+
+- **`${CLAUDE_SKILL_DIR}/references/accessibility-specifications.md`** - Concrete accessibility specs for materials, slides, and venues
+- **`${CLAUDE_SKILL_DIR}/references/cultural-adaptation.md`** - Adapting activities and examples for cultural context
+- **`${CLAUDE_SKILL_DIR}/examples/example-udl-1day-workshop.md`** - UDL applied to a complete 1-day workshop
 
 ---
 

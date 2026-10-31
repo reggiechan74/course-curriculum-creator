@@ -61,7 +61,7 @@ When inserting formative assessment into a lesson plan, select based on:
 
 ## Integration with Lesson Plans
 
-When using this reference in `/generate-lesson-plans`:
+When using this reference in `/course-curriculum-creator:generate-lesson-plans`:
 - Insert at least one formative check per module (after instruction, before independent practice)
 - Name the specific technique (not just "check understanding")
 - Include the decision rule: "If <50% correct on the concept check, re-teach using [alternative explanation] before proceeding to guided practice"
