@@ -142,9 +142,13 @@ export async function reserveSpend(courseDir: string, m: Manifest, req: SpendReq
   });
 }
 
+/** The open reserve entry; throws if it is unknown or already settled or released. */
 function reservation(courseDir: string, reservationId: string): LedgerEntry {
-  const r = readLedger(courseDir).find((e) => e.kind === 'reserve' && e.reservationId === reservationId);
+  const entries = readLedger(courseDir).filter((e) => e.reservationId === reservationId);
+  const r = entries.find((e) => e.kind === 'reserve');
   if (!r) throw new ValidationError(`unknown ledger reservation ${reservationId}`);
+  const closed = entries.find((e) => e.kind === 'settle' || e.kind === 'release');
+  if (closed) throw new ValidationError(`ledger reservation ${reservationId} is already ${closed.kind === 'settle' ? 'settled' : 'released'}`);
   return r;
 }
 

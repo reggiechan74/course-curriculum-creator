@@ -1,9 +1,11 @@
 import { appendFileSync, existsSync, mkdirSync, mkdtempSync, utimesSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { expect, test } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { studioCommands } from '../src/cli.js';
+import { runCli } from '../src/cli/args.js';
 import { BudgetExceededError, ValidationError } from '../src/errors.js';
-import type { Manifest } from '../src/manifest/io.js';
+import { initManifest, type Manifest, saveManifest } from '../src/manifest/io.js';
 import {
   checkBudget, type LedgerEntry, ledgerTotals, readLedger, recordSpend, releaseSpend, reserveSpend, settleSpend,
 } from '../src/media/ledger.js';
@@ -114,4 +116,66 @@ test('reserveSpend waits for the ledger lock and removes a stale lock', async ()
   utimesSync(lock, old, old);
   await reserveSpend(d, m, base);
   expect(ledgerTotals(d).spentUsd).toBe(1);
+});
+
+describe('ledger reserve, settle and release CLI (third-party paid tools)', () => {
+  let logs: string[] = [];
+  beforeEach(() => {
+    logs = [];
+    vi.spyOn(process.stdout, 'write').mockImplementation((s: string | Uint8Array) => { logs.push(String(s)); return true; });
+  });
+  afterEach(() => vi.restoreAllMocks());
+  const last = () => JSON.parse(logs[logs.length - 1]);
+  const courseWith = (budgetUsd: number, maxPlanImages = 40) => {
+    const d = join(dir(), 'My Course');
+    mkdirSync(d, { recursive: true });
+    saveManifest(d, initManifest({ title: 'T', shape: 'workshop', delivery: 'virtual', sessions: [], audienceLevel: 'x', audienceSummary: 'y', budgetUsd, maxPlanImages }, '2026-10-31'));
+    return d;
+  };
+  const reserve = (d: string, usd: string, quota = '0') =>
+    runCli(['ledger', 'reserve', '--course', d, '--asset', 'A-M1-01', '--provider', 'mcp__x__generate_image', '--usd', usd, '--quota', quota], studioCommands);
+
+  test('reserve returns a reservation id and counts it; settle records the actual amount', async () => {
+    const d = courseWith(1);
+    expect(await reserve(d, '0.40')).toBe(0);
+    const { reservationId } = last();
+    expect(reservationId).toMatch(/^[0-9a-f-]{36}$/);
+    expect(ledgerTotals(d)).toEqual({ spentUsd: 0.4, quotaUsed: 0 });
+    expect(await runCli(['ledger', 'settle', '--course', d, '--reservation', reservationId, '--usd', '0.25'], studioCommands)).toBe(0);
+    expect(ledgerTotals(d)).toEqual({ spentUsd: 0.25, quotaUsed: 0 });
+    expect(readLedger(d).map((e) => [e.kind, e.provider, e.actualUsd])).toEqual([['reserve', 'mcp__x__generate_image', 0.4], ['settle', 'mcp__x__generate_image', 0.25]]);
+  });
+
+  test('settle without --usd uses the estimate; release counts nothing', async () => {
+    const d = courseWith(1);
+    await reserve(d, '0.40');
+    const a = last().reservationId;
+    expect(await runCli(['ledger', 'settle', '--course', d, '--reservation', a], studioCommands)).toBe(0);
+    await reserve(d, '0.30', '1');
+    const b = last().reservationId;
+    expect(ledgerTotals(d)).toEqual({ spentUsd: 0.7, quotaUsed: 1 });
+    expect(await runCli(['ledger', 'release', '--course', d, '--reservation', b], studioCommands)).toBe(0);
+    expect(ledgerTotals(d)).toEqual({ spentUsd: 0.4, quotaUsed: 0 });
+  });
+
+  test('reserve over the cap exits 3 and writes nothing', async () => {
+    const d = courseWith(0.5, 1);
+    expect(await reserve(d, '0.60')).toBe(3);
+    expect(last().error).toMatch(/Budget exceeded/);
+    expect(await reserve(d, '0', '2')).toBe(3);
+    expect(last().error).toMatch(/Plan image cap exceeded/);
+    expect(readLedger(d)).toEqual([]);
+  });
+
+  test('unknown or already closed reservations are refused with exit 2; bad numbers exit 1', async () => {
+    const d = courseWith(1);
+    expect(await runCli(['ledger', 'settle', '--course', d, '--reservation', 'nope'], studioCommands)).toBe(2);
+    await reserve(d, '0.10');
+    const id = last().reservationId;
+    expect(await runCli(['ledger', 'release', '--course', d, '--reservation', id], studioCommands)).toBe(0);
+    expect(await runCli(['ledger', 'settle', '--course', d, '--reservation', id], studioCommands)).toBe(2);
+    expect(await runCli(['ledger', 'release', '--course', d, '--reservation', id], studioCommands)).toBe(2);
+    expect(await reserve(d, 'abc')).toBe(1);
+    expect(await runCli(['ledger', 'reserve', '--course', d, '--usd', '0.1', '--quota', '0'], studioCommands)).toBe(1);
+  });
 });

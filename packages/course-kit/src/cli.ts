@@ -7,7 +7,7 @@ import { type CommandTable, type ParsedArgs, requireFlag, requirePositional, run
 import { UsageError, ValidationError } from './errors.js';
 import { loadManifest } from './manifest/io.js';
 import { embedAll, embedOne } from './media/embed.js';
-import { checkBudget, ledgerTotals } from './media/ledger.js';
+import { checkBudget, ledgerTotals, releaseSpend, reserveSpend, settleSpend } from './media/ledger.js';
 import { probeCodex } from './providers/codex.js';
 import { generateAssetImage, IMAGE_PROVIDERS, IMAGE_QUALITIES, type ImageProvider } from './providers/generate.js';
 import type { ImageQuality } from './providers/openai.js';
@@ -85,6 +85,26 @@ export const studioCommands: CommandTable = {
     const request = { usd: num(a, 'usd'), quota: num(a, 'quota') };
     checkBudget(loadManifest(course), ledgerTotals(course), request);
     return { ok: true };
+  },
+  // Third-party paid tools (not gen image / generate_image, which reserve themselves): reserve before the call,
+  // then settle with the actual cost, or release only when the tool certainly did not bill.
+  'ledger reserve': async (a) => {
+    const course = requireFlag(a, 'course');
+    const req = {
+      assetId: requireFlag(a, 'asset'), provider: requireFlag(a, 'provider'), estimateUsd: num(a, 'usd'), quotaUnits: num(a, 'quota'),
+    };
+    return { reservationId: await reserveSpend(course, loadManifest(course), req) };
+  },
+  'ledger settle': (a) => {
+    const course = requireFlag(a, 'course');
+    const actualUsd = optNum(a, 'usd');
+    settleSpend(course, requireFlag(a, 'reservation'), actualUsd === undefined ? {} : { actualUsd });
+    return { ok: true, ...ledgerTotals(course) };
+  },
+  'ledger release': (a) => {
+    const course = requireFlag(a, 'course');
+    releaseSpend(course, requireFlag(a, 'reservation'));
+    return { ok: true, ...ledgerTotals(course) };
   },
   'gen image': async (a) => {
     const course = requireFlag(a, 'course');

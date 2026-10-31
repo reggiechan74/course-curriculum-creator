@@ -44401,8 +44401,11 @@ async function reserveSpend(courseDir, m, req) {
   });
 }
 function reservation(courseDir, reservationId) {
-  const r = readLedger(courseDir).find((e) => e.kind === "reserve" && e.reservationId === reservationId);
+  const entries = readLedger(courseDir).filter((e) => e.reservationId === reservationId);
+  const r = entries.find((e) => e.kind === "reserve");
   if (!r) throw new ValidationError(`unknown ledger reservation ${reservationId}`);
+  const closed = entries.find((e) => e.kind === "settle" || e.kind === "release");
+  if (closed) throw new ValidationError(`ledger reservation ${reservationId} is already ${closed.kind === "settle" ? "settled" : "released"}`);
   return r;
 }
 function settleSpend(courseDir, reservationId, o = {}) {

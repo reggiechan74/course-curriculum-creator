@@ -29041,8 +29041,11 @@ async function reserveSpend(courseDir, m3, req) {
   });
 }
 function reservation(courseDir, reservationId) {
-  const r = readLedger(courseDir).find((e) => e.kind === "reserve" && e.reservationId === reservationId);
+  const entries2 = readLedger(courseDir).filter((e) => e.reservationId === reservationId);
+  const r = entries2.find((e) => e.kind === "reserve");
   if (!r) throw new ValidationError(`unknown ledger reservation ${reservationId}`);
+  const closed = entries2.find((e) => e.kind === "settle" || e.kind === "release");
+  if (closed) throw new ValidationError(`ledger reservation ${reservationId} is already ${closed.kind === "settle" ? "settled" : "released"}`);
   return r;
 }
 function settleSpend(courseDir, reservationId, o = {}) {
@@ -82185,6 +82188,29 @@ var studioCommands = {
     const request2 = { usd: num(a3, "usd"), quota: num(a3, "quota") };
     checkBudget(loadManifest(course), ledgerTotals(course), request2);
     return { ok: true };
+  },
+  // Third-party paid tools (not gen image / generate_image, which reserve themselves): reserve before the call,
+  // then settle with the actual cost, or release only when the tool certainly did not bill.
+  "ledger reserve": async (a3) => {
+    const course = requireFlag(a3, "course");
+    const req = {
+      assetId: requireFlag(a3, "asset"),
+      provider: requireFlag(a3, "provider"),
+      estimateUsd: num(a3, "usd"),
+      quotaUnits: num(a3, "quota")
+    };
+    return { reservationId: await reserveSpend(course, loadManifest(course), req) };
+  },
+  "ledger settle": (a3) => {
+    const course = requireFlag(a3, "course");
+    const actualUsd = optNum(a3, "usd");
+    settleSpend(course, requireFlag(a3, "reservation"), actualUsd === void 0 ? {} : { actualUsd });
+    return { ok: true, ...ledgerTotals(course) };
+  },
+  "ledger release": (a3) => {
+    const course = requireFlag(a3, "course");
+    releaseSpend(course, requireFlag(a3, "reservation"));
+    return { ok: true, ...ledgerTotals(course) };
   },
   "gen image": async (a3) => {
     const course = requireFlag(a3, "course");

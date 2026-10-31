@@ -45,6 +45,9 @@ Ledger and generation:
 
 - `ledger totals --course "<dir>"`: spend and plan-image count so far.
 - `ledger check --course "<dir>" --usd <n> --quota <n>`: exit 3 if the request would pass `media.budgetUsd` or `media.maxPlanImages`.
+- `ledger reserve --course "<dir>" --asset <id> --provider <tool name> --usd <n> --quota <n>`: check the budget and reserve the estimate in one locked step; prints `{reservationId}`; exit 3 if it would pass a cap (nothing is written). Use it before calling a third-party paid image tool. `gen image` and `generate_image` reserve by themselves.
+- `ledger settle --course "<dir>" --reservation <id> [--usd <actual>]`: record the spend of a reservation (default: the reserved estimate).
+- `ledger release --course "<dir>" --reservation <id>`: cancel a reservation; only when the tool certainly did not bill (it refused before running, or was never called). A reservation can be settled or released once; again is exit 2.
 - `gen image --course "<dir>" --asset <id> --provider codex|openai --quality draft|standard|high [--data-dir "<dir>"]`: generate one raster image from the registered prompt.
 
 Rendering:

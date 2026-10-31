@@ -56,9 +56,13 @@ Choose the provider in this order, using `.course/providers.json`:
 
 1. `codex`, when `codex.billing` is `plan` (signed in with ChatGPT; an API-key sign-in is refused with exit 4): `KIT gen image --course "<dir>" --asset <id> --provider codex --quality <image_quality>`.
 2. The `course-media` MCP tool `generate_image({courseDir, assetId, quality})` (OpenAI key from the plugin settings), when Codex is not available or gave exit 4. Use `estimate_cost` first if the user wants the price.
-3. A detected third-party image tool, as the last choice. Run `KIT ledger check --course "<dir>" --usd <n> --quota <n>` before you use it, then register the result with `registry add` (`kind: image`, `status: generated`, `alt: ""`).
+3. A detected third-party image tool, as the last choice. Find its price per image (its documentation or tool description; if you cannot, ask the user). If it costs money, follow "Paid fallback" first (show the cost and ask). Then:
+   1. `KIT ledger reserve --course "<dir>" --asset <id> --provider <tool name> --usd <price> --quota 0` (use `--usd 0 --quota 1` for a tool billed against a plan image allowance). Keep the `reservationId`. Exit 3: see "Image exit codes".
+   2. Call the tool. Save the image to `<dir>/05-media/out/<id>.png` and the prompt you sent to `<dir>/05-media/src/<id>.prompt.txt`.
+   3. If the tool returned an image (or failed after it may have billed): `KIT ledger settle --course "<dir>" --reservation <reservationId> [--usd <actual cost, when the tool reports it>]`. Only if the tool refused before doing anything: `KIT ledger release --course "<dir>" --reservation <reservationId>`.
+   4. Register the result with `registry add` (`kind: image`, `provider: <tool name>`, `source: "05-media/src/<id>.prompt.txt"`, `files: ["05-media/out/<id>.png"]`, `status: generated`, `alt: ""`, `costUsd` and `quotaUnits` as settled).
 
-Never call an image API directly with `curl` or a script. All generation goes through `gen image` or the MCP tool, because only they reserve budget in the ledger. If no provider operates, keep the placeholder, tell the user which provider each missing image needs. The embed step shows the placeholder until an asset is approved.
+Never call an image API directly with `curl` or a script. All generation goes through `gen image`, the MCP tool, or a third-party tool wrapped in `ledger reserve` and `ledger settle`, so every spend is in the ledger. If no provider operates, keep the placeholder, tell the user which provider each missing image needs. The embed step shows the placeholder until an asset is approved.
 
 If an image needs labels, run `KIT render overlay "<dir>/<image>" "<dir>/<labels.json>" "<dir>/<out.svg>"` and register the overlay file in the asset `files` after the image.
 
