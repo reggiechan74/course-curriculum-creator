@@ -1,6 +1,7 @@
-import { readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { Tokens } from './brand/tokens.js';
+import { checkTokens, deriveTokens, loadBrand, type Tokens } from './brand/tokens.js';
 import { coreCommands } from './commands-core.js';
 import { type CommandTable, type ParsedArgs, requireFlag, requirePositional, runCli } from './cli/args.js';
 import { UsageError, ValidationError } from './errors.js';
@@ -105,6 +106,27 @@ export const studioCommands: CommandTable = {
     return { ok: true };
   },
   'providers show': (a) => loadProviders(requireFlag(a, 'course')) ?? { detected: null },
+  'brand validate': (a) => ({ brand: loadBrand(requirePositional(a, 0, 'file')) }),
+  'style tokens': (a) => {
+    const course = requireFlag(a, 'course');
+    let brandPath: string | undefined;
+    if (typeof a.flags.brand === 'string') brandPath = resolve(a.flags.brand);
+    else {
+      const rel = loadManifest(course).brand;
+      const theme = join(course, '05-media', 'style', 'theme.yaml');
+      if (rel) brandPath = resolve(course, rel);
+      else if (existsSync(theme)) brandPath = theme;
+    }
+    if (!brandPath) throw new UsageError('no brand file: pass --brand, set brand in course.yaml, or create 05-media/style/theme.yaml');
+    const tokens = deriveTokens(loadBrand(brandPath));
+    const issues = checkTokens(tokens);
+    const errors = issues.filter((i) => i.level === 'error');
+    if (errors.length) throw new ValidationError(`brand tokens fail contrast checks: ${errors.map((i) => `${i.path}: ${i.message}`).join('; ')}`);
+    const dir = join(course, '05-media', 'style');
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, 'tokens.json'), JSON.stringify(tokens, null, 2) + '\n');
+    return { tokens, issues };
+  },
   'providers patterns': () => providerPatterns(),
 };
 

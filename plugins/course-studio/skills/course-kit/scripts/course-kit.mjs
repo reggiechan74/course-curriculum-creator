@@ -7272,7 +7272,7 @@ var require_public_api = __commonJS({
       }
       return doc;
     }
-    function parse13(src, reviver, options) {
+    function parse14(src, reviver, options) {
       let _reviver = void 0;
       if (typeof reviver === "function") {
         _reviver = reviver;
@@ -7313,7 +7313,7 @@ var require_public_api = __commonJS({
         return value3.toString(options);
       return new Document.Document(value3, _replacer, options).toString(options);
     }
-    exports.parse = parse13;
+    exports.parse = parse14;
     exports.parseAllDocuments = parseAllDocuments;
     exports.parseDocument = parseDocument;
     exports.stringify = stringify5;
@@ -7832,12 +7832,13 @@ var require_topojson_client = __commonJS({
 });
 
 // packages/course-kit/src/cli.ts
-import { readFileSync as readFileSync13, realpathSync as realpathSync2, writeFileSync as writeFileSync12 } from "node:fs";
+import { existsSync as existsSync14, mkdirSync as mkdirSync10, readFileSync as readFileSync14, realpathSync as realpathSync2, writeFileSync as writeFileSync12 } from "node:fs";
+import { join as join16, resolve as resolve5 } from "node:path";
 import { fileURLToPath } from "node:url";
 
-// packages/course-kit/src/commands-core.ts
-import { existsSync as existsSync6, mkdirSync as mkdirSync3 } from "node:fs";
-import { join as join6 } from "node:path";
+// packages/course-kit/src/brand/tokens.ts
+var import_yaml = __toESM(require_dist(), 1);
+import { readFileSync } from "node:fs";
 
 // packages/course-kit/src/errors.ts
 var KitError = class extends Error {
@@ -7868,158 +7869,6 @@ var ProviderUnavailableError = class extends KitError {
     super(message, 4);
   }
 };
-
-// packages/course-kit/src/cli/args.ts
-function parseArgs(argv) {
-  const positionals = [];
-  const flags = {};
-  for (let i = 0; i < argv.length; i++) {
-    const a3 = argv[i];
-    if (!a3.startsWith("--")) {
-      positionals.push(a3);
-      continue;
-    }
-    const eq = a3.indexOf("=");
-    if (eq > 0) {
-      flags[a3.slice(2, eq)] = a3.slice(eq + 1);
-      continue;
-    }
-    const next = argv[i + 1];
-    if (next !== void 0 && !next.startsWith("--")) {
-      flags[a3.slice(2)] = next;
-      i++;
-    } else flags[a3.slice(2)] = true;
-  }
-  return { positionals, flags };
-}
-function requirePositional(args, index3, name) {
-  const v2 = args.positionals[index3];
-  if (v2 === void 0) throw new UsageError(`missing argument: <${name}>`);
-  return v2;
-}
-function requireFlag(args, name) {
-  const v2 = args.flags[name];
-  if (typeof v2 !== "string") throw new UsageError(`missing flag: --${name} <value>`);
-  return v2;
-}
-function print(value3) {
-  process.stdout.write(JSON.stringify(value3) + "\n");
-}
-async function runCli(argv, commands) {
-  try {
-    const args = parseArgs(argv);
-    for (let n = args.positionals.length; n > 0; n--) {
-      const handler = commands[args.positionals.slice(0, n).join(" ")];
-      if (handler) {
-        const result = await handler({ positionals: args.positionals.slice(n), flags: args.flags });
-        print(result ?? {});
-        return 0;
-      }
-    }
-    throw new UsageError(
-      args.positionals.length ? `unknown command: ${args.positionals.join(" ")}` : "no command given"
-    );
-  } catch (e) {
-    if (e instanceof KitError) {
-      print({ error: e.message });
-      return e.exitCode;
-    }
-    print({ error: e instanceof Error ? e.message : String(e) });
-    return 1;
-  }
-}
-
-// packages/course-kit/src/hash.ts
-var import_yaml2 = __toESM(require_dist(), 1);
-import { createHash } from "node:crypto";
-import { existsSync, readFileSync as readFileSync2 } from "node:fs";
-import { resolve } from "node:path";
-
-// packages/course-kit/src/frontmatter.ts
-var import_yaml = __toESM(require_dist(), 1);
-import { readFileSync, writeFileSync } from "node:fs";
-var FM = /^(---[ \t]*\r?\n)((?:[\s\S]*?\r?\n)?)(---[ \t]*(?:\r?\n|$))([\s\S]*)$/;
-function split(text3) {
-  const m3 = FM.exec(text3);
-  return m3 ? { open: m3[1], fm: m3[2], close: m3[3], body: m3[4] } : null;
-}
-function readFrontmatter(path3, opts = {}) {
-  const text3 = readFileSync(path3, "utf8");
-  const parts = split(text3);
-  if (!parts) return { data: {}, body: text3 };
-  let data3;
-  try {
-    data3 = (0, import_yaml.parse)(parts.fm, opts.strings ? { schema: "failsafe" } : void 0);
-  } catch (e) {
-    throw new ValidationError(`invalid frontmatter in ${path3}: ${e.message}`);
-  }
-  return {
-    data: data3 && typeof data3 === "object" && !Array.isArray(data3) ? data3 : {},
-    body: parts.body
-  };
-}
-var isTopLevelKey = (l) => /^[^\s#-]/.test(l) || /^-[^\s]/.test(l);
-var isLooseLine = (l) => l.trim() === "" || l.startsWith("#");
-function findBlock(lines, key2) {
-  const heads = [`${key2}:`, `"${key2}":`, `'${key2}':`];
-  const start = lines.findIndex((l) => heads.some((h2) => l.startsWith(h2)));
-  if (start < 0) return null;
-  let end = start + 1;
-  while (end < lines.length && !isTopLevelKey(lines[end])) end++;
-  while (end > start + 1 && isLooseLine(lines[end - 1])) end--;
-  return [start, end];
-}
-function updateFrontmatter(path3, patch2) {
-  const text3 = readFileSync(path3, "utf8");
-  const parts = split(text3) ?? { open: "---\n", fm: "", close: "---\n", body: text3 };
-  const eol = parts.open.endsWith("\r\n") ? "\r\n" : "\n";
-  const lines = parts.fm.match(/[^\n]*\n/g) ?? [];
-  for (const [k, v2] of Object.entries(patch2)) {
-    const block = (0, import_yaml.stringify)({ [k]: v2 }).replace(/\n$/, "").split("\n").map((l) => l + eol);
-    const range6 = findBlock(lines, k);
-    if (range6) lines.splice(range6[0], range6[1] - range6[0], ...block);
-    else lines.push(...block);
-  }
-  writeFileSync(path3, parts.open + lines.join("") + parts.close + parts.body);
-}
-
-// packages/course-kit/src/hash.ts
-function hashFile(path3) {
-  return createHash("md5").update(readFileSync2(path3)).digest("hex").slice(0, 8);
-}
-function sourceFilesOf(data3) {
-  const sf = data3.sourceFiles;
-  return sf && typeof sf === "object" ? sf : {};
-}
-function currentHash(courseDir, rel) {
-  const p = resolve(courseDir, rel);
-  return existsSync(p) ? hashFile(p) : void 0;
-}
-function checkStale(outputPath, courseDir) {
-  if (!existsSync(outputPath)) return { status: "missing-output", changed: [] };
-  const { data: data3 } = readFrontmatter(outputPath, { strings: true });
-  const stored = data3.sourceHashes && typeof data3.sourceHashes === "object" ? data3.sourceHashes : {};
-  const changed = Object.entries(sourceFilesOf(data3)).filter(([key2, rel]) => currentHash(courseDir, rel) !== stored[key2]).map(([key2]) => key2);
-  return { status: changed.length ? "stale" : "fresh", changed };
-}
-function writeHashes(outputPath, courseDir) {
-  const { data: data3 } = readFrontmatter(outputPath, { strings: true });
-  const hashes = {};
-  for (const [key2, rel] of Object.entries(sourceFilesOf(data3))) {
-    const h2 = currentHash(courseDir, rel);
-    if (h2) {
-      const node2 = new import_yaml2.Scalar(h2);
-      node2.type = "QUOTE_DOUBLE";
-      hashes[key2] = node2;
-    }
-  }
-  updateFrontmatter(outputPath, { sourceHashes: hashes });
-}
-
-// packages/course-kit/src/manifest/io.ts
-var import_yaml3 = __toESM(require_dist(), 1);
-import { readFileSync as readFileSync3, writeFileSync as writeFileSync2 } from "node:fs";
-import { join } from "node:path";
 
 // node_modules/zod/v4/classic/external.js
 var external_exports = {};
@@ -8219,7 +8068,7 @@ __export(external_exports, {
   optional: () => optional,
   output: () => output,
   overwrite: () => _overwrite,
-  parse: () => parse3,
+  parse: () => parse2,
   parseAsync: () => parseAsync2,
   partialRecord: () => partialRecord,
   pipe: () => pipe,
@@ -8571,7 +8420,7 @@ __export(core_exports2, {
   memoizer: () => memoizer,
   mergeValues: () => mergeValues,
   meta: () => meta,
-  parse: () => parse2,
+  parse: () => parse,
   parseAsync: () => parseAsync,
   parseURLObject: () => parseURLObject,
   prettifyError: () => prettifyError,
@@ -9791,7 +9640,7 @@ var _parse = (_Err) => {
   };
   return fn;
 };
-var parse2 = /* @__PURE__ */ _parse($ZodRealError);
+var parse = /* @__PURE__ */ _parse($ZodRealError);
 var _parseAsync = (_Err) => {
   const fn = async (schema, value3, _ctx, params2) => {
     const ctx = _ctx ? { ..._ctx, async: true } : { async: true };
@@ -9879,18 +9728,18 @@ var validateAsync = async (schema, value3, _ctx) => {
   return result.issues.length === 0;
 };
 var _encode = (_Err) => {
-  const parse13 = _parse(_Err);
+  const parse14 = _parse(_Err);
   const fn = (schema, value3, _ctx, _params) => {
     const ctx = _ctx ? { ..._ctx, direction: "backward" } : { direction: "backward" };
-    return parse13(schema, value3, ctx, finalizeParams(fn, _params));
+    return parse14(schema, value3, ctx, finalizeParams(fn, _params));
   };
   return fn;
 };
 var encode = /* @__PURE__ */ _encode($ZodRealError);
 var _decode = (_Err) => {
-  const parse13 = _parse(_Err);
+  const parse14 = _parse(_Err);
   const fn = (schema, value3, _ctx, _params) => {
-    return parse13(schema, value3, _ctx, finalizeParams(fn, _params));
+    return parse14(schema, value3, _ctx, finalizeParams(fn, _params));
   };
   return fn;
 };
@@ -11385,7 +11234,7 @@ function capSize(inst, size) {
   if (!caps.length)
     return;
   const cap = Math.min(...caps.map((c3) => c3[0]));
-  const parse13 = inst._zod.parse;
+  const parse14 = inst._zod.parse;
   inst._zod.parse = (payload, ctx) => {
     const n = size(payload.value);
     if (n > cap && !ctx?.skipChecks && ctx?.direction !== "backward") {
@@ -11399,7 +11248,7 @@ function capSize(inst, size) {
         }
       }
     }
-    return parse13(payload, ctx);
+    return parse14(payload, ctx);
   };
 }
 var arraySize = (input2) => Array.isArray(input2) ? input2.length : -1;
@@ -12944,10 +12793,10 @@ var $ZodFunction = /* @__PURE__ */ $constructor("$ZodFunction", (inst, def2) => 
       throw new Error("implement() must be called with a function");
     }
     return Object.defineProperty(function(...args) {
-      const parsedArgs = inst._def.input ? parse2(inst._def.input, args) : args;
+      const parsedArgs = inst._def.input ? parse(inst._def.input, args) : args;
       const result = Reflect.apply(func, this, parsedArgs);
       if (inst._def.output) {
-        return parse2(inst._def.output, result);
+        return parse(inst._def.output, result);
       }
       return result;
     }, "_zod", { value: inst._zod, enumerable: false });
@@ -13088,7 +12937,7 @@ var recursive = /* @__PURE__ */ new WeakMap();
 var NONE = 0;
 var ASSUMED = 1;
 var PROVEN = 2;
-function isRecursive(inst, stack2, resolve5) {
+function isRecursive(inst, stack2, resolve6) {
   const cached2 = recursive.get(inst);
   if (cached2 !== void 0)
     return cached2 ? PROVEN : NONE;
@@ -13098,7 +12947,7 @@ function isRecursive(inst, stack2, resolve5) {
   let result = NONE;
   const check2 = (child) => {
     if (result !== PROVEN && child?._zod) {
-      const answer = isRecursive(child, stack2, resolve5);
+      const answer = isRecursive(child, stack2, resolve6);
       if (answer > result)
         result = answer;
     }
@@ -13109,7 +12958,7 @@ function isRecursive(inst, stack2, resolve5) {
       const desc = Object.getOwnPropertyDescriptor(sh, key2);
       if (spread && !desc.enumerable)
         continue;
-      const child = desc.get ? ASSUMED : desc.value?._zod ? isRecursive(desc.value, stack2, resolve5) : NONE;
+      const child = desc.get ? ASSUMED : desc.value?._zod ? isRecursive(desc.value, stack2, resolve6) : NONE;
       if (child > answer)
         answer = child;
     }
@@ -13173,7 +13022,7 @@ function isRecursive(inst, stack2, resolve5) {
       break;
     // `$ZodLazy` caches its inner on the def, so a resolved edge is followed exactly
     case "lazy": {
-      const inner = def2._cachedInner ?? (resolve5 ? inst._zod.innerType : void 0);
+      const inner = def2._cachedInner ?? (resolve6 ? inst._zod.innerType : void 0);
       merge6(inner ? isRecursive(inner, stack2, false) : ASSUMED);
       break;
     }
@@ -25254,7 +25103,7 @@ var ZodRealError = /* @__PURE__ */ $constructor("ZodError", initializer2, void 0
 });
 
 // node_modules/zod/v4/classic/parse.js
-var parse3 = /* @__PURE__ */ _parse(ZodRealError);
+var parse2 = /* @__PURE__ */ _parse(ZodRealError);
 var parseAsync2 = /* @__PURE__ */ _parseAsync(ZodRealError);
 var safeParse2 = /* @__PURE__ */ _safeParse(ZodRealError);
 var safeParseAsync2 = /* @__PURE__ */ _safeParseAsync(ZodRealError);
@@ -25391,7 +25240,7 @@ var ZodType = /* @__PURE__ */ $constructor("ZodType", (inst, def2) => {
     util_exports.own(this, "~standard", value3);
   },
   parse: function _parse2(data3, params2) {
-    return parse3(this, data3, params2, { callee: _parse2 });
+    return parse2(this, data3, params2, { callee: _parse2 });
   },
   parseAsync: async function _parseAsync2(data3, params2) {
     return await parseAsync2(this, data3, params2, { callee: _parseAsync2 });
@@ -27738,6 +27587,262 @@ function date4(params2) {
   return _coercedDate(ZodDate, params2);
 }
 
+// packages/course-kit/src/brand/schema.ts
+var HEX = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
+var HexColorSchema = external_exports.string().regex(HEX, "must be a hex color like #1a2b3c or #abc").transform((s) => {
+  const h2 = s.slice(1).toLowerCase();
+  return "#" + (h2.length === 3 ? [...h2].map((c3) => c3 + c3).join("") : h2);
+});
+var BrandSchema = external_exports.object({
+  name: external_exports.string().min(1),
+  logos: external_exports.object({ light: external_exports.string().optional(), dark: external_exports.string().optional() }).optional(),
+  colors: external_exports.object({
+    primary: HexColorSchema,
+    secondary: HexColorSchema.optional(),
+    neutral: external_exports.array(HexColorSchema).optional(),
+    semantic: external_exports.object({
+      success: HexColorSchema.optional(),
+      warning: HexColorSchema.optional(),
+      error: HexColorSchema.optional(),
+      info: HexColorSchema.optional()
+    }).optional()
+  }),
+  fonts: external_exports.object({ heading: external_exports.string().min(1), body: external_exports.string().min(1), mono: external_exports.string().optional() }),
+  voice: external_exports.string().optional(),
+  imagery: external_exports.object({
+    style: external_exports.enum(["illustration", "photo", "mixed"]),
+    do: external_exports.array(external_exports.string()).optional(),
+    dont: external_exports.array(external_exports.string()).optional()
+  }).optional()
+});
+
+// packages/course-kit/src/brand/tokens.ts
+function loadBrand(path3) {
+  let raw;
+  try {
+    raw = (0, import_yaml.parse)(readFileSync(path3, "utf8"));
+  } catch (e) {
+    throw new ValidationError(`cannot read brand file ${path3}: ${e instanceof Error ? e.message : String(e)}`);
+  }
+  const r = BrandSchema.safeParse(raw);
+  if (!r.success) {
+    const msg = r.error.issues.map((i) => `${i.path.join(".") || "(root)"}: ${i.message}`).join("; ");
+    throw new ValidationError(`invalid brand file ${path3}: ${msg}`);
+  }
+  return r.data;
+}
+function luminance(hex4) {
+  const h2 = hex4.replace("#", "");
+  const full = h2.length === 3 ? [...h2].map((c3) => c3 + c3).join("") : h2;
+  const [r, g, b10] = [0, 2, 4].map((i) => {
+    const c3 = parseInt(full.slice(i, i + 2), 16) / 255;
+    return c3 <= 0.04045 ? c3 / 12.92 : ((c3 + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b10;
+}
+function contrastRatio(a3, b10) {
+  const la = luminance(a3);
+  const lb = luminance(b10);
+  return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+}
+var WHITE = "#ffffff";
+var NEAR_BLACK = "#1a1a1a";
+function deriveTokens(b10) {
+  const neutral = b10.colors.neutral ?? [];
+  const bg = WHITE;
+  const darkest = neutral.length ? neutral.reduce((m3, c3) => luminance(c3) < luminance(m3) ? c3 : m3) : NEAR_BLACK;
+  const primary = b10.colors.primary;
+  const primaryFg = contrastRatio(WHITE, primary) >= contrastRatio(NEAR_BLACK, primary) ? WHITE : NEAR_BLACK;
+  return {
+    color: {
+      bg,
+      fg: darkest,
+      primary,
+      primaryFg,
+      accent: b10.colors.secondary ?? primary,
+      muted: neutral.find((c3) => contrastRatio(c3, bg) >= 3) ?? "#6b6b6b"
+    },
+    font: { heading: b10.fonts.heading, body: b10.fonts.body, mono: b10.fonts.mono ?? "ui-monospace, monospace" },
+    space: [4, 8, 12, 16, 24, 32, 48],
+    radius: 6
+  };
+}
+function checkTokens(t) {
+  const checks = [
+    ["color.fg", t.color.fg, t.color.bg, 4.5, "text on background"],
+    ["color.primaryFg", t.color.primaryFg, t.color.primary, 4.5, "text on primary"],
+    ["color.accent", t.color.accent, t.color.bg, 3, "accent on background"]
+  ];
+  const out = [];
+  for (const [path3, a3, b10, min4, what] of checks) {
+    const ratio = contrastRatio(a3, b10);
+    if (ratio < min4) {
+      out.push({
+        level: "error",
+        path: path3,
+        message: `${what} contrast ${ratio.toFixed(2)}:1 is below the required minimum ${min4}:1 (${a3} on ${b10})`
+      });
+    }
+  }
+  return out;
+}
+
+// packages/course-kit/src/commands-core.ts
+import { existsSync as existsSync6, mkdirSync as mkdirSync3 } from "node:fs";
+import { join as join6 } from "node:path";
+
+// packages/course-kit/src/cli/args.ts
+function parseArgs(argv) {
+  const positionals = [];
+  const flags = {};
+  for (let i = 0; i < argv.length; i++) {
+    const a3 = argv[i];
+    if (!a3.startsWith("--")) {
+      positionals.push(a3);
+      continue;
+    }
+    const eq = a3.indexOf("=");
+    if (eq > 0) {
+      flags[a3.slice(2, eq)] = a3.slice(eq + 1);
+      continue;
+    }
+    const next = argv[i + 1];
+    if (next !== void 0 && !next.startsWith("--")) {
+      flags[a3.slice(2)] = next;
+      i++;
+    } else flags[a3.slice(2)] = true;
+  }
+  return { positionals, flags };
+}
+function requirePositional(args, index3, name) {
+  const v2 = args.positionals[index3];
+  if (v2 === void 0) throw new UsageError(`missing argument: <${name}>`);
+  return v2;
+}
+function requireFlag(args, name) {
+  const v2 = args.flags[name];
+  if (typeof v2 !== "string") throw new UsageError(`missing flag: --${name} <value>`);
+  return v2;
+}
+function print(value3) {
+  process.stdout.write(JSON.stringify(value3) + "\n");
+}
+async function runCli(argv, commands) {
+  try {
+    const args = parseArgs(argv);
+    for (let n = args.positionals.length; n > 0; n--) {
+      const handler = commands[args.positionals.slice(0, n).join(" ")];
+      if (handler) {
+        const result = await handler({ positionals: args.positionals.slice(n), flags: args.flags });
+        print(result ?? {});
+        return 0;
+      }
+    }
+    throw new UsageError(
+      args.positionals.length ? `unknown command: ${args.positionals.join(" ")}` : "no command given"
+    );
+  } catch (e) {
+    if (e instanceof KitError) {
+      print({ error: e.message });
+      return e.exitCode;
+    }
+    print({ error: e instanceof Error ? e.message : String(e) });
+    return 1;
+  }
+}
+
+// packages/course-kit/src/hash.ts
+var import_yaml3 = __toESM(require_dist(), 1);
+import { createHash } from "node:crypto";
+import { existsSync, readFileSync as readFileSync3 } from "node:fs";
+import { resolve } from "node:path";
+
+// packages/course-kit/src/frontmatter.ts
+var import_yaml2 = __toESM(require_dist(), 1);
+import { readFileSync as readFileSync2, writeFileSync } from "node:fs";
+var FM = /^(---[ \t]*\r?\n)((?:[\s\S]*?\r?\n)?)(---[ \t]*(?:\r?\n|$))([\s\S]*)$/;
+function split(text3) {
+  const m3 = FM.exec(text3);
+  return m3 ? { open: m3[1], fm: m3[2], close: m3[3], body: m3[4] } : null;
+}
+function readFrontmatter(path3, opts = {}) {
+  const text3 = readFileSync2(path3, "utf8");
+  const parts = split(text3);
+  if (!parts) return { data: {}, body: text3 };
+  let data3;
+  try {
+    data3 = (0, import_yaml2.parse)(parts.fm, opts.strings ? { schema: "failsafe" } : void 0);
+  } catch (e) {
+    throw new ValidationError(`invalid frontmatter in ${path3}: ${e.message}`);
+  }
+  return {
+    data: data3 && typeof data3 === "object" && !Array.isArray(data3) ? data3 : {},
+    body: parts.body
+  };
+}
+var isTopLevelKey = (l) => /^[^\s#-]/.test(l) || /^-[^\s]/.test(l);
+var isLooseLine = (l) => l.trim() === "" || l.startsWith("#");
+function findBlock(lines, key2) {
+  const heads = [`${key2}:`, `"${key2}":`, `'${key2}':`];
+  const start = lines.findIndex((l) => heads.some((h2) => l.startsWith(h2)));
+  if (start < 0) return null;
+  let end = start + 1;
+  while (end < lines.length && !isTopLevelKey(lines[end])) end++;
+  while (end > start + 1 && isLooseLine(lines[end - 1])) end--;
+  return [start, end];
+}
+function updateFrontmatter(path3, patch2) {
+  const text3 = readFileSync2(path3, "utf8");
+  const parts = split(text3) ?? { open: "---\n", fm: "", close: "---\n", body: text3 };
+  const eol = parts.open.endsWith("\r\n") ? "\r\n" : "\n";
+  const lines = parts.fm.match(/[^\n]*\n/g) ?? [];
+  for (const [k, v2] of Object.entries(patch2)) {
+    const block = (0, import_yaml2.stringify)({ [k]: v2 }).replace(/\n$/, "").split("\n").map((l) => l + eol);
+    const range6 = findBlock(lines, k);
+    if (range6) lines.splice(range6[0], range6[1] - range6[0], ...block);
+    else lines.push(...block);
+  }
+  writeFileSync(path3, parts.open + lines.join("") + parts.close + parts.body);
+}
+
+// packages/course-kit/src/hash.ts
+function hashFile(path3) {
+  return createHash("md5").update(readFileSync3(path3)).digest("hex").slice(0, 8);
+}
+function sourceFilesOf(data3) {
+  const sf = data3.sourceFiles;
+  return sf && typeof sf === "object" ? sf : {};
+}
+function currentHash(courseDir, rel) {
+  const p = resolve(courseDir, rel);
+  return existsSync(p) ? hashFile(p) : void 0;
+}
+function checkStale(outputPath, courseDir) {
+  if (!existsSync(outputPath)) return { status: "missing-output", changed: [] };
+  const { data: data3 } = readFrontmatter(outputPath, { strings: true });
+  const stored = data3.sourceHashes && typeof data3.sourceHashes === "object" ? data3.sourceHashes : {};
+  const changed = Object.entries(sourceFilesOf(data3)).filter(([key2, rel]) => currentHash(courseDir, rel) !== stored[key2]).map(([key2]) => key2);
+  return { status: changed.length ? "stale" : "fresh", changed };
+}
+function writeHashes(outputPath, courseDir) {
+  const { data: data3 } = readFrontmatter(outputPath, { strings: true });
+  const hashes = {};
+  for (const [key2, rel] of Object.entries(sourceFilesOf(data3))) {
+    const h2 = currentHash(courseDir, rel);
+    if (h2) {
+      const node2 = new import_yaml3.Scalar(h2);
+      node2.type = "QUOTE_DOUBLE";
+      hashes[key2] = node2;
+    }
+  }
+  updateFrontmatter(outputPath, { sourceHashes: hashes });
+}
+
+// packages/course-kit/src/manifest/io.ts
+var import_yaml4 = __toESM(require_dist(), 1);
+import { readFileSync as readFileSync4, writeFileSync as writeFileSync2 } from "node:fs";
+import { join } from "node:path";
+
 // packages/course-kit/src/manifest/schema.ts
 var ShapeSchema = external_exports.enum(["workshop", "cohort", "self-paced"]);
 var DeliverySchema = external_exports.enum(["in-person", "virtual", "hybrid", "async"]);
@@ -27832,7 +27937,7 @@ function initManifest(opts, today) {
 function loadManifest(courseDir) {
   let raw;
   try {
-    raw = (0, import_yaml3.parse)(readFileSync3(join(courseDir, FILE), "utf8"));
+    raw = (0, import_yaml4.parse)(readFileSync4(join(courseDir, FILE), "utf8"));
   } catch (e) {
     throw new ValidationError(`cannot read ${FILE}: ${e instanceof Error ? e.message : String(e)}`);
   }
@@ -27849,7 +27954,7 @@ function saveManifest(courseDir, m3) {
     const v2 = m3[key2];
     if (v2 !== void 0) ordered[key2] = v2;
   }
-  writeFileSync2(join(courseDir, FILE), (0, import_yaml3.stringify)(ordered));
+  writeFileSync2(join(courseDir, FILE), (0, import_yaml4.stringify)(ordered));
 }
 function duplicates(ids, list, out) {
   const seen = /* @__PURE__ */ new Set();
@@ -27899,7 +28004,7 @@ function validateManifest(m3) {
 }
 
 // packages/course-kit/src/manifest/sync.ts
-import { existsSync as existsSync2, readFileSync as readFileSync4, writeFileSync as writeFileSync3 } from "node:fs";
+import { existsSync as existsSync2, readFileSync as readFileSync5, writeFileSync as writeFileSync3 } from "node:fs";
 import { basename, join as join2, resolve as resolve2 } from "node:path";
 var OBJECTIVES_PATH = "01-planning/learning-objectives.md";
 var OUTLINE_PATH = "02-design/course-outline.md";
@@ -27998,7 +28103,7 @@ function insertIdComments(markdown, items) {
   return result.join("\n");
 }
 function readIfExists(path3) {
-  return existsSync2(path3) ? readFileSync4(path3, "utf8") : void 0;
+  return existsSync2(path3) ? readFileSync5(path3, "utf8") : void 0;
 }
 function syncManifest(courseDir, opts) {
   const objPath = join2(courseDir, OBJECTIVES_PATH);
@@ -28056,8 +28161,8 @@ function syncManifest(courseDir, opts) {
 }
 
 // packages/course-kit/src/media/plan.ts
-var import_yaml4 = __toESM(require_dist(), 1);
-import { existsSync as existsSync3, mkdirSync, readFileSync as readFileSync5, writeFileSync as writeFileSync4 } from "node:fs";
+var import_yaml5 = __toESM(require_dist(), 1);
+import { existsSync as existsSync3, mkdirSync, readFileSync as readFileSync6, writeFileSync as writeFileSync4 } from "node:fs";
 import { join as join3 } from "node:path";
 
 // packages/course-kit/src/media/schema.ts
@@ -28135,7 +28240,7 @@ function loadPlan(courseDir) {
   if (!existsSync3(f)) return { schema: "media-plan/v1", items: [] };
   let raw;
   try {
-    raw = (0, import_yaml4.parse)(readFileSync5(f, "utf8"));
+    raw = (0, import_yaml5.parse)(readFileSync6(f, "utf8"));
   } catch {
     throw new ValidationError(`cannot parse ${f}`);
   }
@@ -28204,7 +28309,7 @@ function estimatePlan(p, pricing, quality) {
 }
 
 // packages/course-kit/src/media/pricing.ts
-import { existsSync as existsSync4, readFileSync as readFileSync6 } from "node:fs";
+import { existsSync as existsSync4, readFileSync as readFileSync7 } from "node:fs";
 import { join as join4 } from "node:path";
 
 // packages/course-kit/data/pricing.json
@@ -28223,7 +28328,7 @@ function loadPricing(dataDir2) {
     const f = join4(dataDir2, "pricing.json");
     if (existsSync4(f)) {
       try {
-        raw = JSON.parse(readFileSync6(f, "utf8"));
+        raw = JSON.parse(readFileSync7(f, "utf8"));
       } catch {
         throw new ValidationError(`cannot parse ${f}`);
       }
@@ -28235,7 +28340,7 @@ function loadPricing(dataDir2) {
 }
 
 // packages/course-kit/src/media/registry.ts
-import { existsSync as existsSync5, mkdirSync as mkdirSync2, readFileSync as readFileSync7, writeFileSync as writeFileSync5 } from "node:fs";
+import { existsSync as existsSync5, mkdirSync as mkdirSync2, readFileSync as readFileSync8, writeFileSync as writeFileSync5 } from "node:fs";
 import { join as join5 } from "node:path";
 var FILE3 = ["05-media", "registry.json"];
 function loadRegistry(courseDir) {
@@ -28243,7 +28348,7 @@ function loadRegistry(courseDir) {
   if (!existsSync5(f)) return { schema: "registry/v1", assets: [] };
   let raw;
   try {
-    raw = JSON.parse(readFileSync7(f, "utf8"));
+    raw = JSON.parse(readFileSync8(f, "utf8"));
   } catch {
     throw new ValidationError(`cannot parse ${f}`);
   }
@@ -28376,7 +28481,7 @@ var coreCommands = {
 
 // packages/course-kit/src/media/ledger.ts
 import { randomUUID } from "node:crypto";
-import { appendFileSync, closeSync, existsSync as existsSync7, mkdirSync as mkdirSync4, openSync, readFileSync as readFileSync8, statSync, unlinkSync } from "node:fs";
+import { appendFileSync, closeSync, existsSync as existsSync7, mkdirSync as mkdirSync4, openSync, readFileSync as readFileSync9, statSync, unlinkSync } from "node:fs";
 import { join as join7 } from "node:path";
 var LedgerEntrySchema = external_exports.object({
   at: external_exports.string(),
@@ -28396,7 +28501,7 @@ function readLedger(courseDir) {
   const f = join7(courseDir, DIR, FILE4);
   if (!existsSync7(f)) return [];
   const out = [];
-  readFileSync8(f, "utf8").split("\n").forEach((line4, i) => {
+  readFileSync9(f, "utf8").split("\n").forEach((line4, i) => {
     if (!line4.trim()) return;
     let raw;
     try {
@@ -28546,11 +28651,11 @@ function childEnv() {
   return env;
 }
 function run(bin3, args, opts = {}) {
-  return new Promise((resolve5) => {
+  return new Promise((resolve6) => {
     execFile(bin3, args, { ...opts, env: childEnv(), maxBuffer: 64 * 1024 * 1024, windowsHide: true }, (error64, _stdout, stderr) => {
-      if (!error64) return resolve5({ code: 0, stderr: String(stderr) });
+      if (!error64) return resolve6({ code: 0, stderr: String(stderr) });
       const code = typeof error64.code === "number" ? error64.code : null;
-      resolve5({ code, stderr: String(stderr), error: error64 });
+      resolve6({ code, stderr: String(stderr), error: error64 });
     });
   });
 }
@@ -28594,11 +28699,11 @@ async function generateImageCodex(o) {
 
 // packages/course-kit/src/providers/generate.ts
 import { createHash as createHash2 } from "node:crypto";
-import { existsSync as existsSync10, mkdirSync as mkdirSync7, readFileSync as readFileSync10, writeFileSync as writeFileSync7 } from "node:fs";
+import { existsSync as existsSync10, mkdirSync as mkdirSync7, readFileSync as readFileSync11, writeFileSync as writeFileSync7 } from "node:fs";
 import { join as join9 } from "node:path";
 
 // packages/course-kit/src/providers/openai.ts
-import { existsSync as existsSync9, mkdirSync as mkdirSync6, readFileSync as readFileSync9, writeFileSync as writeFileSync6 } from "node:fs";
+import { existsSync as existsSync9, mkdirSync as mkdirSync6, readFileSync as readFileSync10, writeFileSync as writeFileSync6 } from "node:fs";
 import { dirname as dirname2, join as join8 } from "node:path";
 var ENDPOINT = "https://api.openai.com/v1/images/generations";
 var MODEL = "gpt-image-2";
@@ -28611,7 +28716,7 @@ function resolveOpenAIKey(env, dataDir2) {
   if (dataDir2) {
     const f = join8(dataDir2, "openai.key");
     if (existsSync9(f)) {
-      const v2 = readFileSync9(f, "utf8").trim();
+      const v2 = readFileSync10(f, "utf8").trim();
       if (v2) return v2;
     }
   }
@@ -28705,7 +28810,7 @@ async function generateAssetImage(courseDir, assetId, provider, o) {
   }
   const anchorsFile = join9(courseDir, "05-media", "style", "prompt-anchors.md");
   if (!existsSync10(anchorsFile)) throw new ValidationError("Run generate-style-guide first.");
-  const anchors = readFileSync10(anchorsFile, "utf8");
+  const anchors = readFileSync11(anchorsFile, "utf8");
   const prompt = composeImagePrompt(anchors, item.description);
   const source3 = `05-media/src/${assetId}.prompt.txt`;
   mkdirSync7(join9(courseDir, "05-media", "src"), { recursive: true });
@@ -28749,7 +28854,7 @@ async function generateAssetImage(courseDir, assetId, provider, o) {
     status: "generated",
     costUsd: estimate2.usd,
     quotaUnits: estimate2.quota,
-    sha256: createHash2("sha256").update(readFileSync10(outPath)).digest("hex"),
+    sha256: createHash2("sha256").update(readFileSync11(outPath)).digest("hex"),
     createdAt: (/* @__PURE__ */ new Date()).toISOString()
   };
   const rest = { ...registry2, assets: registry2.assets.filter((a3) => a3.id !== assetId) };
@@ -28758,8 +28863,8 @@ async function generateAssetImage(courseDir, assetId, provider, o) {
 }
 
 // packages/course-kit/src/providers/record.ts
-var import_yaml5 = __toESM(require_dist(), 1);
-import { existsSync as existsSync11, mkdirSync as mkdirSync8, readFileSync as readFileSync11, writeFileSync as writeFileSync8 } from "node:fs";
+var import_yaml6 = __toESM(require_dist(), 1);
+import { existsSync as existsSync11, mkdirSync as mkdirSync8, readFileSync as readFileSync12, writeFileSync as writeFileSync8 } from "node:fs";
 import { join as join10 } from "node:path";
 
 // packages/course-kit/data/providers.yaml
@@ -28792,14 +28897,14 @@ function loadProviders(courseDir) {
   if (!existsSync11(f)) return null;
   let raw;
   try {
-    raw = JSON.parse(readFileSync11(f, "utf8"));
+    raw = JSON.parse(readFileSync12(f, "utf8"));
   } catch {
     throw new ValidationError(`cannot parse ${f}`);
   }
   return parseDetectedProviders(raw, f);
 }
 function providerPatterns() {
-  return PatternsSchema.parse((0, import_yaml5.parse)(providers_default));
+  return PatternsSchema.parse((0, import_yaml6.parse)(providers_default));
 }
 
 // packages/course-kit/src/render/deps.ts
@@ -28831,7 +28936,7 @@ function installDeps(dataDir2, deps) {
 }
 
 // packages/course-kit/src/render/excalidraw.ts
-import { readFileSync as readFileSync12, writeFileSync as writeFileSync9 } from "node:fs";
+import { readFileSync as readFileSync13, writeFileSync as writeFileSync9 } from "node:fs";
 import { createRequire } from "node:module";
 import { join as join12, resolve as resolve3 } from "node:path";
 var CHROME_FAILURE = /Target closed|Protocol error|Session closed|Execution context was destroyed|crash|disconnected/i;
@@ -28845,7 +28950,7 @@ function classifyEvaluateError(err, ctx = {}) {
 async function renderExcalidraw(srcPath, outSvg, dataDir2) {
   let diagram;
   try {
-    diagram = JSON.parse(readFileSync12(srcPath, "utf8"));
+    diagram = JSON.parse(readFileSync13(srcPath, "utf8"));
   } catch (e) {
     throw new ValidationError(`cannot read excalidraw source ${srcPath}: ${e instanceof Error ? e.message : String(e)}`);
   }
@@ -28871,7 +28976,7 @@ async function renderExcalidraw(srcPath, outSvg, dataDir2) {
     try {
       page = await browser.newPage();
       await page.setContent("<html><body></body></html>");
-      await page.addScriptTag({ content: readFileSync12(bundle2, "utf8") });
+      await page.addScriptTag({ content: readFileSync13(bundle2, "utf8") });
     } catch (e) {
       throw new ProviderUnavailableError(`Chrome page setup failed: ${e instanceof Error ? e.message : String(e)}`);
     }
@@ -29782,7 +29887,7 @@ function formatDate(date6) {
 }
 function dsv_default(delimiter) {
   var reFormat = new RegExp('["' + delimiter + "\n\r]"), DELIMITER = delimiter.charCodeAt(0);
-  function parse13(text3, f) {
+  function parse14(text3, f) {
     var convert, columns, rows = parseRows(text3, function(row, i) {
       if (convert) return convert(row, i - 1);
       columns = row, convert = f ? customConverter(row, f) : objectConverter(row);
@@ -29851,7 +29956,7 @@ function dsv_default(delimiter) {
     return value3 == null ? "" : value3 instanceof Date ? formatDate(value3) : reFormat.test(value3 += "") ? '"' + value3.replace(/"/g, '""') + '"' : value3;
   }
   return {
-    parse: parse13,
+    parse: parse14,
     parseRows,
     format: format5,
     formatBody,
@@ -31512,14 +31617,14 @@ function formatLocale(locale4) {
     };
   }
   function parseSpecifier(d, specifier, string4, j) {
-    var i = 0, n = specifier.length, m3 = string4.length, c3, parse13;
+    var i = 0, n = specifier.length, m3 = string4.length, c3, parse14;
     while (i < n) {
       if (j >= m3) return -1;
       c3 = specifier.charCodeAt(i++);
       if (c3 === 37) {
         c3 = specifier.charAt(i++);
-        parse13 = parses[c3 in pads ? specifier.charAt(i++) : c3];
-        if (!parse13 || (j = parse13(d, string4, j)) < 0) return -1;
+        parse14 = parses[c3 in pads ? specifier.charAt(i++) : c3];
+        if (!parse14 || (j = parse14(d, string4, j)) < 0) return -1;
       } else if (c3 != string4.charCodeAt(j++)) {
         return -1;
       }
@@ -32150,14 +32255,14 @@ function inferTypes(data3, fields) {
   }, {});
 }
 function delimitedFormat(delimiter) {
-  const parse13 = function(data3, format5) {
+  const parse14 = function(data3, format5) {
     const delim = {
       delimiter
     };
     return dsv(data3, format5 ? extend2(format5, delim) : delim);
   };
-  parse13.responseType = "text";
-  return parse13;
+  parse14.responseType = "text";
+  return parse14;
 }
 function dsv(data3, format5) {
   if (format5.header) {
@@ -32225,11 +32330,11 @@ function read(data3, schema, timeParser, utcParser) {
   const reader = formats(schema.type || "json");
   if (!reader) error62("Unknown data format type: " + schema.type);
   data3 = reader(data3, schema);
-  if (schema.parse) parse7(data3, schema.parse, timeParser, utcParser);
+  if (schema.parse) parse8(data3, schema.parse, timeParser, utcParser);
   if (hasOwnProperty(data3, "columns")) delete data3.columns;
   return data3;
 }
-function parse7(data3, types, timeParser, utcParser) {
+function parse8(data3, types, timeParser, utcParser) {
   if (!data3.length) return;
   const locale4 = timeFormatDefaultLocale();
   timeParser = timeParser || locale4.timeParse;
@@ -32246,8 +32351,8 @@ function parse7(data3, types, timeParser, utcParser) {
       if (pattern[0] === "'" && pattern[pattern.length - 1] === "'" || pattern[0] === '"' && pattern[pattern.length - 1] === '"') {
         pattern = pattern.slice(1, -1);
       }
-      const parse13 = parts[0] === "utc" ? utcParser : timeParser;
-      return parse13(pattern);
+      const parse14 = parts[0] === "utc" ? utcParser : timeParser;
+      return parse14(pattern);
     }
     if (!typeParsers[type3]) {
       throw Error("Illegal format pattern: " + field4 + ":" + type3);
@@ -32859,7 +32964,7 @@ function events(source3, type3, filter3, apply2) {
   }
   return s;
 }
-function parse8(data3, format5) {
+function parse9(data3, format5) {
   const locale4 = this.locale();
   return read(data3, format5, locale4.timeParse, locale4.utcParse);
 }
@@ -33716,7 +33821,7 @@ Dataflow.prototype = {
   changeset,
   // DATA LOADING
   ingest,
-  parse: parse8,
+  parse: parse9,
   preload,
   request,
   // EVENT HANDLING
@@ -35628,7 +35733,7 @@ var Distributions = {
 var DISTRIBUTIONS = "distributions";
 var FUNCTION = "function";
 var FIELD = "field";
-function parse9(def2, data3) {
+function parse10(def2, data3) {
   const func = def2[FUNCTION];
   if (!hasOwnProperty(Distributions, func)) {
     error62("Unknown distribution function: " + func);
@@ -35638,7 +35743,7 @@ function parse9(def2, data3) {
     if (name === FIELD) {
       d.data((def2.from || data3()).map(def2[name]));
     } else if (name === DISTRIBUTIONS) {
-      d[name](def2[name].map((_) => parse9(_, data3)));
+      d[name](def2[name].map((_) => parse10(_, data3)));
     } else if (typeof d[name] === FUNCTION) {
       d[name](def2[name]);
     }
@@ -35760,7 +35865,7 @@ inherits_default(Density, Transform, {
   transform(_, pulse2) {
     const out = pulse2.fork(pulse2.NO_SOURCE | pulse2.NO_FIELDS);
     if (!this.value || pulse2.changed() || _.modified()) {
-      const dist2 = parse9(_.distribution, source(pulse2)), minsteps = _.steps || _.minsteps || 25, maxsteps = _.steps || _.maxsteps || 200;
+      const dist2 = parse10(_.distribution, source(pulse2)), minsteps = _.steps || _.minsteps || 25, maxsteps = _.steps || _.maxsteps || 200;
       let method2 = _.method || "pdf";
       if (method2 !== "pdf" && method2 !== "cdf") {
         error62("Invalid density method: " + method2);
@@ -39749,7 +39854,7 @@ function parseSvg(value3) {
 }
 
 // node_modules/d3-interpolate/src/transform/index.js
-function interpolateTransform(parse13, pxComma, pxParen, degParen) {
+function interpolateTransform(parse14, pxComma, pxParen, degParen) {
   function pop(s) {
     return s.length ? s.pop() + " " : "";
   }
@@ -39787,7 +39892,7 @@ function interpolateTransform(parse13, pxComma, pxParen, degParen) {
   }
   return function(a3, b10) {
     var s = [], q = [];
-    a3 = parse13(a3), b10 = parse13(b10);
+    a3 = parse14(a3), b10 = parse14(b10);
     translate4(a3.translateX, a3.translateY, b10.translateX, b10.translateY, s, q);
     rotate2(a3.rotate, b10.rotate, s, q);
     skewX(a3.skewX, b10.skewX, s, q);
@@ -41370,7 +41475,7 @@ var commandPattern = /[mlhvzcsqta]([^mlhvzcsqta]*)/gi;
 var numberPattern = /^[+-]?(([0-9]*\.[0-9]+)|([0-9]+\.)|([0-9]+))([eE][+-]?[0-9]+)?/;
 var spacePattern = /^((\s+,?\s*)|(,\s*))/;
 var flagPattern = /^[01]/;
-function parse10(path3) {
+function parse11(path3) {
   const commands = [];
   const matches = path3.match(commandPattern) || [];
   matches.forEach((str) => {
@@ -41838,7 +41943,7 @@ function symbols2(_) {
 var custom9 = {};
 function customSymbol(path3) {
   if (!hasOwnProperty(custom9, path3)) {
-    const parsed = parse10(path3);
+    const parsed = parse11(path3);
     custom9[path3] = {
       draw: function(context3, size) {
         pathRender(context3, parsed, 0, 0, Math.sqrt(size) / 2);
@@ -43038,7 +43143,7 @@ function path$1(context3, item) {
   if (path3 == null) return true;
   var x5 = item.x || 0, y5 = item.y || 0, sx = item.scaleX || 1, sy = item.scaleY || 1, a3 = (item.angle || 0) * DegToRad, cache2 = item.pathCache;
   if (!cache2 || cache2.path !== path3) {
-    (item.pathCache = cache2 = parse10(path3)).path = path3;
+    (item.pathCache = cache2 = parse11(path3)).path = path3;
   }
   if (a3 && context3.rotate && context3.translate) {
     context3.translate(x5, y5);
@@ -58237,12 +58342,12 @@ function channel_luminance_value(channelValue) {
   }
   return Math.pow((val + 0.055) / 1.055, 2.4);
 }
-function luminance(color5) {
+function luminance2(color5) {
   const c3 = rgb(color5), r = channel_luminance_value(c3.r), g = channel_luminance_value(c3.g), b10 = channel_luminance_value(c3.b);
   return 0.2126 * r + 0.7152 * g + 0.0722 * b10;
 }
 function contrast(color1, color22) {
-  const lum1 = luminance(color1), lum2 = luminance(color22), lumL = Math.max(lum1, lum2), lumD = Math.min(lum1, lum2);
+  const lum1 = luminance2(color1), lum2 = luminance2(color22), lumL = Math.max(lum1, lum2), lumD = Math.min(lum1, lum2);
   return (lumL + 0.05) / (lumD + 0.05);
 }
 function merge5() {
@@ -58402,7 +58507,7 @@ function geoShape(projection3, geojson, group2) {
 function pathShape(path3) {
   let p = null;
   return function(context3) {
-    return context3 ? pathRender(context3, p = p || parse10(path3)) : path3;
+    return context3 ? pathRender(context3, p = p || parse11(path3)) : path3;
   };
 }
 var datum = (d) => d.data;
@@ -58541,7 +58646,7 @@ var functionContext = {
   lab,
   hcl,
   hsl,
-  luminance,
+  luminance: luminance2,
   contrast,
   sequence: range,
   format: format4,
@@ -58685,7 +58790,7 @@ function parser2(expr2, scope) {
 }
 
 // node_modules/vega-runtime/build/vega-runtime.js
-function parse11(spec) {
+function parse12(spec) {
   const ctx = this, operators = spec.operators || [];
   if (spec.background) {
     ctx.background = spec.background;
@@ -59140,7 +59245,7 @@ Context.prototype = Subcontext.prototype = {
     return this.expr.encode(this, encode4);
   },
   // parse methods
-  parse: parse11,
+  parse: parse12,
   parseOperator,
   parseOperatorParameters,
   parseParameters,
@@ -63542,7 +63647,7 @@ function defaults() {
     }
   };
 }
-function parse12(spec, config2, options) {
+function parse13(spec, config2, options) {
   if (!isObject2(spec)) {
     error62("Input Vega specification must be an object.");
   }
@@ -71246,11 +71351,11 @@ function assembleTopLevelSignals(model, signals) {
     const store = stringValue(name + STORE);
     const hasSg = signals.filter((s) => s.name === name);
     if (hasSg.length === 0) {
-      const resolve5 = selCmpt.resolve === "global" ? "union" : selCmpt.resolve;
+      const resolve6 = selCmpt.resolve === "global" ? "union" : selCmpt.resolve;
       const isPoint2 = selCmpt.type === "point" ? ", true, true)" : ")";
       signals.push({
         name: selCmpt.name,
-        update: `${VL_SELECTION_RESOLVE}(${store}, ${stringValue(resolve5)}${isPoint2}`
+        update: `${VL_SELECTION_RESOLVE}(${store}, ${stringValue(resolve6)}${isPoint2}`
       });
     }
     hasSelections = true;
@@ -73325,8 +73430,8 @@ function parseSelectionPredicate(model, pred, dfnode, datum2 = "datum") {
     }
   }
   const fn = selCmpt.project.hasSelectionId ? "vlSelectionIdTest(" : "vlSelectionTest(";
-  const resolve5 = selCmpt.resolve === "global" ? ")" : `, ${stringValue(selCmpt.resolve)})`;
-  const test2 = `${fn}${store}, ${datum2}${resolve5}`;
+  const resolve6 = selCmpt.resolve === "global" ? ")" : `, ${stringValue(selCmpt.resolve)})`;
+  const test2 = `${fn}${store}, ${datum2}${resolve6}`;
   const length2 = `length(data(${store}))`;
   return pred.empty === false ? `${length2} && ${test2}` : `!${length2} || ${test2}`;
 }
@@ -74186,16 +74291,16 @@ function defaultScaleResolve(channel, model) {
   }
   throw new Error("invalid model type for resolve");
 }
-function parseGuideResolve(resolve5, channel) {
-  const channelScaleResolve = resolve5.scale[channel];
+function parseGuideResolve(resolve6, channel) {
+  const channelScaleResolve = resolve6.scale[channel];
   const guide = isXorY(channel) ? "axis" : "legend";
   if (channelScaleResolve === "independent") {
-    if (resolve5[guide][channel] === "shared") {
+    if (resolve6[guide][channel] === "shared") {
       warn2(independentScaleMeansIndependentGuide(channel));
     }
     return "independent";
   }
-  return resolve5[guide][channel] || "shared";
+  return resolve6[guide][channel] || "shared";
 }
 var LEGEND_COMPONENT_PROPERTY_INDEX = {
   ...COMMON_LEGEND_PROPERTY_INDEX,
@@ -74601,15 +74706,15 @@ function parseLegendForChannel(model, channel) {
   return legendCmpt;
 }
 function parseNonUnitLegend(model) {
-  const { legends, resolve: resolve5 } = model.component;
+  const { legends, resolve: resolve6 } = model.component;
   for (const child of model.children) {
     parseLegend2(child);
     for (const channel of keys3(child.component.legends)) {
-      resolve5.legend[channel] = parseGuideResolve(model.component.resolve, channel);
-      if (resolve5.legend[channel] === "shared") {
+      resolve6.legend[channel] = parseGuideResolve(model.component.resolve, channel);
+      if (resolve6.legend[channel] === "shared") {
         legends[channel] = mergeLegendComponent(legends[channel], child.component.legends[channel]);
         if (!legends[channel]) {
-          resolve5.legend[channel] = "independent";
+          resolve6.legend[channel] = "independent";
           delete legends[channel];
         }
       }
@@ -74620,7 +74725,7 @@ function parseNonUnitLegend(model) {
       if (!child.component.legends[channel]) {
         continue;
       }
-      if (resolve5.legend[channel] === "shared") {
+      if (resolve6.legend[channel] === "shared") {
         delete child.component.legends[channel];
       }
     }
@@ -75312,26 +75417,26 @@ function unquote(pattern) {
   }
   return pattern;
 }
-function parseExpression2(field3, parse13) {
+function parseExpression2(field3, parse14) {
   const f = accessPathWithDatum(field3);
-  if (parse13 === "number") {
+  if (parse14 === "number") {
     return `toNumber(${f})`;
-  } else if (parse13 === "boolean") {
+  } else if (parse14 === "boolean") {
     return `toBoolean(${f})`;
-  } else if (parse13 === "string") {
+  } else if (parse14 === "string") {
     return `toString(${f})`;
-  } else if (parse13 === "date") {
+  } else if (parse14 === "date") {
     return `toDate(${f})`;
-  } else if (parse13 === "flatten") {
+  } else if (parse14 === "flatten") {
     return f;
-  } else if (parse13.startsWith("date:")) {
-    const specifier = unquote(parse13.slice(5, parse13.length));
+  } else if (parse14.startsWith("date:")) {
+    const specifier = unquote(parse14.slice(5, parse14.length));
     return `timeParse(${f},'${specifier}')`;
-  } else if (parse13.startsWith("utc:")) {
-    const specifier = unquote(parse13.slice(4, parse13.length));
+  } else if (parse14.startsWith("utc:")) {
+    const specifier = unquote(parse14.slice(4, parse14.length));
     return `utcParse(${f},'${specifier}')`;
   } else {
-    warn2(unrecognizedParse(parse13));
+    warn2(unrecognizedParse(parse14));
     return null;
   }
 }
@@ -75434,9 +75539,9 @@ var ParseNode = class _ParseNode extends DataFlowNode {
   clone() {
     return new _ParseNode(null, duplicate(this._parse));
   }
-  constructor(parent, parse13) {
+  constructor(parent, parse14) {
     super(parent);
-    this._parse = parse13;
+    this._parse = parse14;
   }
   hash() {
     return `Parse ${hash2(this._parse)}`;
@@ -75476,11 +75581,11 @@ var ParseNode = class _ParseNode extends DataFlowNode {
         }
       }
     }
-    const parse13 = new Split(explicit, implicit2);
-    ancestorParse.copyAll(parse13);
+    const parse14 = new Split(explicit, implicit2);
+    ancestorParse.copyAll(parse14);
     const p = {};
-    for (const key2 of keys3(parse13.combine())) {
-      const val = parse13.get(key2);
+    for (const key2 of keys3(parse14.combine())) {
+      const val = parse14.get(key2);
       if (val !== null) {
         p[key2] = val;
       }
@@ -75835,11 +75940,11 @@ var MergeParse = class extends BottomUpOptimizer {
       const commonParse = {};
       const conflictingParse = /* @__PURE__ */ new Set();
       for (const parseNode of parseChildren) {
-        const parse13 = parseNode.parse;
-        for (const k of keys3(parse13)) {
+        const parse14 = parseNode.parse;
+        for (const k of keys3(parse14)) {
           if (!(k in commonParse)) {
-            commonParse[k] = parse13[k];
-          } else if (commonParse[k] !== parse13[k]) {
+            commonParse[k] = parse14[k];
+          } else if (commonParse[k] !== parse14[k]) {
             conflictingParse.add(k);
           }
         }
@@ -76523,8 +76628,8 @@ function parseUnitScaleDomain(model) {
       while (!isFacetModel(facetParent) && facetParent.parent) {
         facetParent = facetParent.parent;
       }
-      const resolve5 = facetParent.component.resolve.scale[channel];
-      if (resolve5 === "shared") {
+      const resolve6 = facetParent.component.resolve.scale[channel];
+      if (resolve6 === "shared") {
         for (const domain4 of domains.value) {
           if (isDataRefDomain(domain4)) {
             domain4.data = FACET_SCALE_PREFIX + domain4.data.replace(FACET_SCALE_PREFIX, "");
@@ -78207,19 +78312,19 @@ var scaleTypeTieBreaker = tieBreakByComparing((st1, st2) => scaleTypePrecedence(
 function parseNonUnitScaleCore(model) {
   const scaleComponents = model.component.scales = {};
   const scaleTypeWithExplicitIndex = {};
-  const resolve5 = model.component.resolve;
+  const resolve6 = model.component.resolve;
   for (const child of model.children) {
     parseScaleCore(child);
     for (const channel of keys3(child.component.scales)) {
-      resolve5.scale[channel] ??= defaultScaleResolve(channel, model);
-      if (resolve5.scale[channel] === "shared") {
+      resolve6.scale[channel] ??= defaultScaleResolve(channel, model);
+      if (resolve6.scale[channel] === "shared") {
         const explicitScaleType = scaleTypeWithExplicitIndex[channel];
         const childScaleType = child.component.scales[channel].getWithExplicit("type");
         if (explicitScaleType) {
           if (scaleCompatible(explicitScaleType.value, childScaleType.value)) {
             scaleTypeWithExplicitIndex[channel] = mergeValuesWithExplicit(explicitScaleType, childScaleType, "type", "scale", scaleTypeTieBreaker);
           } else {
-            resolve5.scale[channel] = "independent";
+            resolve6.scale[channel] = "independent";
             delete scaleTypeWithExplicitIndex[channel];
           }
         } else {
@@ -78291,7 +78396,7 @@ var Model = class {
   signalNameMap;
   component;
   view;
-  constructor(spec, type3, parent, parentGivenName, config2, resolve5, view) {
+  constructor(spec, type3, parent, parentGivenName, config2, resolve6, view) {
     this.type = type3;
     this.parent = parent;
     this.config = config2;
@@ -78322,7 +78427,7 @@ var Model = class {
         scale: {},
         axis: {},
         legend: {},
-        ...resolve5 ? duplicate(resolve5) : {}
+        ...resolve6 ? duplicate(resolve6) : {}
       },
       selection: null,
       scales: null,
@@ -78556,8 +78661,8 @@ var Model = class {
   /**
    * @return scale name for a given channel after the scale has been parsed and named.
    */
-  scaleName(originalScaleName, parse13) {
-    if (parse13) {
+  scaleName(originalScaleName, parse14) {
+    if (parse14) {
       return this.getName(originalScaleName);
     }
     if (
@@ -78572,8 +78677,8 @@ var Model = class {
   /**
    * @return projection name after the projection has been parsed and named.
    */
-  projectionName(parse13) {
-    if (parse13) {
+  projectionName(parse14) {
+    if (parse14) {
       return this.getName("projection");
     }
     if (this.component.projection && !this.component.projection.merged || this.projectionNameMap.has(this.getName("projection"))) {
@@ -78656,8 +78761,8 @@ var DensityTransformNode = class _DensityTransformNode extends DataFlowNode {
     this.transform = duplicate(transform5);
     const specifiedAs = this.transform.as ?? [void 0, void 0];
     this.transform.as = [specifiedAs[0] ?? "value", specifiedAs[1] ?? "density"];
-    const resolve5 = this.transform.resolve ?? "shared";
-    this.transform.resolve = resolve5;
+    const resolve6 = this.transform.resolve ?? "shared";
+    this.transform.resolve = resolve6;
   }
   dependentFields() {
     return /* @__PURE__ */ new Set([this.transform.density, ...this.transform.groupby ?? []]);
@@ -79467,12 +79572,12 @@ function parseChildrenLayoutSize(model) {
 function parseNonUnitLayoutSizeForChannel(model, layoutSizeType) {
   const sizeType = getSizeTypeFromLayoutSizeType(layoutSizeType);
   const channel = getPositionScaleChannel(sizeType);
-  const resolve5 = model.component.resolve;
+  const resolve6 = model.component.resolve;
   const layoutSizeCmpt = model.component.layoutSize;
   let mergedSize;
   for (const child of model.children) {
     const childSize = child.component.layoutSize.getWithExplicit(sizeType);
-    const scaleResolve = resolve5.scale[channel] ?? defaultScaleResolve(channel, model);
+    const scaleResolve = resolve6.scale[channel] ?? defaultScaleResolve(channel, model);
     if (scaleResolve === "independent" && childSize.value === "step") {
       mergedSize = void 0;
       break;
@@ -79829,9 +79934,9 @@ function makeHeaderComponent(model, channel, labels2) {
 function mergeChildAxis(model, channel) {
   const { child } = model;
   if (child.component.axes[channel]) {
-    const { layoutHeaders: layoutHeaders2, resolve: resolve5 } = model.component;
-    resolve5.axis[channel] = parseGuideResolve(resolve5, channel);
-    if (resolve5.axis[channel] === "shared") {
+    const { layoutHeaders: layoutHeaders2, resolve: resolve6 } = model.component;
+    resolve6.axis[channel] = parseGuideResolve(resolve6, channel);
+    if (resolve6.axis[channel] === "shared") {
       const headerChannel = channel === "x" ? "column" : "row";
       const layoutHeader = layoutHeaders2[headerChannel];
       for (const axisComponent of child.component.axes[channel]) {
@@ -80308,16 +80413,16 @@ var OPPOSITE_ORIENT = {
   right: "left"
 };
 function parseLayerAxes(model) {
-  const { axes, resolve: resolve5 } = model.component;
+  const { axes, resolve: resolve6 } = model.component;
   const axisCount = { top: 0, bottom: 0, right: 0, left: 0 };
   for (const child of model.children) {
     child.parseAxesAndHeaders();
     for (const channel of keys3(child.component.axes)) {
-      resolve5.axis[channel] = parseGuideResolve(model.component.resolve, channel);
-      if (resolve5.axis[channel] === "shared") {
+      resolve6.axis[channel] = parseGuideResolve(model.component.resolve, channel);
+      if (resolve6.axis[channel] === "shared") {
         axes[channel] = mergeAxisComponents(axes[channel], child.component.axes[channel]);
         if (!axes[channel]) {
-          resolve5.axis[channel] = "independent";
+          resolve6.axis[channel] = "independent";
           delete axes[channel];
         }
       }
@@ -80328,7 +80433,7 @@ function parseLayerAxes(model) {
       if (!child.component.axes[channel]) {
         continue;
       }
-      if (resolve5.axis[channel] === "independent") {
+      if (resolve6.axis[channel] === "independent") {
         axes[channel] = (axes[channel] ?? []).concat(child.component.axes[channel]);
         for (const axisComponent of child.component.axes[channel]) {
           const { value: orient2, explicit } = axisComponent.getWithExplicit("orient");
@@ -80346,7 +80451,7 @@ function parseLayerAxes(model) {
       }
       delete child.component.axes[channel];
     }
-    if (resolve5.axis[channel] === "independent" && axes[channel] && axes[channel].length > 1) {
+    if (resolve6.axis[channel] === "independent" && axes[channel] && axes[channel].length > 1) {
       for (const [index3, axisCmpt] of (axes[channel] || []).entries()) {
         if (index3 > 0 && !!axisCmpt.get("grid") && !axisCmpt.explicit.grid) {
           axisCmpt.implicit.grid = false;
@@ -81565,14 +81670,14 @@ async function renderVegaLite(spec, outSvg, tokens = {}) {
     ...tokens.font?.body ? { font: tokens.font.body } : {}
   };
   const vl = compile2({ ...spec, config: { ...config2, ...spec.config ?? {} } });
-  const view = new View(parse12(vl.spec), { renderer: "none" });
+  const view = new View(parse13(vl.spec), { renderer: "none" });
   writeFileSync11(outSvg, await view.toSVG());
 }
 
 // packages/course-kit/src/cli.ts
 function readJson(path3, what) {
   try {
-    return JSON.parse(readFileSync13(path3, "utf8"));
+    return JSON.parse(readFileSync14(path3, "utf8"));
   } catch (e) {
     throw new ValidationError(`cannot read ${what} ${path3}: ${e instanceof Error ? e.message : String(e)}`);
   }
@@ -81660,6 +81765,27 @@ var studioCommands = {
     return { ok: true };
   },
   "providers show": (a3) => loadProviders(requireFlag(a3, "course")) ?? { detected: null },
+  "brand validate": (a3) => ({ brand: loadBrand(requirePositional(a3, 0, "file")) }),
+  "style tokens": (a3) => {
+    const course = requireFlag(a3, "course");
+    let brandPath;
+    if (typeof a3.flags.brand === "string") brandPath = resolve5(a3.flags.brand);
+    else {
+      const rel = loadManifest(course).brand;
+      const theme = join16(course, "05-media", "style", "theme.yaml");
+      if (rel) brandPath = resolve5(course, rel);
+      else if (existsSync14(theme)) brandPath = theme;
+    }
+    if (!brandPath) throw new UsageError("no brand file: pass --brand, set brand in course.yaml, or create 05-media/style/theme.yaml");
+    const tokens = deriveTokens(loadBrand(brandPath));
+    const issues = checkTokens(tokens);
+    const errors = issues.filter((i) => i.level === "error");
+    if (errors.length) throw new ValidationError(`brand tokens fail contrast checks: ${errors.map((i) => `${i.path}: ${i.message}`).join("; ")}`);
+    const dir = join16(course, "05-media", "style");
+    mkdirSync10(dir, { recursive: true });
+    writeFileSync12(join16(dir, "tokens.json"), JSON.stringify(tokens, null, 2) + "\n");
+    return { tokens, issues };
+  },
   "providers patterns": () => providerPatterns()
 };
 var isMain = (() => {
