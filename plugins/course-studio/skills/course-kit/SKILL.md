@@ -25,7 +25,7 @@ Core:
 - `hash-write <file> --course "<dir>"`: recompute and write `sourceHashes` into the file's frontmatter.
 - `manifest init --course "<dir>" --json '<options>' [--force]`: create `course.yaml`.
 - `manifest validate --course "<dir>"`: validate `course.yaml`; exit 2 on errors.
-- `manifest sync --course "<dir>" [--write]`: parse objectives and outline, assign stable IDs, update `course.yaml`. Without `--write` it is a read-only dry run; with `--write` it saves `course.yaml` and the ID comments. Running it again does not duplicate anything.
+- `manifest sync --course "<dir>" [--write]`: parse objectives and outline, assign stable IDs, update `course.yaml`. Without `--write` it is a read-only dry run; with `--write` it saves `course.yaml` and the ID comments in the objectives file, the outline, and (module IDs only, from `Module <n>:` headings) `02-design/lesson-plans.md`, `04-materials/student-handout.md` and `04-materials/instructor-guide.md` when they exist. Running it again does not duplicate anything.
 
 Media plan and registry:
 

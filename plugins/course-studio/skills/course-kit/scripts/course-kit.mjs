@@ -28102,6 +28102,20 @@ function insertIdComments(markdown, items) {
   });
   return result.join("\n");
 }
+var MODULE_DOCS = ["02-design/lesson-plans.md", "04-materials/student-handout.md", "04-materials/instructor-guide.md"];
+function moduleHeadings(markdown, known) {
+  const lines = markdown.split("\n");
+  const marked = markedComments(lines);
+  const out = [];
+  let logical = 0;
+  lines.forEach((l, i) => {
+    if (marked[i]) return;
+    logical++;
+    const m3 = /^#{2,4} Module (\d+):/.exec(l);
+    if (m3 && known.has(`M${m3[1]}`)) out.push({ id: `M${m3[1]}`, line: logical });
+  });
+  return out;
+}
 function readIfExists(path3) {
   return existsSync2(path3) ? readFileSync5(path3, "utf8") : void 0;
 }
@@ -28156,6 +28170,14 @@ function syncManifest(courseDir, opts) {
     saveManifest(courseDir, manifest);
     if (objMd !== void 0) writeFileSync3(objPath, insertIdComments(objMd, objectives));
     if (outMd !== void 0) writeFileSync3(outPath, insertIdComments(outMd, modules2));
+    const known = new Set(manifest.modules.map((m3) => m3.id));
+    for (const rel of MODULE_DOCS) {
+      const f = join2(courseDir, rel);
+      const md2 = readIfExists(f);
+      if (md2 === void 0) continue;
+      const next = insertIdComments(md2, moduleHeadings(md2, known));
+      if (next !== md2) writeFileSync3(f, next);
+    }
   }
   return { manifest, issues };
 }

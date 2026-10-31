@@ -19,7 +19,7 @@ Check every generated asset, then let the user decide. `KIT` means `node "${CLAU
 ## Steps
 
 1. Run `KIT registry list --course "<dir>"`. Take the assets with `status: generated`. If there are none, say so and stop.
-2. For each asset, open the file (`Read` shows images and SVG sources) and its source. Compare its facts with the lesson segment in `02-design/lesson-plans.md` (the plan item `segment` and `description`). Record each check as `pass`, `fail` or `n/a`, with a short note:
+2. Asset `files` and `source` are relative to the course folder: open them as `<dir>/<path>`. For each asset, open the file (`Read` shows images and SVG sources) and its source. Compare its facts with the lesson segment in `02-design/lesson-plans.md` (the plan item `segment` and `description`). Record each check as `pass`, `fail` or `n/a`, with a short note:
 
    | Check | Question |
    | --- | --- |

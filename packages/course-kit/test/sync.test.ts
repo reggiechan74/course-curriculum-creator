@@ -1,4 +1,4 @@
-import { cpSync, mkdtempSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
@@ -140,4 +140,26 @@ test('manifest sync CLI honours --write', async () => {
   expect(loadManifest(dir).modules).toHaveLength(4);
   expect(JSON.parse(out[1]).manifest.id).toBe('intro-to-lease-abstraction');
   vi.restoreAllMocks();
+});
+
+test('sync --write adds module ID comments to lesson plans, handout and guide; stable; dry run changes nothing', () => {
+  const dir = copyFixture('v2-sample');
+  const { manifest } = syncManifest(dir, { write: false });
+  const ids = manifest.modules.map((m) => m.id);
+  expect(ids).toContain('M1');
+  expect(ids).toContain('M2');
+  const doc = '---\ntitle: LP\n---\n\n# Lesson Plans\n\n## Module 1: X\n\nText\n\n### Module 2: Y\n\nMore\n\n## Module 99: Z\n';
+  const rels = ['02-design/lesson-plans.md', '04-materials/student-handout.md', '04-materials/instructor-guide.md'];
+  mkdirSync(join(dir, '04-materials'), { recursive: true });
+  mkdirSync(join(dir, '02-design'), { recursive: true });
+  for (const r of rels.slice(0, 2)) writeFileSync(join(dir, r), doc); // instructor-guide absent
+  syncManifest(dir, { write: false });
+  expect(readFileSync(join(dir, rels[0]), 'utf8')).toBe(doc);
+  syncManifest(dir, { write: true });
+  const once = readFileSync(join(dir, rels[0]), 'utf8');
+  expect(once).toBe(doc.replace('## Module 1: X\n', '## Module 1: X\n<!-- id: M1 -->\n').replace('### Module 2: Y\n', '### Module 2: Y\n<!-- id: M2 -->\n'));
+  expect(readFileSync(join(dir, rels[1]), 'utf8')).toBe(once);
+  expect(existsSync(join(dir, rels[2]))).toBe(false);
+  syncManifest(dir, { write: true });
+  expect(readFileSync(join(dir, rels[0]), 'utf8')).toBe(once);
 });

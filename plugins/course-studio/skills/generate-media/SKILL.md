@@ -23,20 +23,22 @@ The course folder is the argument, or the current directory if it contains `cour
 ## Steps
 
 1. Run `KIT providers show --course "<dir>"`. If it returns `{"detected":null}`, do steps 2 to 5 of the `setup` skill (probe Codex, match tool patterns, match design skills, `providers record`) and read it again.
-2. Run `KIT plan validate --course "<dir>"` (exit 2: stop and show the errors) and `KIT registry list --course "<dir>"`. Take the plan items with `status: approved` in module sequence. Skip any item that already has an asset in the registry with status `generated`, `approved` or `imported`. For an asset with status `rejected`, make it again (the same `id`; see "Remake" below).
-3. For each item, use the section for its `kind`. Save sources in `05-media/src/` and results in `05-media/out/`, named by item ID. Use the style tokens in `05-media/style/tokens.json` (`--tokens`) where a renderer accepts them.
+2. Run `KIT plan validate --course "<dir>"` (exit 2: stop and show the errors) and `KIT registry list --course "<dir>"`. Take the plan items with `status: approved` in module sequence. Skip any item that already has an asset in the registry with status `generated`, `approved` or `imported`. List assets with status `rejected` and ask the user (AskUserQuestion) whether to regenerate them; remake one (see "Remake") only when the user asks, or when `review-media` recorded a regenerate request for it. Never regenerate a rejected asset on your own, because it can cost money.
+3. **Paths.** Every `05-media/...` path in this skill is relative to the course folder. The `render` commands and your Write calls resolve paths from the current directory, so prefix them with `<dir>/` (the course folder, quoted) unless it is the current directory. In registry JSON (`files`, `source`) keep the course-relative form, for example `05-media/out/<id>.svg`. After rendering, check that the file exists at `<dir>/05-media/out/<id>.svg` before you register it.
+
+   For each item, use the section for its `kind`. Save sources in `<dir>/05-media/src/` and results in `<dir>/05-media/out/`, named by item ID. Use the style tokens in `<dir>/05-media/style/tokens.json` (`--tokens`) where a renderer accepts them.
 4. After all items, run `KIT ledger totals --course "<dir>"` and tell the user: what was made, what is still a placeholder and why, and the spend. Then give the next step: `/course-studio:review-media`.
 
 ## Diagrams (`kind: diagram`, `chart` is below)
 
 Follow the item `provider`, then the fallbacks in this order:
 
-1. `excalidraw`: only when the Excalidraw connector is connected and `preferred_diagram_style` is `hand-drawn` (or the item says `excalidraw`). Create the scene with the connector, save the scene JSON to `05-media/src/<id>.excalidraw` and keep its share URL. Run `KIT render excalidraw 05-media/src/<id>.excalidraw 05-media/out/<id>.svg --data-dir "${CLAUDE_PLUGIN_DATA}"`.
-2. `mermaid`: write Mermaid to `05-media/src/<id>.mmd` and run `KIT render mermaid 05-media/src/<id>.mmd 05-media/out/<id>.svg --data-dir "${CLAUDE_PLUGIN_DATA}" --tokens 05-media/style/tokens.json`. Use this when the Excalidraw connector or its renderer is not available.
+1. `excalidraw`: only when the Excalidraw connector is connected and `preferred_diagram_style` is `hand-drawn` (or the item says `excalidraw`). Create the scene with the connector, save the scene JSON to `<dir>/05-media/src/<id>.excalidraw` and keep its share URL. Run `KIT render excalidraw "<dir>/05-media/src/<id>.excalidraw" "<dir>/05-media/out/<id>.svg" --data-dir "${CLAUDE_PLUGIN_DATA}"`.
+2. `mermaid`: write Mermaid to `<dir>/05-media/src/<id>.mmd` and run `KIT render mermaid "<dir>/05-media/src/<id>.mmd" "<dir>/05-media/out/<id>.svg" --data-dir "${CLAUDE_PLUGIN_DATA}" --tokens "<dir>/05-media/style/tokens.json"`. Use this when the Excalidraw connector or its renderer is not available.
 3. If mermaid-cli is not installed (exit 4), use the Mermaid Chart connector, if connected, and save its SVG to the output path.
-4. If no tool is available (or the item `provider` is `svg`), write the SVG yourself to `05-media/out/<id>.svg`: a `viewBox`, a `<title>` and `<desc>`, text of at least 16px equivalent, colors from `tokens.json`, no external references.
+4. If no tool is available (or the item `provider` is `svg`), write the SVG yourself to `<dir>/05-media/out/<id>.svg`: a `viewBox`, a `<title>` and `<desc>`, text of at least 16px equivalent, colors from `tokens.json`, no external references.
 
-Chart (`kind: chart`): write a Vega-Lite spec to `05-media/src/<id>.vl.json` with the data inline, then run `KIT render vegalite 05-media/src/<id>.vl.json 05-media/out/<id>.svg --tokens 05-media/style/tokens.json`.
+Chart (`kind: chart`): write a Vega-Lite spec to `<dir>/05-media/src/<id>.vl.json` with the data inline, then run `KIT render vegalite "<dir>/05-media/src/<id>.vl.json" "<dir>/05-media/out/<id>.svg" --tokens "<dir>/05-media/style/tokens.json"`.
 
 After a diagram or chart renders, register it with `KIT registry add --course "<dir>" --json '<asset>'`:
 `{"id":"<id>","kind":"diagram"|"chart","function":<item function>,"objectives":<item objectives>,"module":"<item module>","provider":"excalidraw|mermaid|vegalite|svg","source":"05-media/src/<file>","files":["05-media/out/<id>.svg"],"alt":"","status":"generated","costUsd":0,"quotaUnits":0,"shareUrl":<only when you have one>,"createdAt":"<iso>"}`. Leave `alt` empty; `review-media` writes it.
@@ -58,7 +60,7 @@ Choose the provider in this order, using `.course/providers.json`:
 
 Never call an image API directly with `curl` or a script. All generation goes through `gen image` or the MCP tool, because only they reserve budget in the ledger. If no provider operates, keep the placeholder, tell the user which provider each missing image needs. The embed step shows the placeholder until an asset is approved.
 
-If an image needs labels, run `KIT render overlay <image> <labels.json> <out.svg>` and register the overlay file in the asset `files` after the image.
+If an image needs labels, run `KIT render overlay "<dir>/<image>" "<dir>/<labels.json>" "<dir>/<out.svg>"` and register the overlay file in the asset `files` after the image.
 
 ### Image exit codes
 

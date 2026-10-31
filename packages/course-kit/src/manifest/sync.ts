@@ -111,6 +111,23 @@ export function insertIdComments(markdown: string, items: { id: string; line: nu
   return result.join('\n');
 }
 
+const MODULE_DOCS = ['02-design/lesson-plans.md', '04-materials/student-handout.md', '04-materials/instructor-guide.md'];
+
+/** Module headings (`## Module 2: X`, levels 2 to 4) of a document, as insertIdComments items; only known module IDs. */
+function moduleHeadings(markdown: string, known: Set<string>): { id: string; line: number }[] {
+  const lines = markdown.split('\n');
+  const marked = markedComments(lines);
+  const out: { id: string; line: number }[] = [];
+  let logical = 0;
+  lines.forEach((l, i) => {
+    if (marked[i]) return;
+    logical++;
+    const m = /^#{2,4} Module (\d+):/.exec(l);
+    if (m && known.has(`M${m[1]}`)) out.push({ id: `M${m[1]}`, line: logical });
+  });
+  return out;
+}
+
 function readIfExists(path: string): string | undefined {
   return existsSync(path) ? readFileSync(path, 'utf8') : undefined;
 }
@@ -159,6 +176,14 @@ export function syncManifest(courseDir: string, opts: { write: boolean }): { man
     saveManifest(courseDir, manifest);
     if (objMd !== undefined) writeFileSync(objPath, insertIdComments(objMd, objectives));
     if (outMd !== undefined) writeFileSync(outPath, insertIdComments(outMd, modules));
+    const known = new Set(manifest.modules.map((m) => m.id));
+    for (const rel of MODULE_DOCS) {
+      const f = join(courseDir, rel);
+      const md = readIfExists(f);
+      if (md === undefined) continue;
+      const next = insertIdComments(md, moduleHeadings(md, known));
+      if (next !== md) writeFileSync(f, next);
+    }
   }
   return { manifest, issues };
 }

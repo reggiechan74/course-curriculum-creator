@@ -23,7 +23,7 @@ Always quote paths; course folders may contain spaces. Output is JSON on stdout.
 - `hash-write <file> --course "<dir>"`: recompute and write `sourceHashes` into the file's frontmatter.
 - `manifest init --course "<dir>" --json '<options>' [--force]`: create `course.yaml`. Refuses to overwrite without `--force`.
 - `manifest validate --course "<dir>"`: validate `course.yaml`; exit 2 on errors.
-- `manifest sync --course "<dir>" [--write]`: parse the objectives and outline markdown, assign stable IDs, update `course.yaml`; `--write` also writes `<!-- id: ... -->` comments into the markdown. Safe to run repeatedly.
+- `manifest sync --course "<dir>" [--write]`: parse the objectives and outline markdown, assign stable IDs, update `course.yaml`; `--write` also writes `<!-- id: ... -->` comments into the objectives file and outline, and module ID comments (`## Module 1:` becomes `M1`) into `02-design/lesson-plans.md`, `04-materials/student-handout.md` and `04-materials/instructor-guide.md` when they exist. Safe to run repeatedly.
 
 Later releases add more commands (plan, registry and media commands); they will be listed here.
 
