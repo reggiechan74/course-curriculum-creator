@@ -27,6 +27,20 @@ Run these in a course folder.
 
 Two knowledge skills, `course-kit` (the CLI) and `media-pedagogy` (function taxonomy, Mayer's principles, UDL and accessibility rules), are used by the others and are not run by hand.
 
+## Provider routing
+
+`plan-media` and `generate-media` pick the first available tool in each row.
+
+| Function | Preferred | Fallbacks |
+| --- | --- | --- |
+| Hand-drawn concept or process diagram | `excalidraw` (connector connected and `preferred_diagram_style: hand-drawn`) | `mermaid` |
+| Precise flow, sequence, hierarchy, timeline | `mermaid` | Mermaid Chart connector, then a hand-written `svg` |
+| Chart (`data-viz`) | `vegalite` | table plus description |
+| Illustration, scenario, analogy | `codex` (billed to your ChatGPT plan, no key) | `openai` through `course-media` (needs a key), a detected image tool, then a placeholder plus the saved prompt |
+| Infographic, job aid | HTML and SVG template | markdown one-pager |
+
+With no connectors, no Codex and no key, diagrams and charts are still made locally and images stay as placeholders. Images never contain text; labels are added as an overlay.
+
 ## Settings
 
 Claude Code asks for these when you enable the plugin. Change them with `/plugin configure course-studio@course-curriculum-creator`.

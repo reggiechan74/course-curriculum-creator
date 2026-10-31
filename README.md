@@ -48,11 +48,27 @@ When you install the plugin, Claude Code asks for your [settings](#configuration
 
 ### Course Studio (media plugin)
 
-`plugins/course-studio` adds diagrams, charts and images to courses made with this plugin: brand and style guide, a media plan with cost estimates, and (in the next release) generation, review and embedding. See [plugins/course-studio/README.md](plugins/course-studio/README.md).
+`plugins/course-studio` (0.1.0) adds diagrams, charts and images to courses made with this plugin: brand and style guide, a media plan with cost estimates, generation within a budget, review with alt text, and embedding into your lesson plans and materials. It needs this plugin (2.1.0 or later). See [plugins/course-studio/README.md](plugins/course-studio/README.md).
 
 ```
 /plugin install course-studio@course-curriculum-creator
 ```
+
+| Plugin | Version | Install |
+| --- | --- | --- |
+| `course-curriculum-creator` | 2.1.0 | `/plugin install course-curriculum-creator@course-curriculum-creator` |
+| `course-studio` | 0.1.0 | `/plugin install course-studio@course-curriculum-creator` |
+
+### Recommended companions
+
+Companion design skills are recommended, never required. `/course-studio:setup` detects them and prints the install command for any that are missing. It installs nothing unless you say yes. They choose layout and composition; your brand colors and fonts stay as hard constraints.
+
+| Companion | Repo | Install (Claude Code) | Used for |
+| --- | --- | --- | --- |
+| Impeccable | `pbakaus/impeccable` | `/plugin marketplace add pbakaus/impeccable`, then install from `/plugin` | Design direction and polish; `/impeccable audit` and `critique` as a quality gate |
+| Taste | `Leonxlnx/taste-skill` | `npx skills add https://github.com/Leonxlnx/taste-skill --skill "design-taste-frontend"` | Avoiding a templated look; design variance, motion and density |
+| UI UX Pro Max | `nextlevelbuilder/ui-ux-pro-max-skill` | `/plugin marketplace add nextlevelbuilder/ui-ux-pro-max-skill` | Palettes, font pairings, chart guidance; seeds the style guide when there is no brand |
+| Anthropic `frontend-design` / `web-artifacts-builder` | Anthropic skills | built in or via the Anthropic marketplace | Baseline fallback |
 
 ### Local Development
 This repository is a marketplace. It contains more than one plugin.
