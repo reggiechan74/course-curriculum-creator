@@ -28356,7 +28356,8 @@ var TRANSITIONS = {
   generated: ["approved", "rejected"],
   rejected: ["generated"],
   imported: ["approved", "rejected"],
-  approved: []
+  approved: ["rejected"]
+  // revoking an approval is always safe; the asset stops being embedded
 };
 function setStatus(r, id2, to, opts = {}) {
   const a3 = r.assets.find((x5) => x5.id === id2);
@@ -28367,8 +28368,9 @@ function setStatus(r, id2, to, opts = {}) {
     if (opts.approvedBy !== "user") throw new ValidationError(`asset ${id2} must be approved by the user (approvedBy: user)`);
   }
   const next = { ...a3, status: to };
+  if (to === "rejected") delete next.approvedBy;
   if (opts.review) next.review = opts.review;
-  if (opts.approvedBy) next.approvedBy = opts.approvedBy;
+  if (opts.approvedBy && to === "approved") next.approvedBy = opts.approvedBy;
   return { ...r, assets: r.assets.map((x5) => x5.id === id2 ? next : x5) };
 }
 function updateAssetText(r, id2, patch2) {
@@ -29226,7 +29228,7 @@ async function generateAssetImage(courseDir, assetId, provider, o) {
   const registry2 = loadRegistry(courseDir);
   const prior = registry2.assets.find((a3) => a3.id === assetId);
   if (prior && (prior.status === "approved" || prior.status === "imported")) {
-    throw new ValidationError(`Asset ${assetId} is ${prior.status}; reject it first to regenerate`);
+    throw new ValidationError(`Asset ${assetId} is ${prior.status}; reject it first to regenerate (registry status ${assetId} rejected)`);
   }
   const anchorsFile = join12(courseDir, "05-media", "style", "prompt-anchors.md");
   if (!existsSync12(anchorsFile)) throw new ValidationError("Run generate-style-guide first.");

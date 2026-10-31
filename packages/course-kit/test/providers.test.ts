@@ -232,7 +232,7 @@ test('regeneration of an approved or imported asset is refused before the budget
     existing(dir, status);
     const fetchImpl = okFetch();
     await expect(generateAssetImage(dir, ID, 'openai', { quality: 'standard', env: { OPENAI_API_KEY: KEY }, fetchImpl }))
-      .rejects.toThrow(new ValidationError(`Asset ${ID} is ${status}; reject it first to regenerate`));
+      .rejects.toThrow(new ValidationError(`Asset ${ID} is ${status}; reject it first to regenerate (registry status ${ID} rejected)`));
     expect(fetchImpl).not.toHaveBeenCalled();
   }
 });

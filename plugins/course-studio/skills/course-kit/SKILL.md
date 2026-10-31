@@ -34,7 +34,7 @@ Media plan and registry:
 - `registry list --course "<dir>"`: list assets in `05-media/registry.json`.
 - `registry add --course "<dir>" --json '<asset>'`: add an asset.
 - `registry update <id> --course "<dir>" --json '{"alt":"…","longDescription":"…","caption":"…"}'`: set alt text, long description and caption. Cannot change status; refused for approved assets.
-- `registry status <id> <to> --course "<dir>" [--approved-by user] [--review '<json>']`: set status to `generated`, `approved`, `rejected` or `imported`. Only the user approves an asset.
+- `registry status <id> <to> --course "<dir>" [--approved-by user] [--review '<json>']`: set status to `generated`, `approved`, `rejected` or `imported`. Only the user approves an asset. Allowed: generated or imported to approved or rejected; rejected to generated; approved to rejected (revokes the approval and clears `approvedBy`).
 
 Embedding:
 

@@ -37,9 +37,16 @@ test('transitions', () => {
   expect(setStatus(reg(asset({ status: 'rejected' })), 'A-M1-01', 'generated').assets[0].status).toBe('generated');
   expect(() => setStatus(reg(asset({ status: 'rejected' })), 'A-M1-01', 'approved', { approvedBy: 'user' })).toThrow();
   expect(setStatus(reg(asset({ status: 'imported' })), 'A-M1-01', 'approved', { approvedBy: 'user' }).assets[0].status).toBe('approved');
-  expect(() => setStatus(reg(asset({ status: 'approved' })), 'A-M1-01', 'rejected')).toThrow();
+  expect(() => setStatus(reg(asset({ status: 'approved', approvedBy: 'user' })), 'A-M1-01', 'generated')).toThrow(ValidationError);
   expect(() => setStatus(reg(), 'nope', 'rejected')).toThrow(ValidationError);
 });
+test('approval can be revoked: approved to rejected clears approvedBy, then regenerate or re-approve via generated', () => {
+  const r = setStatus(reg(asset({ status: 'approved', approvedBy: 'user' })), 'A-M1-01', 'rejected');
+  expect(r.assets[0].status).toBe('rejected');
+  expect(r.assets[0]).not.toHaveProperty('approvedBy');
+  expect(setStatus(r, 'A-M1-01', 'generated').assets[0].status).toBe('generated');
+});
+
 test('an asset cannot be added already approved', () => {
   expect(() => addAsset(reg(), asset({ status: 'approved', approvedBy: 'user' }))).toThrow(/cannot be added as approved/);
   expect(() => addAsset(reg(), asset({ status: 'approved' }))).toThrow(ValidationError);

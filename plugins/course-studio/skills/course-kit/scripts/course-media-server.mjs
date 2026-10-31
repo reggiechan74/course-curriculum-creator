@@ -44608,7 +44608,7 @@ async function generateAssetImage(courseDir, assetId, provider, o) {
   const registry2 = loadRegistry(courseDir);
   const prior = registry2.assets.find((a) => a.id === assetId);
   if (prior && (prior.status === "approved" || prior.status === "imported")) {
-    throw new ValidationError(`Asset ${assetId} is ${prior.status}; reject it first to regenerate`);
+    throw new ValidationError(`Asset ${assetId} is ${prior.status}; reject it first to regenerate (registry status ${assetId} rejected)`);
   }
   const anchorsFile = join7(courseDir, "05-media", "style", "prompt-anchors.md");
   if (!existsSync7(anchorsFile)) throw new ValidationError("Run generate-style-guide first.");

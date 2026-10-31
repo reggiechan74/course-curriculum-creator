@@ -35,7 +35,7 @@ const TRANSITIONS: Record<AssetStatus, AssetStatus[]> = {
   generated: ['approved', 'rejected'],
   rejected: ['generated'],
   imported: ['approved', 'rejected'],
-  approved: [],
+  approved: ['rejected'], // revoking an approval is always safe; the asset stops being embedded
 };
 
 export function setStatus(
@@ -49,8 +49,9 @@ export function setStatus(
     if (opts.approvedBy !== 'user') throw new ValidationError(`asset ${id} must be approved by the user (approvedBy: user)`);
   }
   const next: Asset = { ...a, status: to };
+  if (to === 'rejected') delete next.approvedBy;
   if (opts.review) next.review = opts.review;
-  if (opts.approvedBy) next.approvedBy = opts.approvedBy;
+  if (opts.approvedBy && to === 'approved') next.approvedBy = opts.approvedBy;
   return { ...r, assets: r.assets.map((x) => (x.id === id ? next : x)) };
 }
 

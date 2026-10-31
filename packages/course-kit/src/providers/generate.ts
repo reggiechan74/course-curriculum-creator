@@ -36,7 +36,7 @@ export async function generateAssetImage(courseDir: string, assetId: string, pro
   const registry = loadRegistry(courseDir);
   const prior = registry.assets.find((a) => a.id === assetId);
   if (prior && (prior.status === 'approved' || prior.status === 'imported')) {
-    throw new ValidationError(`Asset ${assetId} is ${prior.status}; reject it first to regenerate`);
+    throw new ValidationError(`Asset ${assetId} is ${prior.status}; reject it first to regenerate (registry status ${assetId} rejected)`);
   }
 
   // 2. Prompt anchors from the style guide.
