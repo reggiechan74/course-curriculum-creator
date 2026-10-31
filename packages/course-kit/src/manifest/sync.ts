@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, join, resolve } from 'node:path';
 import { ValidationError } from '../errors.js';
+import { keepFresh } from '../hash.js';
 import {
   type Manifest, type ObjectiveKind, type Session, type ValidationIssue,
   initManifest, loadManifest, saveManifest, validateManifest,
@@ -172,7 +173,7 @@ export function syncManifest(courseDir: string, opts: { write: boolean }): { man
     }
   });
 
-  if (opts.write) {
+  if (opts.write) keepFresh(courseDir, () => {
     saveManifest(courseDir, manifest);
     if (objMd !== undefined) writeFileSync(objPath, insertIdComments(objMd, objectives));
     if (outMd !== undefined) writeFileSync(outPath, insertIdComments(outMd, modules));
@@ -184,6 +185,6 @@ export function syncManifest(courseDir: string, opts: { write: boolean }): { man
       const next = insertIdComments(md, moduleHeadings(md, known));
       if (next !== md) writeFileSync(f, next);
     }
-  }
+  });
   return { manifest, issues };
 }

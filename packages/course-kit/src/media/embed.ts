@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, sep } from 'node:path';
 import { ValidationError } from '../errors.js';
+import { keepFresh } from '../hash.js';
 import { loadPlan } from './plan.js';
 import { loadRegistry } from './registry.js';
 import type { Asset, PlanItem } from './schema.js';
@@ -87,22 +88,24 @@ export function embedAll(courseDir: string): EmbedReport[] {
   }
 
   const reports: EmbedReport[] = [];
-  for (const parts of EMBED_FILES) {
-    const file = join(courseDir, ...parts);
-    if (!existsSync(file)) continue;
-    const original = readFileSync(file, 'utf8');
-    let text = original;
-    const report: EmbedReport = { file: parts.join('/'), embedded: [], placeholders: [] };
-    for (const w of work) {
-      if (!hasAnchor(text, w.module)) continue;
-      const rel = w.files0 ? relative(dirname(file), join(courseDir, w.files0)).split(sep).join('/') : '';
-      const item = isApprovedAsset(w.item) && !rel ? ({ ...w.item, status: 'generated' } as Asset) : w.item;
-      text = embedAsset(text, item, w.module, rel);
-      (isApprovedAsset(item) ? report.embedded : report.placeholders).push(w.id);
+  keepFresh(courseDir, () => {
+    for (const parts of EMBED_FILES) {
+      const file = join(courseDir, ...parts);
+      if (!existsSync(file)) continue;
+      const original = readFileSync(file, 'utf8');
+      let text = original;
+      const report: EmbedReport = { file: parts.join('/'), embedded: [], placeholders: [] };
+      for (const w of work) {
+        if (!hasAnchor(text, w.module)) continue;
+        const rel = w.files0 ? relative(dirname(file), join(courseDir, w.files0)).split(sep).join('/') : '';
+        const item = isApprovedAsset(w.item) && !rel ? ({ ...w.item, status: 'generated' } as Asset) : w.item;
+        text = embedAsset(text, item, w.module, rel);
+        (isApprovedAsset(item) ? report.embedded : report.placeholders).push(w.id);
+      }
+      if (text !== original) writeFileSync(file, text);
+      reports.push(report);
     }
-    if (text !== original) writeFileSync(file, text);
-    reports.push(report);
-  }
+  });
   return reports;
 }
 
@@ -117,6 +120,6 @@ export function embedOne(courseDir: string, file: string, id: string, anchorId: 
   const rel = first ? relative(dirname(file), join(courseDir, first)).split(sep).join('/') : '';
   const original = readFileSync(file, 'utf8');
   const out = embedAsset(original, item, anchorId, rel);
-  if (out !== original) writeFileSync(file, out);
+  if (out !== original) keepFresh(courseDir, () => writeFileSync(file, out));
   return { embedded: isApprovedAsset(item) };
 }

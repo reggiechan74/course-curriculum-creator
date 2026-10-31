@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
-import { existsSync, readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 import { Scalar } from 'yaml';
 import { readFrontmatter, updateFrontmatter } from './frontmatter.js';
 
@@ -44,4 +44,52 @@ export function writeHashes(outputPath: string, courseDir: string): void {
     }
   }
   updateFrontmatter(outputPath, { sourceHashes: hashes });
+}
+
+function listMarkdown(root: string, rel = ''): string[] {
+  const out: string[] = [];
+  for (const e of readdirSync(join(root, rel), { withFileTypes: true })) {
+    if (e.name.startsWith('.') || e.name === 'node_modules') continue;
+    const r = rel ? join(rel, e.name) : e.name;
+    if (e.isDirectory()) out.push(...listMarkdown(root, r));
+    else if (e.name.endsWith('.md')) out.push(join(root, r));
+  }
+  return out;
+}
+
+/** Outputs (any .md in the course with `sourceFiles` frontmatter) that are fresh now. */
+export function freshOutputs(courseDir: string): string[] {
+  const dir = resolve(courseDir);
+  return listMarkdown(dir).filter((p) => {
+    try {
+      const { data } = readFrontmatter(p, { strings: true });
+      return Object.keys(sourceFilesOf(data)).length > 0 && checkStale(p, dir).status === 'fresh';
+    } catch { return false; /* unreadable frontmatter: leave it alone */ }
+  });
+}
+
+/**
+ * Rewrites the hashes of the given outputs that have gone stale. Repeats until stable, because
+ * refreshing one output changes its bytes, which can make an output that hashes it stale.
+ */
+export function refreshOutputs(courseDir: string, outputs: string[]): void {
+  const dir = resolve(courseDir);
+  for (let round = 0; round <= outputs.length; round++) {
+    let changed = false;
+    for (const p of outputs) {
+      if (checkStale(p, dir).status === 'stale') { writeHashes(p, dir); changed = true; }
+    }
+    if (!changed) return;
+  }
+}
+
+/**
+ * Runs a toolkit write (ID comments, media blocks) that changes source files, then recomputes the
+ * hashes of exactly the outputs that were fresh before it. Outputs that were already stale stay stale.
+ */
+export function keepFresh<T>(courseDir: string, write: () => T): T {
+  const fresh = freshOutputs(courseDir);
+  const result = write();
+  refreshOutputs(courseDir, fresh);
+  return result;
 }

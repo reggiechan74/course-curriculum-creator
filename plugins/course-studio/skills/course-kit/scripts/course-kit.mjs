@@ -7833,7 +7833,7 @@ var require_topojson_client = __commonJS({
 
 // packages/course-kit/src/cli.ts
 import { existsSync as existsSync16, mkdirSync as mkdirSync11, readFileSync as readFileSync16, realpathSync as realpathSync2, writeFileSync as writeFileSync14 } from "node:fs";
-import { join as join18, resolve as resolve6 } from "node:path";
+import { join as join19, resolve as resolve6 } from "node:path";
 import { fileURLToPath } from "node:url";
 
 // packages/course-kit/src/brand/tokens.ts
@@ -27689,7 +27689,7 @@ function checkTokens(t) {
 
 // packages/course-kit/src/commands-core.ts
 import { existsSync as existsSync7, mkdirSync as mkdirSync4 } from "node:fs";
-import { join as join7 } from "node:path";
+import { join as join8 } from "node:path";
 
 // packages/course-kit/src/cli/args.ts
 function parseArgs(argv) {
@@ -27754,8 +27754,8 @@ async function runCli(argv, commands) {
 // packages/course-kit/src/hash.ts
 var import_yaml3 = __toESM(require_dist(), 1);
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync as readFileSync3 } from "node:fs";
-import { resolve } from "node:path";
+import { existsSync, readdirSync, readFileSync as readFileSync3 } from "node:fs";
+import { join, resolve } from "node:path";
 
 // packages/course-kit/src/frontmatter.ts
 var import_yaml2 = __toESM(require_dist(), 1);
@@ -27837,11 +27837,51 @@ function writeHashes(outputPath, courseDir) {
   }
   updateFrontmatter(outputPath, { sourceHashes: hashes });
 }
+function listMarkdown(root, rel = "") {
+  const out = [];
+  for (const e of readdirSync(join(root, rel), { withFileTypes: true })) {
+    if (e.name.startsWith(".") || e.name === "node_modules") continue;
+    const r = rel ? join(rel, e.name) : e.name;
+    if (e.isDirectory()) out.push(...listMarkdown(root, r));
+    else if (e.name.endsWith(".md")) out.push(join(root, r));
+  }
+  return out;
+}
+function freshOutputs(courseDir) {
+  const dir = resolve(courseDir);
+  return listMarkdown(dir).filter((p) => {
+    try {
+      const { data: data3 } = readFrontmatter(p, { strings: true });
+      return Object.keys(sourceFilesOf(data3)).length > 0 && checkStale(p, dir).status === "fresh";
+    } catch {
+      return false;
+    }
+  });
+}
+function refreshOutputs(courseDir, outputs) {
+  const dir = resolve(courseDir);
+  for (let round = 0; round <= outputs.length; round++) {
+    let changed = false;
+    for (const p of outputs) {
+      if (checkStale(p, dir).status === "stale") {
+        writeHashes(p, dir);
+        changed = true;
+      }
+    }
+    if (!changed) return;
+  }
+}
+function keepFresh(courseDir, write) {
+  const fresh = freshOutputs(courseDir);
+  const result = write();
+  refreshOutputs(courseDir, fresh);
+  return result;
+}
 
 // packages/course-kit/src/manifest/io.ts
 var import_yaml4 = __toESM(require_dist(), 1);
 import { readFileSync as readFileSync4, writeFileSync as writeFileSync2 } from "node:fs";
-import { join } from "node:path";
+import { join as join2 } from "node:path";
 
 // packages/course-kit/src/manifest/schema.ts
 var ShapeSchema = external_exports.enum(["workshop", "cohort", "self-paced"]);
@@ -27937,7 +27977,7 @@ function initManifest(opts, today) {
 function loadManifest(courseDir) {
   let raw;
   try {
-    raw = (0, import_yaml4.parse)(readFileSync4(join(courseDir, FILE), "utf8"));
+    raw = (0, import_yaml4.parse)(readFileSync4(join2(courseDir, FILE), "utf8"));
   } catch (e) {
     throw new ValidationError(`cannot read ${FILE}: ${e instanceof Error ? e.message : String(e)}`);
   }
@@ -27954,7 +27994,7 @@ function saveManifest(courseDir, m3) {
     const v2 = m3[key2];
     if (v2 !== void 0) ordered[key2] = v2;
   }
-  writeFileSync2(join(courseDir, FILE), (0, import_yaml4.stringify)(ordered));
+  writeFileSync2(join2(courseDir, FILE), (0, import_yaml4.stringify)(ordered));
 }
 function duplicates(ids, list, out) {
   const seen = /* @__PURE__ */ new Set();
@@ -28005,7 +28045,7 @@ function validateManifest(m3) {
 
 // packages/course-kit/src/manifest/sync.ts
 import { existsSync as existsSync2, readFileSync as readFileSync5, writeFileSync as writeFileSync3 } from "node:fs";
-import { basename, join as join2, resolve as resolve2 } from "node:path";
+import { basename, join as join3, resolve as resolve2 } from "node:path";
 var OBJECTIVES_PATH = "01-planning/learning-objectives.md";
 var OUTLINE_PATH = "02-design/course-outline.md";
 var ID_COMMENT = /^<!-- id: [^>]*? -->\r?$/;
@@ -28120,8 +28160,8 @@ function readIfExists(path3) {
   return existsSync2(path3) ? readFileSync5(path3, "utf8") : void 0;
 }
 function syncManifest(courseDir, opts) {
-  const objPath = join2(courseDir, OBJECTIVES_PATH);
-  const outPath = join2(courseDir, OUTLINE_PATH);
+  const objPath = join3(courseDir, OBJECTIVES_PATH);
+  const outPath = join3(courseDir, OUTLINE_PATH);
   const objMd = readIfExists(objPath);
   const outMd = readIfExists(outPath);
   if (objMd === void 0 && outMd === void 0) {
@@ -28131,7 +28171,7 @@ function syncManifest(courseDir, opts) {
   const { sessions: parsedSessions, modules: modules2 } = parseOutline(outMd ?? "");
   const sessions = parsedSessions;
   let manifest;
-  if (existsSync2(join2(courseDir, "course.yaml"))) {
+  if (existsSync2(join3(courseDir, "course.yaml"))) {
     manifest = loadManifest(courseDir);
     if (sessions.length > 0) manifest.timeBudget = { ...manifest.timeBudget, live: { sessions } };
   } else {
@@ -28166,30 +28206,30 @@ function syncManifest(courseDir, opts) {
       issues.push({ level: "warning", path: `modules[${i}].objectives`, message: `module ${mod.id} (${mod.title}) is not linked to any objective` });
     }
   });
-  if (opts.write) {
+  if (opts.write) keepFresh(courseDir, () => {
     saveManifest(courseDir, manifest);
     if (objMd !== void 0) writeFileSync3(objPath, insertIdComments(objMd, objectives));
     if (outMd !== void 0) writeFileSync3(outPath, insertIdComments(outMd, modules2));
     const known = new Set(manifest.modules.map((m3) => m3.id));
     for (const rel of MODULE_DOCS) {
-      const f = join2(courseDir, rel);
+      const f = join3(courseDir, rel);
       const md2 = readIfExists(f);
       if (md2 === void 0) continue;
       const next = insertIdComments(md2, moduleHeadings(md2, known));
       if (next !== md2) writeFileSync3(f, next);
     }
-  }
+  });
   return { manifest, issues };
 }
 
 // packages/course-kit/src/migrate/v2.ts
-import { cpSync, existsSync as existsSync4, mkdirSync as mkdirSync2, mkdtempSync, readFileSync as readFileSync7, readdirSync, rmSync, writeFileSync as writeFileSync5 } from "node:fs";
+import { cpSync, existsSync as existsSync4, mkdirSync as mkdirSync2, mkdtempSync, readFileSync as readFileSync7, readdirSync as readdirSync2, rmSync, writeFileSync as writeFileSync5 } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join as join4, posix, resolve as resolve3 } from "node:path";
+import { dirname, join as join5, posix, resolve as resolve3 } from "node:path";
 
 // packages/course-kit/src/media/registry.ts
 import { existsSync as existsSync3, mkdirSync, readFileSync as readFileSync6, writeFileSync as writeFileSync4 } from "node:fs";
-import { join as join3 } from "node:path";
+import { join as join4 } from "node:path";
 
 // packages/course-kit/src/media/schema.ts
 var AssetFunctionSchema = external_exports.enum([
@@ -28261,7 +28301,7 @@ var PricingSchema = external_exports.object({
 // packages/course-kit/src/media/registry.ts
 var FILE2 = ["05-media", "registry.json"];
 function loadRegistry(courseDir) {
-  const f = join3(courseDir, ...FILE2);
+  const f = join4(courseDir, ...FILE2);
   if (!existsSync3(f)) return { schema: "registry/v1", assets: [] };
   let raw;
   try {
@@ -28276,8 +28316,8 @@ function loadRegistry(courseDir) {
   return r.data;
 }
 function saveRegistry(courseDir, r) {
-  mkdirSync(join3(courseDir, FILE2[0]), { recursive: true });
-  writeFileSync4(join3(courseDir, ...FILE2), JSON.stringify(r, null, 2) + "\n");
+  mkdirSync(join4(courseDir, FILE2[0]), { recursive: true });
+  writeFileSync4(join4(courseDir, ...FILE2), JSON.stringify(r, null, 2) + "\n");
 }
 function addAsset(r, a3) {
   if (a3.status === "approved") {
@@ -28353,7 +28393,7 @@ function parseDuration(s) {
 }
 function listFiles(root, rel = "") {
   const out = [];
-  for (const e of readdirSync(join4(root, rel), { withFileTypes: true })) {
+  for (const e of readdirSync2(join5(root, rel), { withFileTypes: true })) {
     if (e.name.startsWith(".") || e.name === "node_modules") continue;
     const r = rel ? `${rel}/${e.name}` : e.name;
     if (e.isDirectory()) out.push(...listFiles(root, r));
@@ -28383,7 +28423,7 @@ function computeSources(dir) {
       material.push({ path: f, role: "material" });
     }
   }
-  const external = has2.has("README.md") ? externalLinks(readFileSync7(join4(dir, "README.md"), "utf8")).map((path3) => ({ path: path3, role: "external" })) : [];
+  const external = has2.has("README.md") ? externalLinks(readFileSync7(join5(dir, "README.md"), "utf8")).map((path3) => ({ path: path3, role: "external" })) : [];
   return [...derived2, ...variant, ...source3, ...material, ...external];
 }
 function migrateV2(courseDir, o) {
@@ -28391,16 +28431,16 @@ function migrateV2(courseDir, o) {
   const dir = resolve3(courseDir);
   const actions = [];
   const questions = [];
-  const scratch = mkdtempSync(join4(tmpdir(), "migrate-"));
+  const scratch = mkdtempSync(join5(tmpdir(), "migrate-"));
   try {
     for (const rel of [...ID_COMMENT_FILES, "course.yaml"]) {
-      if (!existsSync4(join4(dir, rel))) continue;
-      mkdirSync2(dirname(join4(scratch, rel)), { recursive: true });
-      cpSync(join4(dir, rel), join4(scratch, rel));
+      if (!existsSync4(join5(dir, rel))) continue;
+      mkdirSync2(dirname(join5(scratch, rel)), { recursive: true });
+      cpSync(join5(dir, rel), join5(scratch, rel));
     }
     const synced = syncManifest(scratch, { write: true }).manifest;
-    const existing = existsSync4(join4(dir, "course.yaml")) ? loadManifest(dir) : void 0;
-    const fm = existsSync4(join4(dir, POSITIONING)) ? readFrontmatter(join4(dir, POSITIONING)).data : {};
+    const existing = existsSync4(join5(dir, "course.yaml")) ? loadManifest(dir) : void 0;
+    const fm = existsSync4(join5(dir, POSITIONING)) ? readFrontmatter(join5(dir, POSITIONING)).data : {};
     const extraNew = {};
     for (const [k, v2] of Object.entries(fm)) if (!MAPPED_KEYS.has(k)) extraNew[k] = v2;
     let target2;
@@ -28441,7 +28481,7 @@ function migrateV2(courseDir, o) {
     const computed = computeSources(dir);
     const kept = (existing?.sources ?? []).filter((s) => !computed.some((c3) => c3.path === s.path));
     target2.sources = [...computed, ...kept];
-    const present = (rel) => existsSync4(join4(dir, rel));
+    const present = (rel) => existsSync4(join5(dir, rel));
     const stages = {};
     for (const [k, rel] of Object.entries(STAGE_FILES)) stages[k] = present(rel) ? "present" : "missing";
     stages.materials = MATERIAL_STAGE_FILES.some(present) ? "present" : "missing";
@@ -28450,8 +28490,8 @@ function migrateV2(courseDir, o) {
     let registry2 = loadRegistry(dir);
     const imported = [];
     const registryActions = [];
-    const matDir = join4(dir, "04-materials");
-    const images = existsSync4(matDir) ? readdirSync(matDir).filter((f) => IMAGE_EXT.test(f)).sort() : [];
+    const matDir = join5(dir, "04-materials");
+    const images = existsSync4(matDir) ? readdirSync2(matDir).filter((f) => IMAGE_EXT.test(f)).sort() : [];
     const now2 = (/* @__PURE__ */ new Date()).toISOString();
     for (const name of images) {
       const id2 = `IMG-${name.replace(/\.[^.]+$/, "")}`;
@@ -28485,19 +28525,21 @@ function migrateV2(courseDir, o) {
       if (!answered) questions.push({ id: `alt:${id2}`, text: `Alt text for 04-materials/${name}` });
     }
     imported.sort();
-    const probe = join4(scratch, "probe");
+    const probe = join5(scratch, "probe");
     mkdirSync2(probe);
     saveManifest(probe, target2);
-    const next = readFileSync7(join4(probe, "course.yaml"), "utf8");
-    const manifestChanged = !existing || readFileSync7(join4(dir, "course.yaml"), "utf8") !== next;
+    const next = readFileSync7(join5(probe, "course.yaml"), "utf8");
+    const manifestChanged = !existing || readFileSync7(join5(dir, "course.yaml"), "utf8") !== next;
     if (manifestChanged) actions.push("write course.yaml");
     actions.push(...registryActions);
-    const idChanges = ID_COMMENT_FILES.filter((rel) => existsSync4(join4(scratch, rel)) && existsSync4(join4(dir, rel)) && readFileSync7(join4(scratch, rel), "utf8") !== readFileSync7(join4(dir, rel), "utf8"));
+    const idChanges = ID_COMMENT_FILES.filter((rel) => existsSync4(join5(scratch, rel)) && existsSync4(join5(dir, rel)) && readFileSync7(join5(scratch, rel), "utf8") !== readFileSync7(join5(dir, rel), "utf8"));
     for (const rel of idChanges) actions.push(`insert ID comments in ${rel}`);
     if (!o.dryRun) {
-      if (manifestChanged) writeFileSync5(join4(dir, "course.yaml"), next);
-      if (registryActions.length) saveRegistry(dir, registry2);
-      for (const rel of idChanges) writeFileSync5(join4(dir, rel), readFileSync7(join4(scratch, rel), "utf8"));
+      keepFresh(dir, () => {
+        if (manifestChanged) writeFileSync5(join5(dir, "course.yaml"), next);
+        if (registryActions.length) saveRegistry(dir, registry2);
+        for (const rel of idChanges) writeFileSync5(join5(dir, rel), readFileSync7(join5(scratch, rel), "utf8"));
+      });
     }
     return { manifest: target2, actions, questions, imported };
   } finally {
@@ -28508,11 +28550,11 @@ function migrateV2(courseDir, o) {
 // packages/course-kit/src/media/plan.ts
 var import_yaml5 = __toESM(require_dist(), 1);
 import { existsSync as existsSync5, mkdirSync as mkdirSync3, readFileSync as readFileSync8, writeFileSync as writeFileSync6 } from "node:fs";
-import { join as join5 } from "node:path";
+import { join as join6 } from "node:path";
 var FILE3 = ["05-media", "media-plan.yaml"];
 var DIAGRAM_ONLY = /* @__PURE__ */ new Set(["concept-map", "process-flow", "comparison", "hierarchy", "cycle", "timeline"]);
 function loadPlan(courseDir) {
-  const f = join5(courseDir, ...FILE3);
+  const f = join6(courseDir, ...FILE3);
   if (!existsSync5(f)) return { schema: "media-plan/v1", items: [] };
   let raw;
   try {
@@ -28586,7 +28628,7 @@ function estimatePlan(p, pricing, quality) {
 
 // packages/course-kit/src/media/pricing.ts
 import { existsSync as existsSync6, readFileSync as readFileSync9 } from "node:fs";
-import { join as join6 } from "node:path";
+import { join as join7 } from "node:path";
 
 // packages/course-kit/data/pricing.json
 var pricing_default = {
@@ -28601,7 +28643,7 @@ var pricing_default = {
 function loadPricing(dataDir2) {
   let raw = pricing_default;
   if (dataDir2) {
-    const f = join6(dataDir2, "pricing.json");
+    const f = join7(dataDir2, "pricing.json");
     if (existsSync6(f)) {
       try {
         raw = JSON.parse(readFileSync9(f, "utf8"));
@@ -28645,7 +28687,7 @@ var coreCommands = {
     if (!parsed.success) {
       throw new UsageError(`invalid --json: ${parsed.error.issues.map((i) => `${i.path.join(".") || "(root)"}: ${i.message}`).join("; ")}`);
     }
-    if (existsSync7(join7(course, "course.yaml")) && a3.flags.force !== true) {
+    if (existsSync7(join8(course, "course.yaml")) && a3.flags.force !== true) {
       throw new UsageError(`course.yaml already exists in ${course}; pass --force to overwrite`);
     }
     const opts = parsed.data;
@@ -28726,7 +28768,7 @@ var coreCommands = {
 
 // packages/course-kit/src/media/embed.ts
 import { existsSync as existsSync8, readFileSync as readFileSync10, writeFileSync as writeFileSync7 } from "node:fs";
-import { dirname as dirname2, join as join8, relative, sep } from "node:path";
+import { dirname as dirname2, join as join9, relative, sep } from "node:path";
 var EMBED_FILES = [
   ["02-design", "lesson-plans.md"],
   ["04-materials", "student-handout.md"],
@@ -28797,22 +28839,24 @@ function embedAll(courseDir) {
     work.push({ id: a3.id, module: a3.module, item: a3, files0: a3.files[0] });
   }
   const reports = [];
-  for (const parts of EMBED_FILES) {
-    const file2 = join8(courseDir, ...parts);
-    if (!existsSync8(file2)) continue;
-    const original = readFileSync10(file2, "utf8");
-    let text3 = original;
-    const report = { file: parts.join("/"), embedded: [], placeholders: [] };
-    for (const w2 of work) {
-      if (!hasAnchor(text3, w2.module)) continue;
-      const rel = w2.files0 ? relative(dirname2(file2), join8(courseDir, w2.files0)).split(sep).join("/") : "";
-      const item = isApprovedAsset(w2.item) && !rel ? { ...w2.item, status: "generated" } : w2.item;
-      text3 = embedAsset(text3, item, w2.module, rel);
-      (isApprovedAsset(item) ? report.embedded : report.placeholders).push(w2.id);
+  keepFresh(courseDir, () => {
+    for (const parts of EMBED_FILES) {
+      const file2 = join9(courseDir, ...parts);
+      if (!existsSync8(file2)) continue;
+      const original = readFileSync10(file2, "utf8");
+      let text3 = original;
+      const report = { file: parts.join("/"), embedded: [], placeholders: [] };
+      for (const w2 of work) {
+        if (!hasAnchor(text3, w2.module)) continue;
+        const rel = w2.files0 ? relative(dirname2(file2), join9(courseDir, w2.files0)).split(sep).join("/") : "";
+        const item = isApprovedAsset(w2.item) && !rel ? { ...w2.item, status: "generated" } : w2.item;
+        text3 = embedAsset(text3, item, w2.module, rel);
+        (isApprovedAsset(item) ? report.embedded : report.placeholders).push(w2.id);
+      }
+      if (text3 !== original) writeFileSync7(file2, text3);
+      reports.push(report);
     }
-    if (text3 !== original) writeFileSync7(file2, text3);
-    reports.push(report);
-  }
+  });
   return reports;
 }
 function embedOne(courseDir, file2, id2, anchorId) {
@@ -28822,17 +28866,17 @@ function embedOne(courseDir, file2, id2, anchorId) {
   if (!item) throw new ValidationError(`unknown asset or plan item ${id2}`);
   if (!existsSync8(file2)) throw new ValidationError(`file not found: ${file2}`);
   const first = a3?.files[0];
-  const rel = first ? relative(dirname2(file2), join8(courseDir, first)).split(sep).join("/") : "";
+  const rel = first ? relative(dirname2(file2), join9(courseDir, first)).split(sep).join("/") : "";
   const original = readFileSync10(file2, "utf8");
   const out = embedAsset(original, item, anchorId, rel);
-  if (out !== original) writeFileSync7(file2, out);
+  if (out !== original) keepFresh(courseDir, () => writeFileSync7(file2, out));
   return { embedded: isApprovedAsset(item) };
 }
 
 // packages/course-kit/src/media/ledger.ts
 import { randomUUID } from "node:crypto";
 import { appendFileSync, closeSync, existsSync as existsSync9, mkdirSync as mkdirSync5, openSync, readFileSync as readFileSync11, statSync, unlinkSync } from "node:fs";
-import { join as join9 } from "node:path";
+import { join as join10 } from "node:path";
 var LedgerEntrySchema = external_exports.object({
   at: external_exports.string(),
   assetId: external_exports.string(),
@@ -28848,7 +28892,7 @@ var LedgerEntrySchema = external_exports.object({
 var DIR = ".course";
 var FILE4 = "cost-ledger.jsonl";
 function readLedger(courseDir) {
-  const f = join9(courseDir, DIR, FILE4);
+  const f = join10(courseDir, DIR, FILE4);
   if (!existsSync9(f)) return [];
   const out = [];
   readFileSync11(f, "utf8").split("\n").forEach((line4, i) => {
@@ -28912,16 +28956,16 @@ function recordSpend(courseDir, e) {
   if (!r.success) {
     throw new ValidationError(`invalid ledger entry: ${r.error.issues.map((x5) => `${x5.path.join(".") || "(root)"}: ${x5.message}`).join("; ")}`);
   }
-  mkdirSync5(join9(courseDir, DIR), { recursive: true });
-  appendFileSync(join9(courseDir, DIR, FILE4), JSON.stringify(r.data) + "\n");
+  mkdirSync5(join10(courseDir, DIR), { recursive: true });
+  appendFileSync(join10(courseDir, DIR, FILE4), JSON.stringify(r.data) + "\n");
 }
 var LOCK = "ledger.lock";
 var LOCK_STALE_MS = 2 * 6e4;
 var LOCK_WAIT_MS = 3e4;
 var sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 async function withLedgerLock(courseDir, fn) {
-  mkdirSync5(join9(courseDir, DIR), { recursive: true });
-  const lock = join9(courseDir, DIR, LOCK);
+  mkdirSync5(join10(courseDir, DIR), { recursive: true });
+  const lock = join10(courseDir, DIR, LOCK);
   const deadline = Date.now() + LOCK_WAIT_MS;
   for (let attempt = 0; ; attempt++) {
     let fd;
@@ -29050,11 +29094,11 @@ async function generateImageCodex(o) {
 // packages/course-kit/src/providers/generate.ts
 import { createHash as createHash2 } from "node:crypto";
 import { existsSync as existsSync12, mkdirSync as mkdirSync8, readFileSync as readFileSync13, writeFileSync as writeFileSync9 } from "node:fs";
-import { join as join11 } from "node:path";
+import { join as join12 } from "node:path";
 
 // packages/course-kit/src/providers/openai.ts
 import { existsSync as existsSync11, mkdirSync as mkdirSync7, readFileSync as readFileSync12, writeFileSync as writeFileSync8 } from "node:fs";
-import { dirname as dirname4, join as join10 } from "node:path";
+import { dirname as dirname4, join as join11 } from "node:path";
 var ENDPOINT = "https://api.openai.com/v1/images/generations";
 var MODEL = "gpt-image-2";
 var API_QUALITY = { draft: "low", standard: "medium", high: "high" };
@@ -29064,7 +29108,7 @@ function resolveOpenAIKey(env, dataDir2) {
     if (v2 && v2.trim()) return v2.trim();
   }
   if (dataDir2) {
-    const f = join10(dataDir2, "openai.key");
+    const f = join11(dataDir2, "openai.key");
     if (existsSync11(f)) {
       const v2 = readFileSync12(f, "utf8").trim();
       if (v2) return v2;
@@ -29158,13 +29202,13 @@ async function generateAssetImage(courseDir, assetId, provider, o) {
   if (prior && (prior.status === "approved" || prior.status === "imported")) {
     throw new ValidationError(`Asset ${assetId} is ${prior.status}; reject it first to regenerate`);
   }
-  const anchorsFile = join11(courseDir, "05-media", "style", "prompt-anchors.md");
+  const anchorsFile = join12(courseDir, "05-media", "style", "prompt-anchors.md");
   if (!existsSync12(anchorsFile)) throw new ValidationError("Run generate-style-guide first.");
   const anchors = readFileSync13(anchorsFile, "utf8");
   const prompt = composeImagePrompt(anchors, item.description);
   const source3 = `05-media/src/${assetId}.prompt.txt`;
-  mkdirSync8(join11(courseDir, "05-media", "src"), { recursive: true });
-  writeFileSync9(join11(courseDir, source3), prompt);
+  mkdirSync8(join12(courseDir, "05-media", "src"), { recursive: true });
+  writeFileSync9(join12(courseDir, source3), prompt);
   const pricing = provider === "openai" ? loadPricing(o.dataDir) : void 0;
   const estimate2 = pricing ? { usd: openaiPrice(pricing, o.quality), quota: 0 } : { usd: 0, quota: 1 };
   const reservationId = await reserveSpend(courseDir, manifest, {
@@ -29175,7 +29219,7 @@ async function generateAssetImage(courseDir, assetId, provider, o) {
     quotaUnits: estimate2.quota
   });
   const file2 = `05-media/out/${assetId}.png`;
-  const outPath = join11(courseDir, file2);
+  const outPath = join12(courseDir, file2);
   let model;
   try {
     if (provider === "openai") {
@@ -29215,7 +29259,7 @@ async function generateAssetImage(courseDir, assetId, provider, o) {
 // packages/course-kit/src/providers/record.ts
 var import_yaml6 = __toESM(require_dist(), 1);
 import { existsSync as existsSync13, mkdirSync as mkdirSync9, readFileSync as readFileSync14, writeFileSync as writeFileSync10 } from "node:fs";
-import { join as join12 } from "node:path";
+import { join as join13 } from "node:path";
 
 // packages/course-kit/data/providers.yaml
 var providers_default = '# Name patterns (glob, * = any text) that identify detected tools and skills for each capability.\nimage: ["*generate_image*", "*image_gen*"]\ndiagram: ["*Excalidraw*", "*Mermaid*"]\ndesignSkills: ["impeccable*", "design-taste-frontend*", "ui-ux-pro-max*", "frontend-design*"]\n';
@@ -29239,11 +29283,11 @@ function parseDetectedProviders(raw, what = "detected providers") {
 }
 function recordProviders(courseDir, d) {
   const data3 = parseDetectedProviders(d);
-  mkdirSync9(join12(courseDir, FILE5[0]), { recursive: true });
-  writeFileSync10(join12(courseDir, ...FILE5), JSON.stringify(data3, null, 2) + "\n");
+  mkdirSync9(join13(courseDir, FILE5[0]), { recursive: true });
+  writeFileSync10(join13(courseDir, ...FILE5), JSON.stringify(data3, null, 2) + "\n");
 }
 function loadProviders(courseDir) {
-  const f = join12(courseDir, ...FILE5);
+  const f = join13(courseDir, ...FILE5);
   if (!existsSync13(f)) return null;
   let raw;
   try {
@@ -29260,7 +29304,7 @@ function providerPatterns() {
 // packages/course-kit/src/render/deps.ts
 import { execFileSync } from "node:child_process";
 import { existsSync as existsSync14, mkdirSync as mkdirSync10 } from "node:fs";
-import { join as join13 } from "node:path";
+import { join as join14 } from "node:path";
 var PACKAGES = {
   "mermaid-cli": ["@mermaid-js/mermaid-cli@12.0.0"],
   "excalidraw-to-svg": ["excalidraw-to-svg@3.1.0", "@excalidraw/utils@0.1.2", "puppeteer@25.16.0"]
@@ -29269,13 +29313,13 @@ function isDepName(n) {
   return Object.hasOwn(PACKAGES, n);
 }
 function depPath(dataDir2, dep) {
-  const nm = join13(dataDir2, "node_modules");
+  const nm = join14(dataDir2, "node_modules");
   if (dep === "mermaid-cli") {
-    const p2 = join13(nm, ".bin", "mmdc");
+    const p2 = join14(nm, ".bin", "mmdc");
     return existsSync14(p2) ? p2 : null;
   }
-  const p = join13(nm, "excalidraw-to-svg");
-  const needed = [p, join13(nm, "@excalidraw", "utils", "dist", "excalidraw-utils.min.js"), join13(nm, "puppeteer")];
+  const p = join14(nm, "excalidraw-to-svg");
+  const needed = [p, join14(nm, "@excalidraw", "utils", "dist", "excalidraw-utils.min.js"), join14(nm, "puppeteer")];
   return needed.every((f) => existsSync14(f)) ? p : null;
 }
 function installDeps(dataDir2, deps) {
@@ -29288,7 +29332,7 @@ function installDeps(dataDir2, deps) {
 // packages/course-kit/src/render/excalidraw.ts
 import { readFileSync as readFileSync15, writeFileSync as writeFileSync11 } from "node:fs";
 import { createRequire } from "node:module";
-import { join as join14, resolve as resolve4 } from "node:path";
+import { join as join15, resolve as resolve4 } from "node:path";
 var CHROME_FAILURE = /Target closed|Protocol error|Session closed|Execution context was destroyed|crash|disconnected/i;
 function classifyEvaluateError(err, ctx = {}) {
   const msg = err instanceof Error ? err.message : String(err);
@@ -29308,10 +29352,10 @@ async function renderExcalidraw(srcPath, outSvg, dataDir2) {
     throw new ProviderUnavailableError("excalidraw-to-svg is not installed; run: deps install excalidraw-to-svg --data-dir <dir>");
   }
   const root = resolve4(dataDir2);
-  const bundle2 = join14(root, "node_modules", "@excalidraw", "utils", "dist", "excalidraw-utils.min.js");
+  const bundle2 = join15(root, "node_modules", "@excalidraw", "utils", "dist", "excalidraw-utils.min.js");
   let puppeteer;
   try {
-    puppeteer = createRequire(join14(root, "noop.js"))("puppeteer");
+    puppeteer = createRequire(join15(root, "noop.js"))("puppeteer");
   } catch {
     throw new ProviderUnavailableError("puppeteer is not installed; run: deps install excalidraw-to-svg --data-dir <dir>");
   }
@@ -29352,11 +29396,11 @@ async function renderExcalidraw(srcPath, outSvg, dataDir2) {
 import { execFileSync as execFileSync2 } from "node:child_process";
 import { existsSync as existsSync15, mkdtempSync as mkdtempSync2, rmSync as rmSync2, writeFileSync as writeFileSync12 } from "node:fs";
 import { tmpdir as tmpdir2 } from "node:os";
-import { join as join15 } from "node:path";
+import { join as join16 } from "node:path";
 async function renderMermaid(srcPath, outSvg, dataDir2, tokens = {}) {
   const mmdc = depPath(dataDir2, "mermaid-cli");
   if (!mmdc) throw new ProviderUnavailableError("mermaid-cli is not installed; run: deps install mermaid-cli --data-dir <dir>");
-  const tmp = mkdtempSync2(join15(tmpdir2(), "ck-mmd-"));
+  const tmp = mkdtempSync2(join16(tmpdir2(), "ck-mmd-"));
   try {
     const c3 = tokens.color ?? {};
     const themeVariables = {};
@@ -29365,9 +29409,9 @@ async function renderMermaid(srcPath, outSvg, dataDir2, tokens = {}) {
     if (c3.fg) themeVariables.lineColor = c3.fg;
     if (c3.bg) themeVariables.background = c3.bg;
     if (tokens.font?.body) themeVariables.fontFamily = tokens.font.body;
-    const cfg = join15(tmp, "config.json");
+    const cfg = join16(tmp, "config.json");
     writeFileSync12(cfg, JSON.stringify({ theme: "base", themeVariables }));
-    const pup = join15(tmp, "puppeteer.json");
+    const pup = join16(tmp, "puppeteer.json");
     writeFileSync12(pup, JSON.stringify({ args: ["--no-sandbox"] }));
     if (!existsSync15(srcPath)) throw new ValidationError(`mermaid source not found: ${srcPath}`);
     try {
@@ -41876,9 +41920,9 @@ var Tau = Math.PI * 2;
 var HalfSqrt3 = Math.sqrt(3) / 2;
 var segmentCache = {};
 var bezierCache = {};
-var join16 = [].join;
+var join17 = [].join;
 function segments(x5, y5, rx, ry, large, sweep, rotateX, ox, oy) {
-  const key2 = join16.call(arguments);
+  const key2 = join17.call(arguments);
   if (segmentCache[key2]) {
     return segmentCache[key2];
   }
@@ -41928,7 +41972,7 @@ function segments(x5, y5, rx, ry, large, sweep, rotateX, ox, oy) {
   return segmentCache[key2] = result;
 }
 function bezier(params2) {
-  const key2 = join16.call(params2);
+  const key2 = join17.call(params2);
   if (bezierCache[key2]) {
     return bezierCache[key2];
   }
@@ -58781,7 +58825,7 @@ function array3(seq) {
 function sequence2(seq) {
   return array3(seq) || (isString(seq) ? seq : null);
 }
-function join17(seq, ...args) {
+function join18(seq, ...args) {
   return array3(seq).join(...args);
 }
 function indexof(seq, ...args) {
@@ -58976,7 +59020,7 @@ var functionContext = {
   toNumber,
   toString,
   indexof,
-  join: join17,
+  join: join18,
   lastindexof,
   replace: replace2,
   reverse,
@@ -82127,7 +82171,7 @@ var studioCommands = {
     if (typeof a3.flags.brand === "string") brandPath = resolve6(a3.flags.brand);
     else {
       const rel = loadManifest(course).brand;
-      const theme = join18(course, "05-media", "style", "theme.yaml");
+      const theme = join19(course, "05-media", "style", "theme.yaml");
       if (rel) brandPath = resolve6(course, rel);
       else if (existsSync16(theme)) brandPath = theme;
     }
@@ -82136,9 +82180,9 @@ var studioCommands = {
     const issues = checkTokens(tokens);
     const errors = issues.filter((i) => i.level === "error");
     if (errors.length) throw new ValidationError(`brand tokens fail contrast checks: ${errors.map((i) => `${i.path}: ${i.message}`).join("; ")}`);
-    const dir = join18(course, "05-media", "style");
+    const dir = join19(course, "05-media", "style");
     mkdirSync11(dir, { recursive: true });
-    writeFileSync14(join18(dir, "tokens.json"), JSON.stringify(tokens, null, 2) + "\n");
+    writeFileSync14(join19(dir, "tokens.json"), JSON.stringify(tokens, null, 2) + "\n");
     return { tokens, issues };
   },
   "providers patterns": () => providerPatterns()

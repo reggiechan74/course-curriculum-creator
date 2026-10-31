@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, posix, resolve } from 'node:path';
 import { ValidationError } from '../errors.js';
 import { readFrontmatter } from '../frontmatter.js';
+import { keepFresh } from '../hash.js';
 import {
   type Manifest, type Shape, type SourceRef, type StageName, ShapeSchema,
   initManifest, loadManifest, saveManifest,
@@ -190,9 +191,11 @@ export function migrateV2(courseDir: string, o: { dryRun: boolean; answers?: Rec
     for (const rel of idChanges) actions.push(`insert ID comments in ${rel}`);
 
     if (!o.dryRun) {
-      if (manifestChanged) writeFileSync(join(dir, 'course.yaml'), next);
-      if (registryActions.length) saveRegistry(dir, registry);
-      for (const rel of idChanges) writeFileSync(join(dir, rel), readFileSync(join(scratch, rel), 'utf8'));
+      keepFresh(dir, () => {
+        if (manifestChanged) writeFileSync(join(dir, 'course.yaml'), next);
+        if (registryActions.length) saveRegistry(dir, registry);
+        for (const rel of idChanges) writeFileSync(join(dir, rel), readFileSync(join(scratch, rel), 'utf8'));
+      });
     }
     return { manifest: target, actions, questions, imported };
   } finally {
