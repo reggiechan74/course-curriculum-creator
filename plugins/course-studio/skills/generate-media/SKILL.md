@@ -75,7 +75,7 @@ If an image needs labels, write the labels to `<dir>/05-media/src/<id>.labels.js
 1. `KIT render overlay "<dir>/05-media/out/<id>.png" "<dir>/05-media/src/<id>.labels.json" "<dir>/05-media/out/<id>.overlay.svg" --tokens "<dir>/05-media/style/tokens.json"`
 2. `KIT registry update <id> --course "<dir>" --json '{"files":["05-media/out/<id>.png","05-media/out/<id>.overlay.svg"]}'`
 
-`embed` uses the `.overlay.svg` file when an asset has one, so the lesson shows the image with its labels.
+The overlay carries its own copy of the picture, so `embed` uses the `.overlay.svg` file when an asset has one and the lesson shows the image with its labels in any viewer. If the image is regenerated later, run step 1 again so the overlay holds the new picture.
 
 ### Paid fallback
 

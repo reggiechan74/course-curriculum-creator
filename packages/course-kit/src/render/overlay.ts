@@ -1,4 +1,5 @@
-import { dirname, relative, resolve, sep } from 'node:path';
+import { readFileSync } from 'node:fs';
+import { ValidationError } from '../errors.js';
 import type { Tokens } from '../brand/tokens.js';
 
 export interface Label { text: string; x: number; y: number; anchor?: 'start' | 'middle' | 'end' }
@@ -22,7 +23,29 @@ export function buildLabelOverlay(
   ].join('\n');
 }
 
-/** The `<image href>` for an overlay: the image path relative to the overlay file's folder, URL-encoded per segment. */
-export function overlayHref(imagePath: string, overlayPath: string): string {
-  return relative(dirname(resolve(overlayPath)), resolve(imagePath)).split(sep).map(encodeURIComponent).join('/');
+/** Image types an overlay can embed, detected from the file's first bytes (not its name). */
+const SIGNATURES: { mime: string; test: (b: Buffer) => boolean }[] = [
+  { mime: 'image/png', test: (b) => b.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) },
+  { mime: 'image/jpeg', test: (b) => b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff },
+  { mime: 'image/webp', test: (b) => b.toString('ascii', 0, 4) === 'RIFF' && b.toString('ascii', 8, 12) === 'WEBP' },
+  { mime: 'image/gif', test: (b) => b.toString('ascii', 0, 4) === 'GIF8' },
+];
+
+export interface EmbeddedImage { href: string; width?: number; height?: number }
+
+/**
+ * The picture as a `data:` URI. Markdown viewers show an SVG as an image, and in that mode a browser
+ * will not load a separate file the SVG points to, so the picture must live inside the overlay.
+ * PNG width and height come from the IHDR header so the overlay matches the picture by default.
+ */
+export function embeddedImage(imagePath: string): EmbeddedImage {
+  let bytes: Buffer;
+  try { bytes = readFileSync(imagePath); } catch { throw new ValidationError(`image not found: ${imagePath}`); }
+  const kind = SIGNATURES.find((s) => s.test(bytes));
+  if (!kind) throw new ValidationError(`not a PNG, JPEG, WebP or GIF image: ${imagePath}`);
+  const href = `data:${kind.mime};base64,${bytes.toString('base64')}`;
+  if (kind.mime === 'image/png' && bytes.length >= 24) {
+    return { href, width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) };
+  }
+  return { href };
 }

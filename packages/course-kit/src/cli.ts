@@ -15,7 +15,7 @@ import { loadProviders, parseDetectedProviders, providerPatterns, recordProvider
 import { type DepName, installDeps, isDepName } from './render/deps.js';
 import { renderExcalidraw } from './render/excalidraw.js';
 import { renderMermaid } from './render/mermaid.js';
-import { buildLabelOverlay, type Label, overlayHref } from './render/overlay.js';
+import { buildLabelOverlay, embeddedImage, type Label } from './render/overlay.js';
 import { renderVegaLite } from './render/vegalite.js';
 
 type PartialTokens = Partial<Tokens>;
@@ -74,9 +74,10 @@ export const studioCommands: CommandTable = {
     const labels = readJson(requirePositional(a, 1, 'labels.json'), 'labels') as Label[];
     if (!Array.isArray(labels)) throw new ValidationError('labels.json must be an array');
     const out = requirePositional(a, 2, 'out');
-    const width = optNum(a, 'width') ?? 1024;
-    const height = optNum(a, 'height') ?? 1024;
-    writeFileSync(out, buildLabelOverlay(overlayHref(image, out), width, height, labels, tokensOf(a)));
+    const img = embeddedImage(image);
+    const width = optNum(a, 'width') ?? img.width ?? 1024;
+    const height = optNum(a, 'height') ?? img.height ?? 1024;
+    writeFileSync(out, buildLabelOverlay(img.href, width, height, labels, tokensOf(a)));
     return { out };
   },
   'ledger totals': (a) => ledgerTotals(requireFlag(a, 'course')),

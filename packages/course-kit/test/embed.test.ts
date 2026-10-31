@@ -8,7 +8,6 @@ import { runCli } from '../src/cli/args.js';
 import { ValidationError } from '../src/errors.js';
 import { embedAll, embedAsset, embedOne } from '../src/media/embed.js';
 import { loadRegistry, saveRegistry, updateAssetText } from '../src/media/registry.js';
-import { overlayHref } from '../src/render/overlay.js';
 import type { Asset, PlanItem } from '../src/media/schema.js';
 
 const md = '# Module 1\n<!-- id: M1 -->\nBody text.\n';
@@ -208,17 +207,37 @@ describe('label overlays end to end', () => {
   const withFiles = (files: string[]) => course({ '02-design/lesson-plans.md': md, [png]: 'png', [overlay]: '<svg/>' }, [item('A-M1-01')], [{ ...approved, files }]);
   const quiet = () => vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
 
-  test('render overlay writes the image href relative to the overlay file', async () => {
-    const d = course({ [png]: 'png' }, [], []);
+  // 2x3 PNG: signature + IHDR with width 2, height 3.
+  const PNG_2x3 = Buffer.from('89504e470d0a1a0a0000000d494844520000000200000003080600000000', 'hex');
+  test('render overlay embeds the picture as a data URI and reads PNG size', async () => {
+    const d = course({}, [], []);
+    mkdirSync(join(d, '05-media', 'out'), { recursive: true });
+    writeFileSync(join(d, png), PNG_2x3);
     const labels = join(d, 'labels.json');
     writeFileSync(labels, JSON.stringify([{ text: 'Rent', x: 1, y: 2 }]));
     quiet();
     expect(await runCli(['render', 'overlay', join(d, png), labels, join(d, overlay)], studioCommands)).toBe(0);
-    expect(readFileSync(join(d, overlay), 'utf8')).toContain('<image href="A-M1-01.png"');
-    mkdirSync(join(d, 'sub dir'));
-    expect(await runCli(['render', 'overlay', join(d, png), labels, join(d, 'sub dir', 'o.svg')], studioCommands)).toBe(0);
-    expect(readFileSync(join(d, 'sub dir', 'o.svg'), 'utf8')).toContain('<image href="../05-media/out/A-M1-01.png"');
-    expect(overlayHref(join(d, 'my img.png'), join(d, 'x.svg'))).toBe('my%20img.png');
+    const svg = readFileSync(join(d, overlay), 'utf8');
+    expect(svg).toContain(`<image href="data:image/png;base64,${PNG_2x3.toString('base64')}"`);
+    expect(svg).toContain('viewBox="0 0 2 3"');
+    // Moving the overlay elsewhere keeps the picture: nothing points to an outside file.
+    expect(svg).not.toMatch(/href="(?!data:)/);
+    expect(await runCli(['render', 'overlay', join(d, png), labels, join(d, overlay), '--width', '800', '--height', '600'], studioCommands)).toBe(0);
+    expect(readFileSync(join(d, overlay), 'utf8')).toContain('viewBox="0 0 800 600"');
+  });
+  test('render overlay detects JPEG and refuses files that are not images', async () => {
+    const d = course({}, [], []);
+    const jpg = join(d, 'p.jpg');
+    writeFileSync(jpg, Buffer.from('ffd8ffe000104a464946', 'hex'));
+    const txt = join(d, 'p.txt');
+    writeFileSync(txt, 'not an image');
+    const labels = join(d, 'labels.json');
+    writeFileSync(labels, '[]');
+    quiet();
+    expect(await runCli(['render', 'overlay', jpg, labels, join(d, 'o.svg')], studioCommands)).toBe(0);
+    expect(readFileSync(join(d, 'o.svg'), 'utf8')).toContain('href="data:image/jpeg;base64,');
+    expect(await runCli(['render', 'overlay', txt, labels, join(d, 'o2.svg')], studioCommands)).toBe(2);
+    expect(await runCli(['render', 'overlay', join(d, 'missing.png'), labels, join(d, 'o3.svg')], studioCommands)).toBe(2);
   });
 
   test('registry update sets files (course-relative, existing) and never status; approved assets are refused', async () => {

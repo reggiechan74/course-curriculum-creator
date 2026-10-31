@@ -20,10 +20,14 @@ test('studio bundle: render overlay and ledger commands emit JSON', () => {
   execFileSync('node', [join(repo, 'packages/course-kit/scripts/build.mjs')], { cwd: repo });
   const d = mkdtempSync(join(tmpdir(), 'studio bundle '));
   writeFileSync(join(d, 'labels.json'), JSON.stringify([{ text: 'A & B', x: 1, y: 2 }]));
+  writeFileSync(join(d, 'img.png'), Buffer.from('89504e470d0a1a0a0000000d494844520000006400000032080600000000', 'hex'));
   const out = join(d, 'o.svg');
-  const r = JSON.parse(execFileSync('node', [studioBundle, 'render', 'overlay', 'img.png', join(d, 'labels.json'), out, '--width', '100', '--height', '50'], { encoding: 'utf8' }));
+  const r = JSON.parse(execFileSync('node', [studioBundle, 'render', 'overlay', join(d, 'img.png'), join(d, 'labels.json'), out], { encoding: 'utf8' }));
   expect(r).toEqual({ out });
-  expect(readFileSync(out, 'utf8')).toContain('A &amp; B');
+  const svg = readFileSync(out, 'utf8');
+  expect(svg).toContain('A &amp; B');
+  expect(svg).toContain('href="data:image/png;base64,');
+  expect(svg).toContain('viewBox="0 0 100 50"');
   const t = JSON.parse(execFileSync('node', [studioBundle, 'ledger', 'totals', '--course', d], { encoding: 'utf8' }));
   expect(t).toEqual({ spentUsd: 0, quotaUsed: 0 });
   const bad = spawnSync('node', [studioBundle, 'ledger', 'check', '--course', d, '--usd', 'abc', '--quota', '0'], { encoding: 'utf8' });

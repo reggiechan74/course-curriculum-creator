@@ -56,7 +56,7 @@ Rendering:
 - `render vegalite <spec.json> <out.svg> [--tokens <tokens.json>]`
 - `render mermaid <src.mmd> <out.svg> --data-dir "<dir>" [--tokens <tokens.json>]` (`--data-dir` required; use `${CLAUDE_PLUGIN_DATA}`)
 - `render excalidraw <scene.excalidraw> <out.svg> --data-dir "<dir>"` (`--data-dir` required)
-- `render overlay <image> <labels.json> <out.svg> [--width n] [--height n] [--tokens <tokens.json>]`: SVG label overlay for raster images; width and height default to 1024. The `<image href>` is written relative to the overlay file's folder, so keep the overlay next to the image (name it `<id>.overlay.svg`).
+- `render overlay <image> <labels.json> <out.svg> [--width n] [--height n] [--tokens <tokens.json>]`: SVG label overlay for raster images; the picture (PNG, JPEG, WebP or GIF) is embedded in the SVG as a `data:` URI, so the overlay shows image and labels in any markdown viewer and does not depend on where the image file sits. Width and height default to the PNG's own size (else 1024); `--width`/`--height` override. Name it `<id>.overlay.svg`. A file that is not an image exits 2. If the image is regenerated, run `render overlay` again.
 
 Providers, brand and style:
 
