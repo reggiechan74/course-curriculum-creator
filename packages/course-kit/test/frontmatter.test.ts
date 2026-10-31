@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { expect, test } from 'vitest';
 import { readFrontmatter, writeFrontmatter } from '../src/frontmatter.js';
 import { checkStale, writeHashes } from '../src/hash.js';
+import { ValidationError } from '../src/errors.js';
 
 const tmp = () => mkdtempSync(join(tmpdir(), 'kit-'));
 
@@ -96,4 +97,65 @@ test('writeHashes appends sourceHashes when absent', () => {
   writeFileSync(out, '---\nsourceFiles:\n  a: s.md\n---\nB\n');
   writeHashes(out, dir);
   expect(readFileSync(out, 'utf8')).toBe('---\nsourceFiles:\n  a: s.md\nsourceHashes:\n  a: "90015098"\n---\nB\n');
+});
+
+test('a column-0 comment inside the old block does not leave stale lines behind', () => {
+  const dir = tmp();
+  writeFileSync(join(dir, 's.md'), 'abc');
+  const out = join(dir, 'o.md');
+  writeFileSync(
+    out,
+    '---\nsourceFiles:\n  a: s.md\nsourceHashes:\n  a: "11111111"\n# mid comment\n  b: "22222222"\n# about tail\ntail: end\n---\nB\n',
+  );
+  writeHashes(out, dir);
+  // Trailing column-0 comments/blank lines before the next key stay with that key.
+  expect(readFileSync(out, 'utf8')).toBe(
+    '---\nsourceFiles:\n  a: s.md\nsourceHashes:\n  a: "90015098"\n# about tail\ntail: end\n---\nB\n',
+  );
+  expect(checkStale(out, dir).status).toBe('fresh');
+});
+
+test('CRLF file stays byte-identical except the patched block, which uses CRLF', () => {
+  const dir = tmp();
+  writeFileSync(join(dir, 's.md'), 'abc');
+  const out = join(dir, 'o.md');
+  const head = '---\r\n# c\r\nsourceFiles:\r\n  a: s.md\r\n';
+  const tail = 'tail: end\r\n---\r\nBody\r\nline2\r\n';
+  writeFileSync(out, `${head}sourceHashes:\r\n  a: "11111111"\r\n${tail}`);
+  writeHashes(out, dir);
+  expect(readFileSync(out, 'utf8')).toBe(`${head}sourceHashes:\r\n  a: "90015098"\r\n${tail}`);
+  expect(checkStale(out, dir).status).toBe('fresh');
+});
+
+test('CRLF file gets an appended block with CRLF', () => {
+  const dir = tmp();
+  writeFileSync(join(dir, 's.md'), 'abc');
+  const out = join(dir, 'o.md');
+  writeFileSync(out, '---\r\nsourceFiles:\r\n  a: s.md\r\n---\r\nB\r\n');
+  writeHashes(out, dir);
+  expect(readFileSync(out, 'utf8')).toBe('---\r\nsourceFiles:\r\n  a: s.md\r\nsourceHashes:\r\n  a: "90015098"\r\n---\r\nB\r\n');
+});
+
+test('delimiter lines with trailing spaces are preserved', () => {
+  const dir = tmp();
+  writeFileSync(join(dir, 's.md'), 'abc');
+  const out = join(dir, 'o.md');
+  writeFileSync(out, '---  \nsourceFiles:\n  a: s.md\n--- \t\nB\n');
+  writeHashes(out, dir);
+  expect(readFileSync(out, 'utf8')).toBe('---  \nsourceFiles:\n  a: s.md\nsourceHashes:\n  a: "90015098"\n--- \t\nB\n');
+});
+
+test('unparseable frontmatter throws ValidationError', () => {
+  const dir = tmp();
+  const out = join(dir, 'o.md');
+  writeFileSync(out, '---\nsourceHashes:\n  a: "1"\n  a: "2"\n---\nB\n');
+  expect(() => checkStale(out, dir)).toThrow(ValidationError);
+  expect(() => readFrontmatter(out)).toThrow(ValidationError);
+  writeFileSync(out, '---\na: [unclosed\n---\nB\n');
+  expect(() => checkStale(out, dir)).toThrow(ValidationError);
+  try {
+    checkStale(out, dir);
+  } catch (e) {
+    expect((e as ValidationError).exitCode).toBe(2);
+  }
 });
