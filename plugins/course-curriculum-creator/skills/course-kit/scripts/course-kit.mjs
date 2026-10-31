@@ -27786,6 +27786,9 @@ function saveRegistry(courseDir, r) {
   writeFileSync5(join5(courseDir, ...FILE3), JSON.stringify(r, null, 2) + "\n");
 }
 function addAsset(r, a) {
+  if (a.status === "approved") {
+    throw new ValidationError("Assets cannot be added as approved; add as generated or imported, then approve with registry status");
+  }
   if (r.assets.some((x) => x.id === a.id)) throw new ValidationError(`duplicate asset id ${a.id}`);
   return { ...r, assets: [...r.assets, a] };
 }

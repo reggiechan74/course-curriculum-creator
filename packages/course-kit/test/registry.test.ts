@@ -40,3 +40,7 @@ test('transitions', () => {
   expect(() => setStatus(reg(asset({ status: 'approved' })), 'A-M1-01', 'rejected')).toThrow();
   expect(() => setStatus(reg(), 'nope', 'rejected')).toThrow(ValidationError);
 });
+test('an asset cannot be added already approved', () => {
+  expect(() => addAsset(reg(), asset({ status: 'approved', approvedBy: 'user' }))).toThrow(/cannot be added as approved/);
+  expect(() => addAsset(reg(), asset({ status: 'approved' }))).toThrow(ValidationError);
+});

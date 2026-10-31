@@ -24,6 +24,9 @@ export function saveRegistry(courseDir: string, r: Registry): void {
 }
 
 export function addAsset(r: Registry, a: Asset): Registry {
+  if (a.status === 'approved') {
+    throw new ValidationError('Assets cannot be added as approved; add as generated or imported, then approve with registry status');
+  }
   if (r.assets.some((x) => x.id === a.id)) throw new ValidationError(`duplicate asset id ${a.id}`);
   return { ...r, assets: [...r.assets, a] };
 }
