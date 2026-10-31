@@ -8,5 +8,5 @@ export default defineConfig({
       if (id.endsWith('.yaml')) return { code: `export default ${JSON.stringify(code)};`, map: null };
     },
   }],
-  test: { include: ['test/**/*.test.ts'] },
+  test: { include: ['test/**/*.test.ts'], globalSetup: ['test/global-setup.ts'] },
 });
