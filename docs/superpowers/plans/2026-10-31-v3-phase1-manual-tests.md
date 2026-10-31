@@ -10,7 +10,7 @@
 4. Create `02-design/lesson-plans.md` with `## Module 1:` and `## Module 2:` headings and run `manifest sync --write`. Expect `<!-- id: M1 -->` under each heading.
 5. Write `05-media/media-plan.yaml` with three approved items: `A-M1-01` (diagram, svg), `A-M2-01` (chart, vegalite), `A-M2-02` (image, codex). Run `KIT plan validate` (exit 0) and `KIT plan estimate --quality standard` (expect totalQuota 1, totalUsd 0).
 6. `KIT render vegalite 05-media/src/A-M2-01.vl.json 05-media/out/A-M2-01.svg --tokens 05-media/style/tokens.json`. Expect exit 0 and an SVG.
-7. `KIT render mermaid ...` with no mermaid-cli. Expect the "mermaid-cli is not installed" error (exit 4); author `05-media/out/A-M1-01.svg` by hand (skill fallback 4).
+7. `KIT render mermaid 05-media/src/A-M1-01.mmd 05-media/out/A-M1-01.svg --data-dir <dir>` with no mermaid-cli (`<dir>` = any writable data directory; `KIT deps install mermaid-cli --data-dir <dir>` installs it). Expect the "mermaid-cli is not installed" error (exit 4); author `05-media/out/A-M1-01.svg` by hand (skill fallback 4).
 8. `KIT registry add` both (status `generated`, empty alt).
 9. With no Codex login (empty `HOME`) and no key: `KIT gen image --course . --asset A-M2-02 --provider codex --quality standard`. Expect exit 4 and `ledger totals` = 0 spent, 0 quota.
 10. `KIT registry update <id> --json '{"alt":...}'` for both, then `KIT registry status <id> approved --approved-by user`.
@@ -28,7 +28,7 @@ Result: **NEEDS USER**. Not run: spends the user's ChatGPT plan quota (real Code
 ## 3. Excalidraw connector, hand-drawn style
 
 1. Connect the Excalidraw connector in Claude Code, set `preferred_diagram_style: hand-drawn`, plan an approved diagram item, run `/course-studio:generate-media`.
-2. Expect `05-media/src/<id>.excalidraw`, a share URL in the registry asset (`shareUrl`), and `05-media/out/<id>.svg` (local renderer may first need `KIT deps install excalidraw`).
+2. Expect `05-media/src/<id>.excalidraw`, a share URL in the registry asset (`shareUrl`), and `05-media/out/<id>.svg` (the local renderer may first need `KIT deps install excalidraw-to-svg --data-dir <dir>`, then `KIT render excalidraw 05-media/src/<id>.excalidraw 05-media/out/<id>.svg --data-dir <dir>`).
 
 Result: **NEEDS USER**. Requires connector authentication.
 
@@ -65,14 +65,14 @@ claude plugin eval plugins/course-studio --scaffold --allow-tools Write Edit Bas
 
 Expect all cases (core: 2, studio: 5) to pass.
 
-Result: **NEEDS USER**. Needs system packages and spends the user's model quota. Evals for `plugins/course-studio` have an earlier run under `plugins/course-studio/evals/results/` that was not reviewed as part of this pass.
+Result: **NEEDS USER**. Needs system packages and spends the user's model quota. `plugins/course-studio/evals/results/` is git-ignored local output from an interrupted earlier run; ignore it. For non-interactive runs add `--trust-plugin`.
 
 ## Automated checks (run 2026-10-31)
 
 | Command | Result |
 | --- | --- |
 | `npm test` | PASS: 16 files, 166 passed, 3 skipped |
-| `npm run check` | PASS for bundles (rebuilt bundles are byte-identical); `git diff` only shows the README edits until they are committed |
+| `npm run check` | PASS (exit 0 after commit) |
 | `claude plugin validate .` | PASS |
 | `claude plugin validate plugins/course-curriculum-creator` | PASS |
 | `claude plugin validate plugins/course-studio` | PASS |
