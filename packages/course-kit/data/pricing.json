@@ -1,0 +1,7 @@
+{
+  "asOf": "2026-10-31",
+  "source": "https://developers.openai.com/api/docs/guides/image-generation (per-image cost table, 1024x1024)",
+  "image": {
+    "openai:gpt-image-2": { "draft": 0.006, "standard": 0.053, "high": 0.211 }
+  }
+}

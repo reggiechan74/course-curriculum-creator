@@ -55,3 +55,20 @@ test('longest-prefix match and KitError exit codes', async () => {
   expect(await runCli(['manifest', 'init', 'p'], table)).toBe(0);
   expect(JSON.parse(logs.join(''))).toEqual({ which: 'init', rest: ['p'] });
 });
+
+test('registry and plan commands', async () => {
+  const dir = join(mkdtempSync(join(tmpdir(), 'kit-')), 'My Courses');
+  mkdirSync(dir, { recursive: true });
+  const asset = { id: 'A1', kind: 'diagram', objectives: [], provider: 'mermaid', files: [], alt: 'alt', status: 'generated', costUsd: 0, quotaUnits: 0, createdAt: 'x' };
+  const run = async (...argv: string[]) => { logs.length = 0; const code = await runCli(argv, coreCommands); return { code, out: JSON.parse(logs.join('')) }; };
+  expect((await run('registry', 'add', '--course', dir, '--json', JSON.stringify(asset))).code).toBe(0);
+  expect((await run('registry', 'add', '--course', dir, '--json', JSON.stringify(asset))).code).toBe(2);
+  expect((await run('registry', 'add', '--course', dir, '--json', '{}')).code).toBe(2);
+  expect((await run('registry', 'list', '--course', dir)).out.assets).toHaveLength(1);
+  expect((await run('registry', 'status', 'A1', 'approved', '--course', dir)).code).toBe(2);
+  const ok = await run('registry', 'status', 'A1', 'approved', '--approved-by', 'user', '--course', dir);
+  expect(ok.out.asset).toMatchObject({ status: 'approved', approvedBy: 'user' });
+  const est = await run('plan', 'estimate', '--quality', 'standard', '--course', dir);
+  expect(est).toEqual({ code: 0, out: { perModule: {}, totalUsd: 0, totalQuota: 0 } });
+  expect((await run('plan', 'estimate', '--quality', 'bad', '--course', dir)).code).toBe(1);
+});

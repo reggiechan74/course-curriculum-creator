@@ -1512,7 +1512,7 @@ var require_stringify = __commonJS({
         props.push(doc.directives.tagString(tag));
       return props.join(" ");
     }
-    function stringify3(item, ctx, onComment, onChompKeep) {
+    function stringify4(item, ctx, onComment, onChompKeep) {
       if (identity.isPair(item))
         return item.toString(ctx, onComment, onChompKeep);
       if (identity.isAlias(item)) {
@@ -1541,7 +1541,7 @@ var require_stringify = __commonJS({
 ${ctx.indent}${str}`;
     }
     exports.createStringifyContext = createStringifyContext;
-    exports.stringify = stringify3;
+    exports.stringify = stringify4;
   }
 });
 
@@ -1551,7 +1551,7 @@ var require_stringifyPair = __commonJS({
     "use strict";
     var identity = require_identity();
     var Scalar2 = require_Scalar();
-    var stringify3 = require_stringify();
+    var stringify4 = require_stringify();
     var stringifyComment = require_stringifyComment();
     function stringifyPair({ key, value }, ctx, onComment, onChompKeep) {
       const { allNullValues, doc, indent, indentStep, options: { commentString, indentSeq, simpleKeys } } = ctx;
@@ -1573,7 +1573,7 @@ var require_stringifyPair = __commonJS({
       });
       let keyCommentDone = false;
       let chompKeep = false;
-      let str = stringify3.stringify(key, ctx, () => keyCommentDone = true, () => chompKeep = true);
+      let str = stringify4.stringify(key, ctx, () => keyCommentDone = true, () => chompKeep = true);
       if (!explicitKey && !ctx.inFlow && str.length > 1024) {
         if (simpleKeys)
           throw new Error("With simple keys, single line scalar must not span more than 1024 characters");
@@ -1625,7 +1625,7 @@ ${indent}:`;
         ctx.indent = ctx.indent.substring(2);
       }
       let valueCommentDone = false;
-      const valueStr = stringify3.stringify(value, ctx, () => valueCommentDone = true, () => chompKeep = true);
+      const valueStr = stringify4.stringify(value, ctx, () => valueCommentDone = true, () => chompKeep = true);
       let ws = " ";
       if (keyComment || vsb || vcb) {
         ws = vsb ? "\n" : "";
@@ -1766,7 +1766,7 @@ var require_addPairToJSMap = __commonJS({
     "use strict";
     var log = require_log();
     var merge2 = require_merge();
-    var stringify3 = require_stringify();
+    var stringify4 = require_stringify();
     var identity = require_identity();
     var toJS = require_toJS();
     function addPairToJSMap(ctx, map2, { key, value }) {
@@ -1802,7 +1802,7 @@ var require_addPairToJSMap = __commonJS({
       if (typeof jsKey !== "object")
         return String(jsKey);
       if (identity.isNode(key) && ctx?.doc) {
-        const strCtx = stringify3.createStringifyContext(ctx.doc, {});
+        const strCtx = stringify4.createStringifyContext(ctx.doc, {});
         strCtx.anchors = /* @__PURE__ */ new Set();
         for (const node2 of ctx.anchors.keys())
           strCtx.anchors.add(node2.anchor);
@@ -1869,12 +1869,12 @@ var require_stringifyCollection = __commonJS({
   "node_modules/yaml/dist/stringify/stringifyCollection.js"(exports) {
     "use strict";
     var identity = require_identity();
-    var stringify3 = require_stringify();
+    var stringify4 = require_stringify();
     var stringifyComment = require_stringifyComment();
     function stringifyCollection(collection, ctx, options) {
       const flow = ctx.inFlow ?? collection.flow;
-      const stringify4 = flow ? stringifyFlowCollection : stringifyBlockCollection;
-      return stringify4(collection, ctx, options);
+      const stringify5 = flow ? stringifyFlowCollection : stringifyBlockCollection;
+      return stringify5(collection, ctx, options);
     }
     function stringifyBlockCollection({ comment, items }, ctx, { blockItemPrefix, flowChars, itemIndent, onChompKeep, onComment }) {
       const { indent, options: { commentString } } = ctx;
@@ -1899,7 +1899,7 @@ var require_stringifyCollection = __commonJS({
           }
         }
         chompKeep = false;
-        let str2 = stringify3.stringify(item, itemCtx, () => comment2 = null, () => chompKeep = true);
+        let str2 = stringify4.stringify(item, itemCtx, () => comment2 = null, () => chompKeep = true);
         if (comment2)
           str2 += stringifyComment.lineComment(str2, itemIndent, commentString(comment2));
         if (chompKeep && comment2)
@@ -1966,7 +1966,7 @@ ${indent}${line}` : "\n";
         }
         if (comment)
           reqNewline = true;
-        let str = stringify3.stringify(item, itemCtx, () => comment = null);
+        let str = stringify4.stringify(item, itemCtx, () => comment = null);
         reqNewline || (reqNewline = lines.length > linesAtValue || str.includes("\n"));
         if (i < items.length - 1) {
           str += ",";
@@ -3327,7 +3327,7 @@ var require_stringifyDocument = __commonJS({
   "node_modules/yaml/dist/stringify/stringifyDocument.js"(exports) {
     "use strict";
     var identity = require_identity();
-    var stringify3 = require_stringify();
+    var stringify4 = require_stringify();
     var stringifyComment = require_stringifyComment();
     function stringifyDocument(doc, options) {
       const lines = [];
@@ -3342,7 +3342,7 @@ var require_stringifyDocument = __commonJS({
       }
       if (hasDirectives)
         lines.push("---");
-      const ctx = stringify3.createStringifyContext(doc, options);
+      const ctx = stringify4.createStringifyContext(doc, options);
       const { commentString } = ctx.options;
       if (doc.commentBefore) {
         if (lines.length !== 1)
@@ -3364,7 +3364,7 @@ var require_stringifyDocument = __commonJS({
           contentComment = doc.contents.comment;
         }
         const onChompKeep = contentComment ? void 0 : () => chompKeep = true;
-        let body = stringify3.stringify(doc.contents, ctx, () => contentComment = null, onChompKeep);
+        let body = stringify4.stringify(doc.contents, ctx, () => contentComment = null, onChompKeep);
         if (contentComment)
           body += stringifyComment.lineComment(body, "", commentString(contentComment));
         if ((body[0] === "|" || body[0] === ">") && lines[lines.length - 1] === "---") {
@@ -3372,7 +3372,7 @@ var require_stringifyDocument = __commonJS({
         } else
           lines.push(body);
       } else {
-        lines.push(stringify3.stringify(doc.contents, ctx));
+        lines.push(stringify4.stringify(doc.contents, ctx));
       }
       if (doc.directives?.docEnd) {
         if (doc.comment) {
@@ -5508,7 +5508,7 @@ var require_cst_scalar = __commonJS({
 var require_cst_stringify = __commonJS({
   "node_modules/yaml/dist/parse/cst-stringify.js"(exports) {
     "use strict";
-    var stringify3 = (cst) => "type" in cst ? stringifyToken(cst) : stringifyItem(cst);
+    var stringify4 = (cst) => "type" in cst ? stringifyToken(cst) : stringifyItem(cst);
     function stringifyToken(token) {
       switch (token.type) {
         case "block-scalar": {
@@ -5561,7 +5561,7 @@ var require_cst_stringify = __commonJS({
         res += stringifyToken(value);
       return res;
     }
-    exports.stringify = stringify3;
+    exports.stringify = stringify4;
   }
 });
 
@@ -7272,7 +7272,7 @@ var require_public_api = __commonJS({
       }
       return doc;
     }
-    function parse5(src, reviver, options) {
+    function parse6(src, reviver, options) {
       let _reviver = void 0;
       if (typeof reviver === "function") {
         _reviver = reviver;
@@ -7291,7 +7291,7 @@ var require_public_api = __commonJS({
       }
       return doc.toJS(Object.assign({ reviver: _reviver }, options));
     }
-    function stringify3(value, replacer, options) {
+    function stringify4(value, replacer, options) {
       let _replacer = null;
       if (typeof replacer === "function" || Array.isArray(replacer)) {
         _replacer = replacer;
@@ -7313,10 +7313,10 @@ var require_public_api = __commonJS({
         return value.toString(options);
       return new Document.Document(value, _replacer, options).toString(options);
     }
-    exports.parse = parse5;
+    exports.parse = parse6;
     exports.parseAllDocuments = parseAllDocuments;
     exports.parseDocument = parseDocument;
-    exports.stringify = stringify3;
+    exports.stringify = stringify4;
   }
 });
 
@@ -7373,8 +7373,8 @@ var require_dist = __commonJS({
 });
 
 // packages/course-kit/src/cli-core.ts
-import { existsSync as existsSync3, mkdirSync, realpathSync } from "node:fs";
-import { join as join3 } from "node:path";
+import { existsSync as existsSync6, mkdirSync as mkdirSync3, realpathSync } from "node:fs";
+import { join as join6 } from "node:path";
 import { fileURLToPath } from "node:url";
 
 // packages/course-kit/src/errors.ts
@@ -9407,18 +9407,18 @@ var validateAsync = async (schema, value, _ctx) => {
   return result.issues.length === 0;
 };
 var _encode = (_Err) => {
-  const parse5 = _parse(_Err);
+  const parse6 = _parse(_Err);
   const fn = (schema, value, _ctx, _params) => {
     const ctx = _ctx ? { ..._ctx, direction: "backward" } : { direction: "backward" };
-    return parse5(schema, value, ctx, finalizeParams(fn, _params));
+    return parse6(schema, value, ctx, finalizeParams(fn, _params));
   };
   return fn;
 };
 var encode = /* @__PURE__ */ _encode($ZodRealError);
 var _decode = (_Err) => {
-  const parse5 = _parse(_Err);
+  const parse6 = _parse(_Err);
   const fn = (schema, value, _ctx, _params) => {
-    return parse5(schema, value, _ctx, finalizeParams(fn, _params));
+    return parse6(schema, value, _ctx, finalizeParams(fn, _params));
   };
   return fn;
 };
@@ -10913,7 +10913,7 @@ function capSize(inst, size) {
   if (!caps.length)
     return;
   const cap = Math.min(...caps.map((c) => c[0]));
-  const parse5 = inst._zod.parse;
+  const parse6 = inst._zod.parse;
   inst._zod.parse = (payload, ctx) => {
     const n = size(payload.value);
     if (n > cap && !ctx?.skipChecks && ctx?.direction !== "backward") {
@@ -10927,7 +10927,7 @@ function capSize(inst, size) {
         }
       }
     }
-    return parse5(payload, ctx);
+    return parse6(payload, ctx);
   };
 }
 var arraySize = (input2) => Array.isArray(input2) ? input2.length : -1;
@@ -27583,7 +27583,243 @@ function syncManifest(courseDir, opts) {
   return { manifest, issues };
 }
 
+// packages/course-kit/src/media/plan.ts
+var import_yaml4 = __toESM(require_dist(), 1);
+import { existsSync as existsSync3, mkdirSync, readFileSync as readFileSync5, writeFileSync as writeFileSync4 } from "node:fs";
+import { join as join3 } from "node:path";
+
+// packages/course-kit/src/media/schema.ts
+var AssetFunctionSchema = external_exports.enum([
+  "concept-map",
+  "process-flow",
+  "comparison",
+  "hierarchy",
+  "cycle",
+  "timeline",
+  "data-viz",
+  "worked-example",
+  "scenario-illustration",
+  "analogy-illustration",
+  "infographic",
+  "job-aid",
+  "interactive-explainer",
+  "audio-recap",
+  "video-explainer"
+]);
+var AssetKindSchema = external_exports.enum(["diagram", "chart", "image", "infographic", "audio", "video"]);
+var AssetStatusSchema = external_exports.enum(["generated", "approved", "rejected", "imported"]);
+var ReviewCheckSchema = external_exports.enum(["no-stray-text", "factual", "representation", "style", "contrast", "physical"]);
+var ReviewRecordSchema = external_exports.object({
+  checks: external_exports.record(ReviewCheckSchema, external_exports.enum(["pass", "fail", "n/a"])),
+  notes: external_exports.string().optional(),
+  at: external_exports.string()
+});
+var AssetSchema = external_exports.object({
+  id: external_exports.string().min(1),
+  kind: AssetKindSchema,
+  function: AssetFunctionSchema.optional(),
+  objectives: external_exports.array(external_exports.string()),
+  module: external_exports.string().optional(),
+  provider: external_exports.string(),
+  source: external_exports.string().optional(),
+  files: external_exports.array(external_exports.string()),
+  alt: external_exports.string(),
+  longDescription: external_exports.string().optional(),
+  caption: external_exports.string().optional(),
+  status: AssetStatusSchema,
+  costUsd: external_exports.number(),
+  quotaUnits: external_exports.number(),
+  sha256: external_exports.string().optional(),
+  shareUrl: external_exports.string().optional(),
+  review: ReviewRecordSchema.optional(),
+  approvedBy: external_exports.literal("user").optional(),
+  createdAt: external_exports.string()
+});
+var RegistrySchema = external_exports.object({ schema: external_exports.literal("registry/v1"), assets: external_exports.array(AssetSchema) });
+var PlanItemSchema = external_exports.object({
+  id: external_exports.string().min(1),
+  module: external_exports.string(),
+  segment: external_exports.string().optional(),
+  objectives: external_exports.array(external_exports.string()),
+  function: AssetFunctionSchema,
+  kind: AssetKindSchema,
+  description: external_exports.string(),
+  provider: external_exports.string(),
+  estimateUsd: external_exports.number(),
+  quotaUnits: external_exports.number(),
+  status: external_exports.enum(["proposed", "approved", "rejected"])
+});
+var MediaPlanSchema = external_exports.object({ schema: external_exports.literal("media-plan/v1"), items: external_exports.array(PlanItemSchema) });
+var PricingSchema = external_exports.object({
+  asOf: external_exports.string(),
+  image: external_exports.record(external_exports.string(), external_exports.object({ draft: external_exports.number(), standard: external_exports.number(), high: external_exports.number() }))
+});
+
+// packages/course-kit/src/media/plan.ts
+var FILE2 = ["05-media", "media-plan.yaml"];
+var DIAGRAM_ONLY = /* @__PURE__ */ new Set(["concept-map", "process-flow", "comparison", "hierarchy", "cycle", "timeline"]);
+function loadPlan(courseDir) {
+  const f = join3(courseDir, ...FILE2);
+  if (!existsSync3(f)) return { schema: "media-plan/v1", items: [] };
+  let raw;
+  try {
+    raw = (0, import_yaml4.parse)(readFileSync5(f, "utf8"));
+  } catch {
+    throw new ValidationError(`cannot parse ${f}`);
+  }
+  const r = MediaPlanSchema.safeParse(raw);
+  if (!r.success) {
+    throw new ValidationError(`invalid media plan: ${r.error.issues.map((i) => `${i.path.join(".") || "(root)"}: ${i.message}`).join("; ")}`);
+  }
+  return r.data;
+}
+function validatePlan(p, m, r) {
+  const out = [];
+  const objs = new Set(m.objectives.map((o) => o.id));
+  const mods = new Set(m.modules.map((x) => x.id));
+  const seen = /* @__PURE__ */ new Set();
+  p.items.forEach((it, i) => {
+    const at = `items[${i}]`;
+    if (seen.has(it.id)) out.push({ level: "error", path: `${at}.id`, message: `duplicate plan item id ${it.id}` });
+    seen.add(it.id);
+    if (it.objectives.length === 0) out.push({ level: "error", path: `${at}.objectives`, message: `Item ${it.id} has no objectives.` });
+    it.objectives.forEach((o, j) => {
+      if (!objs.has(o)) out.push({ level: "error", path: `${at}.objectives[${j}]`, message: `Item ${it.id} names unknown objective ${o}.` });
+    });
+    if (!mods.has(it.module)) out.push({ level: "error", path: `${at}.module`, message: `Item ${it.id} names unknown module ${it.module}.` });
+    if (DIAGRAM_ONLY.has(it.function) && it.kind === "image") {
+      out.push({ level: "error", path: `${at}.kind`, message: `Item ${it.id}: function ${it.function} must use kind diagram, not image.` });
+    }
+  });
+  r.assets.forEach((a, i) => {
+    const at = `assets[${i}]`;
+    a.objectives.forEach((o, j) => {
+      if (!objs.has(o)) out.push({ level: "error", path: `${at}.objectives[${j}]`, message: `Asset ${a.id} names unknown objective ${o}.` });
+    });
+    if (a.module !== void 0 && !mods.has(a.module)) {
+      out.push({ level: "error", path: `${at}.module`, message: `Asset ${a.id} names unknown module ${a.module}.` });
+    }
+  });
+  const covered = new Set(p.items.filter((it) => it.status !== "rejected").map((it) => it.module));
+  m.modules.forEach((mod, i) => {
+    if (!covered.has(mod.id)) {
+      out.push({ level: "warning", path: `modules[${i}]`, message: `Module ${mod.id} has text only. UDL needs 2 or more representation modes.` });
+    }
+  });
+  return out;
+}
+function estimatePlan(p, pricing, quality) {
+  const cents = {};
+  for (const it of p.items) {
+    if (it.status === "rejected") continue;
+    const e = cents[it.module] ??= { c: 0, quota: 0 };
+    if (it.provider === "openai" && it.kind === "image") {
+      const price = pricing.image["openai:gpt-image-2"]?.[quality];
+      if (price === void 0) throw new ValidationError("pricing has no entry for openai:gpt-image-2");
+      e.c += Math.round(price * 1e6);
+    } else if (it.provider === "codex" && it.kind === "image") {
+      e.quota += it.quotaUnits ?? 1;
+    }
+  }
+  const perModule = {};
+  let totalC = 0, totalQuota = 0;
+  for (const [k, v] of Object.entries(cents)) {
+    perModule[k] = { usd: Math.round(v.c / 1e4) / 100, quota: v.quota };
+    totalC += v.c;
+    totalQuota += v.quota;
+  }
+  return { perModule, totalUsd: Math.round(totalC / 1e4) / 100, totalQuota };
+}
+
+// packages/course-kit/src/media/pricing.ts
+import { existsSync as existsSync4, readFileSync as readFileSync6 } from "node:fs";
+import { join as join4 } from "node:path";
+
+// packages/course-kit/data/pricing.json
+var pricing_default = {
+  asOf: "2026-10-31",
+  source: "https://developers.openai.com/api/docs/guides/image-generation (per-image cost table, 1024x1024)",
+  image: {
+    "openai:gpt-image-2": { draft: 6e-3, standard: 0.053, high: 0.211 }
+  }
+};
+
+// packages/course-kit/src/media/pricing.ts
+function loadPricing(dataDir) {
+  let raw = pricing_default;
+  if (dataDir) {
+    const f = join4(dataDir, "pricing.json");
+    if (existsSync4(f)) {
+      try {
+        raw = JSON.parse(readFileSync6(f, "utf8"));
+      } catch {
+        throw new ValidationError(`cannot parse ${f}`);
+      }
+    }
+  }
+  const r = PricingSchema.safeParse(raw);
+  if (!r.success) throw new ValidationError(`invalid pricing.json: ${r.error.issues.map((i) => i.message).join("; ")}`);
+  return r.data;
+}
+
+// packages/course-kit/src/media/registry.ts
+import { existsSync as existsSync5, mkdirSync as mkdirSync2, readFileSync as readFileSync7, writeFileSync as writeFileSync5 } from "node:fs";
+import { join as join5 } from "node:path";
+var FILE3 = ["05-media", "registry.json"];
+function loadRegistry(courseDir) {
+  const f = join5(courseDir, ...FILE3);
+  if (!existsSync5(f)) return { schema: "registry/v1", assets: [] };
+  let raw;
+  try {
+    raw = JSON.parse(readFileSync7(f, "utf8"));
+  } catch {
+    throw new ValidationError(`cannot parse ${f}`);
+  }
+  const r = RegistrySchema.safeParse(raw);
+  if (!r.success) {
+    throw new ValidationError(`invalid registry: ${r.error.issues.map((i) => `${i.path.join(".") || "(root)"}: ${i.message}`).join("; ")}`);
+  }
+  return r.data;
+}
+function saveRegistry(courseDir, r) {
+  mkdirSync2(join5(courseDir, FILE3[0]), { recursive: true });
+  writeFileSync5(join5(courseDir, ...FILE3), JSON.stringify(r, null, 2) + "\n");
+}
+function addAsset(r, a) {
+  if (r.assets.some((x) => x.id === a.id)) throw new ValidationError(`duplicate asset id ${a.id}`);
+  return { ...r, assets: [...r.assets, a] };
+}
+var TRANSITIONS = {
+  generated: ["approved", "rejected"],
+  rejected: ["generated"],
+  imported: ["approved", "rejected"],
+  approved: []
+};
+function setStatus(r, id, to, opts = {}) {
+  const a = r.assets.find((x) => x.id === id);
+  if (!a) throw new ValidationError(`unknown asset id ${id}`);
+  if (!TRANSITIONS[a.status].includes(to)) throw new ValidationError(`cannot change asset ${id} from ${a.status} to ${to}`);
+  if (to === "approved") {
+    if (!a.alt.trim()) throw new ValidationError(`asset ${id} needs alt text before approval`);
+    if (opts.approvedBy !== "user") throw new ValidationError(`asset ${id} must be approved by the user (approvedBy: user)`);
+  }
+  const next = { ...a, status: to };
+  if (opts.review) next.review = opts.review;
+  if (opts.approvedBy) next.approvedBy = opts.approvedBy;
+  return { ...r, assets: r.assets.map((x) => x.id === id ? next : x) };
+}
+
 // packages/course-kit/src/cli-core.ts
+function jsonFlag(raw, flag) {
+  try {
+    return JSON.parse(raw);
+  } catch {
+    throw new UsageError(`--${flag} must be valid JSON`);
+  }
+}
+function zodMsg(e) {
+  return e.issues.map((i) => `${i.path.join(".") || "(root)"}: ${i.message}`).join("; ");
+}
 var coreCommands = {
   hash: (a) => ({ hash: hashFile(requirePositional(a, 0, "file")) }),
   stale: (a) => checkStale(requirePositional(a, 0, "output"), requireFlag(a, "course")),
@@ -27603,14 +27839,14 @@ var coreCommands = {
     if (!parsed.success) {
       throw new UsageError(`invalid --json: ${parsed.error.issues.map((i) => `${i.path.join(".") || "(root)"}: ${i.message}`).join("; ")}`);
     }
-    if (existsSync3(join3(course, "course.yaml")) && a.flags.force !== true) {
+    if (existsSync6(join6(course, "course.yaml")) && a.flags.force !== true) {
       throw new UsageError(`course.yaml already exists in ${course}; pass --force to overwrite`);
     }
     const opts = parsed.data;
     const m = initManifest(opts, (/* @__PURE__ */ new Date()).toISOString().slice(0, 10));
     const issues = validateManifest(m).filter((i) => i.level === "error");
     if (issues.length) throw new ValidationError(JSON.stringify({ issues }));
-    mkdirSync(course, { recursive: true });
+    mkdirSync3(course, { recursive: true });
     saveManifest(course, m);
     return { manifest: m };
   },
@@ -27619,6 +27855,47 @@ var coreCommands = {
     const issues = validateManifest(loadManifest(requireFlag(a, "course")));
     if (issues.some((i) => i.level === "error")) throw new ValidationError(JSON.stringify({ issues }));
     return { issues };
+  },
+  "registry list": (a) => ({ assets: loadRegistry(requireFlag(a, "course")).assets }),
+  "registry add": (a) => {
+    const course = requireFlag(a, "course");
+    const parsed = AssetSchema.safeParse(jsonFlag(requireFlag(a, "json"), "json"));
+    if (!parsed.success) throw new ValidationError(`invalid asset: ${zodMsg(parsed.error)}`);
+    saveRegistry(course, addAsset(loadRegistry(course), parsed.data));
+    return { asset: parsed.data };
+  },
+  "registry status": (a) => {
+    const course = requireFlag(a, "course");
+    const id = requirePositional(a, 0, "id");
+    const to = AssetStatusSchema.safeParse(requirePositional(a, 1, "to"));
+    if (!to.success) throw new UsageError("<to> must be one of generated, approved, rejected, imported");
+    const opts = {};
+    const by = a.flags["approved-by"];
+    if (by !== void 0) {
+      if (by !== "user") throw new UsageError('--approved-by must be "user"');
+      opts.approvedBy = "user";
+    }
+    if (typeof a.flags.review === "string") {
+      const rv = ReviewRecordSchema.safeParse(jsonFlag(a.flags.review, "review"));
+      if (!rv.success) throw new UsageError(`invalid --review: ${zodMsg(rv.error)}`);
+      opts.review = rv.data;
+    }
+    const next = setStatus(loadRegistry(course), id, to.data, opts);
+    saveRegistry(course, next);
+    return { asset: next.assets.find((x) => x.id === id) };
+  },
+  "plan validate": (a) => {
+    const course = requireFlag(a, "course");
+    const issues = validatePlan(loadPlan(course), loadManifest(course), loadRegistry(course));
+    if (issues.some((i) => i.level === "error")) throw new ValidationError(JSON.stringify({ issues }));
+    return { issues };
+  },
+  "plan estimate": (a) => {
+    const course = requireFlag(a, "course");
+    const q = requireFlag(a, "quality");
+    if (q !== "draft" && q !== "standard" && q !== "high") throw new UsageError("--quality must be draft, standard or high");
+    const dir = typeof a.flags["data-dir"] === "string" ? a.flags["data-dir"] : void 0;
+    return estimatePlan(loadPlan(course), loadPricing(dir), q);
   }
 };
 var isMain = (() => {
