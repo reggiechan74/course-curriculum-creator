@@ -20,6 +20,12 @@ Make every approved item in `05-media/media-plan.yaml`. `KIT` means `node "${CLA
 
 The course folder is the argument, or the current directory if it contains `course.yaml`.
 
+## Settings
+
+Plugin settings (configured with `/plugin configure course-studio@course-curriculum-creator`). A value still shown as a literal `${user_config.…}` placeholder has not been set, so use its default:
+- `image_quality` = `${user_config.image_quality}` (default `standard`): pass as `--quality` (and `quality` to the MCP tools). Written `<image_quality>` below.
+- `preferred_diagram_style` = `${user_config.preferred_diagram_style}` (default `clean`): `hand-drawn` prefers Excalidraw, `clean` prefers Mermaid.
+
 ## Steps
 
 1. Run `KIT providers show --course "<dir>"`. If it returns `{"detected":null}`, do steps 2 to 5 of the `setup` skill (probe Codex, match tool patterns, match design skills, `providers record`) and read it again.
@@ -55,7 +61,7 @@ After a diagram or chart renders, register it with `KIT registry add --course "<
 Choose the provider in this order, using `.course/providers.json`:
 
 1. `codex`, when `codex.billing` is `plan` (signed in with ChatGPT; an API-key sign-in is refused with exit 4): `KIT gen image --course "<dir>" --asset <id> --provider codex --quality <image_quality>`.
-2. The `course-media` MCP tool `generate_image({courseDir, assetId, quality})` (OpenAI key from the plugin settings), when Codex is not available or gave exit 4. Use `estimate_cost` first if the user wants the price.
+2. The `course-media` MCP tool `generate_image({courseDir, assetId, quality})` (OpenAI key from the plugin settings), when Codex is not available or gave exit 4. This costs money: if the plan item's `provider` is not `openai`, follow "Paid fallback" first.
 3. A detected third-party image tool, as the last choice. Find its price per image (its documentation or tool description; if you cannot, ask the user). If it costs money, follow "Paid fallback" first (show the cost and ask). Then:
    1. `KIT ledger reserve --course "<dir>" --asset <id> --provider <tool name> --usd <price> --quota 0` (use `--usd 0 --quota 1` for a tool billed against a plan image allowance). Keep the `reservationId`. Exit 3: see "Image exit codes".
    2. Call the tool. Save the image to `<dir>/05-media/out/<id>.png` and the prompt you sent to `<dir>/05-media/src/<id>.prompt.txt`.
@@ -71,7 +77,17 @@ If an image needs labels, write the labels to `<dir>/05-media/src/<id>.labels.js
 
 `embed` uses the `.overlay.svg` file when an asset has one, so the lesson shows the image with its labels.
 
+### Paid fallback
+
+An item planned as `codex` or `auto` was estimated at $0, and the user approved the plan at that price. Nothing paid runs without the user's approval, so before you move such an item to a paid provider (`generate_image`, or a third-party tool that costs money):
+
+1. Get the cost. For OpenAI: run `KIT plan estimate --course "<dir>" --quality <image_quality>` and note `totalUsd`; change the item's `provider` to `openai` in `05-media/media-plan.yaml`; run `plan estimate` again. The difference is the item's cost (`estimate_cost` gives the same totals). For a third-party tool use its price. Run `KIT ledger totals --course "<dir>"` for the spend so far.
+2. Ask (AskUserQuestion): "Codex cannot make <id> (<reason>). OpenAI at <image_quality> costs about $<cost> for this image; spent $<spent> of $<media.budgetUsd>. Generate it with OpenAI?" Offer yes, no (keep the placeholder), or yes for all remaining image items (show the total for them).
+3. Yes: keep `provider: openai` in the plan (for a third-party tool, set `provider` to its name), run `KIT plan validate --course "<dir>"`, then generate. No: put the item's `provider` back as it was and keep the placeholder.
+
 ### Image exit codes
+
+MCP tool results have no exit code. Treat an error result whose text starts with `Budget exceeded` or `Plan image cap exceeded` as exit 3, and `course-media is not configured` as exit 4.
 
 - Exit 3 (budget exceeded): stop all generation. Run `KIT ledger totals --course "<dir>"`, show the totals against `media.budgetUsd` and `media.maxPlanImages`, and ask the user (AskUserQuestion) to raise the budget in `course.yaml` or to stop. Continue only after they raise it.
 - Exit 4 (provider not available): go to the next provider in the order above. Do not retry the same one.
