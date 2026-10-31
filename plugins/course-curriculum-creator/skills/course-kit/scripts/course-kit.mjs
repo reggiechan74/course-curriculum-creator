@@ -7460,98 +7460,6 @@ async function runCli(argv, commands) {
 import { existsSync as existsSync6, mkdirSync as mkdirSync3 } from "node:fs";
 import { join as join6 } from "node:path";
 
-// packages/course-kit/src/hash.ts
-var import_yaml2 = __toESM(require_dist(), 1);
-import { createHash } from "node:crypto";
-import { existsSync, readFileSync as readFileSync2 } from "node:fs";
-import { resolve } from "node:path";
-
-// packages/course-kit/src/frontmatter.ts
-var import_yaml = __toESM(require_dist(), 1);
-import { readFileSync, writeFileSync } from "node:fs";
-var FM = /^(---[ \t]*\r?\n)((?:[\s\S]*?\r?\n)?)(---[ \t]*(?:\r?\n|$))([\s\S]*)$/;
-function split(text) {
-  const m = FM.exec(text);
-  return m ? { open: m[1], fm: m[2], close: m[3], body: m[4] } : null;
-}
-function readFrontmatter(path, opts = {}) {
-  const text = readFileSync(path, "utf8");
-  const parts = split(text);
-  if (!parts) return { data: {}, body: text };
-  let data;
-  try {
-    data = (0, import_yaml.parse)(parts.fm, opts.strings ? { schema: "failsafe" } : void 0);
-  } catch (e) {
-    throw new ValidationError(`invalid frontmatter in ${path}: ${e.message}`);
-  }
-  return {
-    data: data && typeof data === "object" && !Array.isArray(data) ? data : {},
-    body: parts.body
-  };
-}
-var isTopLevelKey = (l) => /^[^\s#-]/.test(l) || /^-[^\s]/.test(l);
-var isLooseLine = (l) => l.trim() === "" || l.startsWith("#");
-function findBlock(lines, key) {
-  const heads = [`${key}:`, `"${key}":`, `'${key}':`];
-  const start = lines.findIndex((l) => heads.some((h) => l.startsWith(h)));
-  if (start < 0) return null;
-  let end = start + 1;
-  while (end < lines.length && !isTopLevelKey(lines[end])) end++;
-  while (end > start + 1 && isLooseLine(lines[end - 1])) end--;
-  return [start, end];
-}
-function updateFrontmatter(path, patch) {
-  const text = readFileSync(path, "utf8");
-  const parts = split(text) ?? { open: "---\n", fm: "", close: "---\n", body: text };
-  const eol = parts.open.endsWith("\r\n") ? "\r\n" : "\n";
-  const lines = parts.fm.match(/[^\n]*\n/g) ?? [];
-  for (const [k, v] of Object.entries(patch)) {
-    const block = (0, import_yaml.stringify)({ [k]: v }).replace(/\n$/, "").split("\n").map((l) => l + eol);
-    const range = findBlock(lines, k);
-    if (range) lines.splice(range[0], range[1] - range[0], ...block);
-    else lines.push(...block);
-  }
-  writeFileSync(path, parts.open + lines.join("") + parts.close + parts.body);
-}
-
-// packages/course-kit/src/hash.ts
-function hashFile(path) {
-  return createHash("md5").update(readFileSync2(path)).digest("hex").slice(0, 8);
-}
-function sourceFilesOf(data) {
-  const sf = data.sourceFiles;
-  return sf && typeof sf === "object" ? sf : {};
-}
-function currentHash(courseDir, rel) {
-  const p = resolve(courseDir, rel);
-  return existsSync(p) ? hashFile(p) : void 0;
-}
-function checkStale(outputPath, courseDir) {
-  if (!existsSync(outputPath)) return { status: "missing-output", changed: [] };
-  const { data } = readFrontmatter(outputPath, { strings: true });
-  const stored = data.sourceHashes && typeof data.sourceHashes === "object" ? data.sourceHashes : {};
-  const changed = Object.entries(sourceFilesOf(data)).filter(([key, rel]) => currentHash(courseDir, rel) !== stored[key]).map(([key]) => key);
-  return { status: changed.length ? "stale" : "fresh", changed };
-}
-function writeHashes(outputPath, courseDir) {
-  const { data } = readFrontmatter(outputPath, { strings: true });
-  const hashes = {};
-  for (const [key, rel] of Object.entries(sourceFilesOf(data))) {
-    const h = currentHash(courseDir, rel);
-    if (h) {
-      const node2 = new import_yaml2.Scalar(h);
-      node2.type = "QUOTE_DOUBLE";
-      hashes[key] = node2;
-    }
-  }
-  updateFrontmatter(outputPath, { sourceHashes: hashes });
-}
-
-// packages/course-kit/src/manifest/io.ts
-var import_yaml3 = __toESM(require_dist(), 1);
-import { readFileSync as readFileSync3, writeFileSync as writeFileSync2 } from "node:fs";
-import { join } from "node:path";
-
 // node_modules/zod/v4/classic/external.js
 var external_exports = {};
 __export(external_exports, {
@@ -7750,7 +7658,7 @@ __export(external_exports, {
   optional: () => optional,
   output: () => output,
   overwrite: () => _overwrite,
-  parse: () => parse3,
+  parse: () => parse2,
   parseAsync: () => parseAsync2,
   partialRecord: () => partialRecord,
   pipe: () => pipe,
@@ -8102,7 +8010,7 @@ __export(core_exports2, {
   memoizer: () => memoizer,
   mergeValues: () => mergeValues,
   meta: () => meta,
-  parse: () => parse2,
+  parse: () => parse,
   parseAsync: () => parseAsync,
   parseURLObject: () => parseURLObject,
   prettifyError: () => prettifyError,
@@ -9322,7 +9230,7 @@ var _parse = (_Err) => {
   };
   return fn;
 };
-var parse2 = /* @__PURE__ */ _parse($ZodRealError);
+var parse = /* @__PURE__ */ _parse($ZodRealError);
 var _parseAsync = (_Err) => {
   const fn = async (schema, value, _ctx, params) => {
     const ctx = _ctx ? { ..._ctx, async: true } : { async: true };
@@ -12475,10 +12383,10 @@ var $ZodFunction = /* @__PURE__ */ $constructor("$ZodFunction", (inst, def) => {
       throw new Error("implement() must be called with a function");
     }
     return Object.defineProperty(function(...args) {
-      const parsedArgs = inst._def.input ? parse2(inst._def.input, args) : args;
+      const parsedArgs = inst._def.input ? parse(inst._def.input, args) : args;
       const result = Reflect.apply(func, this, parsedArgs);
       if (inst._def.output) {
-        return parse2(inst._def.output, result);
+        return parse(inst._def.output, result);
       }
       return result;
     }, "_zod", { value: inst._zod, enumerable: false });
@@ -24785,7 +24693,7 @@ var ZodRealError = /* @__PURE__ */ $constructor("ZodError", initializer2, void 0
 });
 
 // node_modules/zod/v4/classic/parse.js
-var parse3 = /* @__PURE__ */ _parse(ZodRealError);
+var parse2 = /* @__PURE__ */ _parse(ZodRealError);
 var parseAsync2 = /* @__PURE__ */ _parseAsync(ZodRealError);
 var safeParse2 = /* @__PURE__ */ _safeParse(ZodRealError);
 var safeParseAsync2 = /* @__PURE__ */ _safeParseAsync(ZodRealError);
@@ -24922,7 +24830,7 @@ var ZodType = /* @__PURE__ */ $constructor("ZodType", (inst, def) => {
     util_exports.own(this, "~standard", value);
   },
   parse: function _parse2(data, params) {
-    return parse3(this, data, params, { callee: _parse2 });
+    return parse2(this, data, params, { callee: _parse2 });
   },
   parseAsync: async function _parseAsync2(data, params) {
     return await parseAsync2(this, data, params, { callee: _parseAsync2 });
@@ -27269,6 +27177,98 @@ function date4(params) {
   return _coercedDate(ZodDate, params);
 }
 
+// packages/course-kit/src/hash.ts
+var import_yaml2 = __toESM(require_dist(), 1);
+import { createHash } from "node:crypto";
+import { existsSync, readFileSync as readFileSync2 } from "node:fs";
+import { resolve } from "node:path";
+
+// packages/course-kit/src/frontmatter.ts
+var import_yaml = __toESM(require_dist(), 1);
+import { readFileSync, writeFileSync } from "node:fs";
+var FM = /^(---[ \t]*\r?\n)((?:[\s\S]*?\r?\n)?)(---[ \t]*(?:\r?\n|$))([\s\S]*)$/;
+function split(text) {
+  const m = FM.exec(text);
+  return m ? { open: m[1], fm: m[2], close: m[3], body: m[4] } : null;
+}
+function readFrontmatter(path, opts = {}) {
+  const text = readFileSync(path, "utf8");
+  const parts = split(text);
+  if (!parts) return { data: {}, body: text };
+  let data;
+  try {
+    data = (0, import_yaml.parse)(parts.fm, opts.strings ? { schema: "failsafe" } : void 0);
+  } catch (e) {
+    throw new ValidationError(`invalid frontmatter in ${path}: ${e.message}`);
+  }
+  return {
+    data: data && typeof data === "object" && !Array.isArray(data) ? data : {},
+    body: parts.body
+  };
+}
+var isTopLevelKey = (l) => /^[^\s#-]/.test(l) || /^-[^\s]/.test(l);
+var isLooseLine = (l) => l.trim() === "" || l.startsWith("#");
+function findBlock(lines, key) {
+  const heads = [`${key}:`, `"${key}":`, `'${key}':`];
+  const start = lines.findIndex((l) => heads.some((h) => l.startsWith(h)));
+  if (start < 0) return null;
+  let end = start + 1;
+  while (end < lines.length && !isTopLevelKey(lines[end])) end++;
+  while (end > start + 1 && isLooseLine(lines[end - 1])) end--;
+  return [start, end];
+}
+function updateFrontmatter(path, patch) {
+  const text = readFileSync(path, "utf8");
+  const parts = split(text) ?? { open: "---\n", fm: "", close: "---\n", body: text };
+  const eol = parts.open.endsWith("\r\n") ? "\r\n" : "\n";
+  const lines = parts.fm.match(/[^\n]*\n/g) ?? [];
+  for (const [k, v] of Object.entries(patch)) {
+    const block = (0, import_yaml.stringify)({ [k]: v }).replace(/\n$/, "").split("\n").map((l) => l + eol);
+    const range = findBlock(lines, k);
+    if (range) lines.splice(range[0], range[1] - range[0], ...block);
+    else lines.push(...block);
+  }
+  writeFileSync(path, parts.open + lines.join("") + parts.close + parts.body);
+}
+
+// packages/course-kit/src/hash.ts
+function hashFile(path) {
+  return createHash("md5").update(readFileSync2(path)).digest("hex").slice(0, 8);
+}
+function sourceFilesOf(data) {
+  const sf = data.sourceFiles;
+  return sf && typeof sf === "object" ? sf : {};
+}
+function currentHash(courseDir, rel) {
+  const p = resolve(courseDir, rel);
+  return existsSync(p) ? hashFile(p) : void 0;
+}
+function checkStale(outputPath, courseDir) {
+  if (!existsSync(outputPath)) return { status: "missing-output", changed: [] };
+  const { data } = readFrontmatter(outputPath, { strings: true });
+  const stored = data.sourceHashes && typeof data.sourceHashes === "object" ? data.sourceHashes : {};
+  const changed = Object.entries(sourceFilesOf(data)).filter(([key, rel]) => currentHash(courseDir, rel) !== stored[key]).map(([key]) => key);
+  return { status: changed.length ? "stale" : "fresh", changed };
+}
+function writeHashes(outputPath, courseDir) {
+  const { data } = readFrontmatter(outputPath, { strings: true });
+  const hashes = {};
+  for (const [key, rel] of Object.entries(sourceFilesOf(data))) {
+    const h = currentHash(courseDir, rel);
+    if (h) {
+      const node2 = new import_yaml2.Scalar(h);
+      node2.type = "QUOTE_DOUBLE";
+      hashes[key] = node2;
+    }
+  }
+  updateFrontmatter(outputPath, { sourceHashes: hashes });
+}
+
+// packages/course-kit/src/manifest/io.ts
+var import_yaml3 = __toESM(require_dist(), 1);
+import { readFileSync as readFileSync3, writeFileSync as writeFileSync2 } from "node:fs";
+import { join } from "node:path";
+
 // packages/course-kit/src/manifest/schema.ts
 var ShapeSchema = external_exports.enum(["workshop", "cohort", "self-paced"]);
 var DeliverySchema = external_exports.enum(["in-person", "virtual", "hybrid", "async"]);
@@ -27814,6 +27814,16 @@ function setStatus(r, id, to, opts = {}) {
   if (opts.approvedBy) next.approvedBy = opts.approvedBy;
   return { ...r, assets: r.assets.map((x) => x.id === id ? next : x) };
 }
+function updateAssetText(r, id, patch) {
+  const a = r.assets.find((x) => x.id === id);
+  if (!a) throw new ValidationError(`unknown asset id ${id}`);
+  if (a.status === "approved") throw new ValidationError(`asset ${id} is approved and cannot be edited`);
+  const next = { ...a };
+  for (const k of ["alt", "longDescription", "caption"]) {
+    if (patch[k] !== void 0) next[k] = patch[k];
+  }
+  return { ...r, assets: r.assets.map((x) => x.id === id ? next : x) };
+}
 
 // packages/course-kit/src/commands-core.ts
 function jsonFlag(raw, flag) {
@@ -27869,6 +27879,15 @@ var coreCommands = {
     if (!parsed.success) throw new ValidationError(`invalid asset: ${zodMsg(parsed.error)}`);
     saveRegistry(course, addAsset(loadRegistry(course), parsed.data));
     return { asset: parsed.data };
+  },
+  "registry update": (a) => {
+    const course = requireFlag(a, "course");
+    const id = requirePositional(a, 0, "id");
+    const patch = external_exports.object({ alt: external_exports.string().optional(), longDescription: external_exports.string().optional(), caption: external_exports.string().optional() }).strict().safeParse(jsonFlag(requireFlag(a, "json"), "json"));
+    if (!patch.success) throw new UsageError(`invalid --json: ${zodMsg(patch.error)}`);
+    const next = updateAssetText(loadRegistry(course), id, patch.data);
+    saveRegistry(course, next);
+    return { asset: next.assets.find((x) => x.id === id) };
   },
   "registry status": (a) => {
     const course = requireFlag(a, "course");

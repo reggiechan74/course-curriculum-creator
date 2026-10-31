@@ -1,0 +1,7 @@
+{
+  "schema": "registry/v1",
+  "assets": [
+    {"id":"A-M1-01","kind":"diagram","function":"process-flow","objectives":["LO-1"],"module":"M1","provider":"svg","files":["05-media/out/A-M1-01.svg"],"alt":"","status":"generated","costUsd":0,"quotaUnits":0,"createdAt":"2026-10-31T00:00:00Z"},
+    {"id":"A-M2-01","kind":"chart","function":"data-viz","objectives":["LO-2"],"module":"M2","provider":"svg","files":["05-media/out/A-M2-01.svg"],"alt":"","status":"generated","costUsd":0,"quotaUnits":0,"createdAt":"2026-10-31T00:00:00Z"}
+  ]
+}

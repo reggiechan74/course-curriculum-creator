@@ -33,7 +33,13 @@ Media plan and registry:
 - `plan estimate --course "<dir>" --quality draft|standard|high [--data-dir "<dir>"]`: estimate cost per item and in total.
 - `registry list --course "<dir>"`: list assets in `05-media/registry.json`.
 - `registry add --course "<dir>" --json '<asset>'`: add an asset.
+- `registry update <id> --course "<dir>" --json '{"alt":"…","longDescription":"…","caption":"…"}'`: set alt text, long description and caption. Cannot change status; refused for approved assets.
 - `registry status <id> <to> --course "<dir>" [--approved-by user] [--review '<json>']`: set status to `generated`, `approved`, `rejected` or `imported`. Only the user approves an asset.
+
+Embedding:
+
+- `embed all --course "<dir>"`: write media blocks into `02-design/lesson-plans.md`, `04-materials/student-handout.md` and `04-materials/instructor-guide.md` (each only if it exists and has the module `<!-- id: Mx -->` comment). Approved assets get an image block; everything else gets a "Media pending approval" placeholder. Output: `{files:[{file,embedded,placeholders}]}`. Safe to run again.
+- `embed <file> --asset <id> --anchor <module-id> --course "<dir>"`: the same for one file; exit 2 if the anchor comment is missing.
 
 Ledger and generation:
 

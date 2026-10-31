@@ -6,6 +6,7 @@ import { coreCommands } from './commands-core.js';
 import { type CommandTable, type ParsedArgs, requireFlag, requirePositional, runCli } from './cli/args.js';
 import { UsageError, ValidationError } from './errors.js';
 import { loadManifest } from './manifest/io.js';
+import { embedAll, embedOne } from './media/embed.js';
 import { checkBudget, ledgerTotals } from './media/ledger.js';
 import { probeCodex } from './providers/codex.js';
 import { generateAssetImage, IMAGE_PROVIDERS, IMAGE_QUALITIES, type ImageProvider } from './providers/generate.js';
@@ -93,6 +94,11 @@ export const studioCommands: CommandTable = {
     const dataDirFlag = typeof a.flags['data-dir'] === 'string' ? a.flags['data-dir'] : undefined;
     return { asset: await generateAssetImage(course, assetId, provider, { quality, dataDir: dataDirFlag }) };
   },
+  embed: (a) => {
+    const course = requireFlag(a, 'course');
+    return embedOne(course, resolve(requirePositional(a, 0, 'file')), requireFlag(a, 'asset'), requireFlag(a, 'anchor'));
+  },
+  'embed all': (a) => ({ files: embedAll(requireFlag(a, 'course')) }),
   'providers probe-codex': () => probeCodex(),
   'providers record': (a) => {
     const course = requireFlag(a, 'course');

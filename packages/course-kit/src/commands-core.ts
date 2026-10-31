@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, realpathSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { z } from 'zod';
 import { type CommandTable, requireFlag, requirePositional, runCli } from './cli/args.js';
 import { UsageError, ValidationError } from './errors.js';
 import { checkStale, hashFile, writeHashes } from './hash.js';
@@ -8,7 +9,7 @@ import { InitOptionsSchema, initManifest, loadManifest, saveManifest, validateMa
 import { syncManifest } from './manifest/sync.js';
 import { estimatePlan, loadPlan, validatePlan } from './media/plan.js';
 import { loadPricing } from './media/pricing.js';
-import { addAsset, loadRegistry, saveRegistry, setStatus } from './media/registry.js';
+import { addAsset, loadRegistry, saveRegistry, setStatus, updateAssetText } from './media/registry.js';
 import { AssetSchema, AssetStatusSchema, ReviewRecordSchema } from './media/schema.js';
 
 function jsonFlag(raw: string, flag: string): unknown {
@@ -58,6 +59,16 @@ export const coreCommands: CommandTable = {
     if (!parsed.success) throw new ValidationError(`invalid asset: ${zodMsg(parsed.error)}`);
     saveRegistry(course, addAsset(loadRegistry(course), parsed.data));
     return { asset: parsed.data };
+  },
+  'registry update': (a) => {
+    const course = requireFlag(a, 'course');
+    const id = requirePositional(a, 0, 'id');
+    const patch = z.object({ alt: z.string().optional(), longDescription: z.string().optional(), caption: z.string().optional() }).strict()
+      .safeParse(jsonFlag(requireFlag(a, 'json'), 'json'));
+    if (!patch.success) throw new UsageError(`invalid --json: ${zodMsg(patch.error)}`);
+    const next = updateAssetText(loadRegistry(course), id, patch.data);
+    saveRegistry(course, next);
+    return { asset: next.assets.find((x) => x.id === id) };
   },
   'registry status': (a) => {
     const course = requireFlag(a, 'course');

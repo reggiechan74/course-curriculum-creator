@@ -53,3 +53,17 @@ export function setStatus(
   if (opts.approvedBy) next.approvedBy = opts.approvedBy;
   return { ...r, assets: r.assets.map((x) => (x.id === id ? next : x)) };
 }
+
+export type AssetTextPatch = { alt?: string; longDescription?: string; caption?: string };
+
+/** Sets alt, longDescription and caption only. Never changes status; approved assets are frozen. */
+export function updateAssetText(r: Registry, id: string, patch: AssetTextPatch): Registry {
+  const a = r.assets.find((x) => x.id === id);
+  if (!a) throw new ValidationError(`unknown asset id ${id}`);
+  if (a.status === 'approved') throw new ValidationError(`asset ${id} is approved and cannot be edited`);
+  const next: Asset = { ...a };
+  for (const k of ['alt', 'longDescription', 'caption'] as const) {
+    if (patch[k] !== undefined) next[k] = patch[k] as string;
+  }
+  return { ...r, assets: r.assets.map((x) => (x.id === id ? next : x)) };
+}

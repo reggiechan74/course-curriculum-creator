@@ -79,7 +79,7 @@ var require_identity = __commonJS({
         }
       return false;
     }
-    var hasAnchor = (node2) => (isScalar(node2) || isCollection(node2)) && !!node2.anchor;
+    var hasAnchor2 = (node2) => (isScalar(node2) || isCollection(node2)) && !!node2.anchor;
     exports.ALIAS = ALIAS;
     exports.DOC = DOC;
     exports.MAP = MAP;
@@ -87,7 +87,7 @@ var require_identity = __commonJS({
     exports.PAIR = PAIR;
     exports.SCALAR = SCALAR;
     exports.SEQ = SEQ;
-    exports.hasAnchor = hasAnchor;
+    exports.hasAnchor = hasAnchor2;
     exports.isAlias = isAlias;
     exports.isCollection = isCollection;
     exports.isDocument = isDocument;
@@ -4005,10 +4005,10 @@ var require_resolve_block_map = __commonJS({
       let offset4 = bm.offset;
       let commentEnd = null;
       for (const collItem of bm.items) {
-        const { start, key: key2, sep, value: value3 } = collItem;
+        const { start, key: key2, sep: sep2, value: value3 } = collItem;
         const keyProps = resolveProps.resolveProps(start, {
           indicator: "explicit-key-ind",
-          next: key2 ?? sep?.[0],
+          next: key2 ?? sep2?.[0],
           offset: offset4,
           onError,
           parentIndent: bm.indent,
@@ -4022,7 +4022,7 @@ var require_resolve_block_map = __commonJS({
             else if ("indent" in key2 && key2.indent !== bm.indent)
               onError(offset4, "BAD_INDENT", startColMsg);
           }
-          if (!keyProps.anchor && !keyProps.tag && !sep) {
+          if (!keyProps.anchor && !keyProps.tag && !sep2) {
             commentEnd = keyProps.end;
             if (keyProps.comment) {
               if (map4.comment)
@@ -4046,7 +4046,7 @@ var require_resolve_block_map = __commonJS({
         ctx.atKey = false;
         if (utilMapIncludes.mapIncludes(ctx, map4.items, keyNode))
           onError(keyStart, "DUPLICATE_KEY", "Map keys must be unique");
-        const valueProps = resolveProps.resolveProps(sep ?? [], {
+        const valueProps = resolveProps.resolveProps(sep2 ?? [], {
           indicator: "map-value-ind",
           next: value3,
           offset: keyNode.range[2],
@@ -4062,7 +4062,7 @@ var require_resolve_block_map = __commonJS({
             if (ctx.options.strict && keyProps.start < valueProps.found.offset - 1024)
               onError(keyNode.range, "KEY_OVER_1024_CHARS", "The : indicator must be at most 1024 chars after the start of an implicit block mapping key");
           }
-          const valueNode = value3 ? composeNode(ctx, value3, valueProps, onError) : composeEmptyNode(ctx, offset4, sep, null, valueProps, onError);
+          const valueNode = value3 ? composeNode(ctx, value3, valueProps, onError) : composeEmptyNode(ctx, offset4, sep2, null, valueProps, onError);
           if (ctx.schema.compat)
             utilFlowIndentCheck.flowIndentCheck(bm.indent, value3, onError);
           offset4 = valueNode.range[2];
@@ -4153,7 +4153,7 @@ var require_resolve_end = __commonJS({
       let comment = "";
       if (end) {
         let hasSpace = false;
-        let sep = "";
+        let sep2 = "";
         for (const token of end) {
           const { source: source3, type: type3 } = token;
           switch (type3) {
@@ -4167,13 +4167,13 @@ var require_resolve_end = __commonJS({
               if (!comment)
                 comment = cb;
               else
-                comment += sep + cb;
-              sep = "";
+                comment += sep2 + cb;
+              sep2 = "";
               break;
             }
             case "newline":
               if (comment)
-                sep += source3;
+                sep2 += source3;
               hasSpace = true;
               break;
             default:
@@ -4216,18 +4216,18 @@ var require_resolve_flow_collection = __commonJS({
       let offset4 = fc.offset + fc.start.source.length;
       for (let i = 0; i < fc.items.length; ++i) {
         const collItem = fc.items[i];
-        const { start, key: key2, sep, value: value3 } = collItem;
+        const { start, key: key2, sep: sep2, value: value3 } = collItem;
         const props = resolveProps.resolveProps(start, {
           flow: fcName,
           indicator: "explicit-key-ind",
-          next: key2 ?? sep?.[0],
+          next: key2 ?? sep2?.[0],
           offset: offset4,
           onError,
           parentIndent: fc.indent,
           startOnNewline: false
         });
         if (!props.found) {
-          if (!props.anchor && !props.tag && !sep && !value3) {
+          if (!props.anchor && !props.tag && !sep2 && !value3) {
             if (i === 0 && props.comma)
               onError(props.comma, "UNEXPECTED_TOKEN", `Unexpected , in ${fcName}`);
             else if (i < fc.items.length - 1)
@@ -4281,8 +4281,8 @@ var require_resolve_flow_collection = __commonJS({
             }
           }
         }
-        if (!isMap && !sep && !props.found) {
-          const valueNode = value3 ? composeNode(ctx, value3, props, onError) : composeEmptyNode(ctx, props.end, sep, null, props, onError);
+        if (!isMap && !sep2 && !props.found) {
+          const valueNode = value3 ? composeNode(ctx, value3, props, onError) : composeEmptyNode(ctx, props.end, sep2, null, props, onError);
           coll.items.push(valueNode);
           offset4 = valueNode.range[2];
           if (isBlock(value3))
@@ -4294,7 +4294,7 @@ var require_resolve_flow_collection = __commonJS({
           if (isBlock(key2))
             onError(keyNode.range, "BLOCK_IN_FLOW", blockMsg);
           ctx.atKey = false;
-          const valueProps = resolveProps.resolveProps(sep ?? [], {
+          const valueProps = resolveProps.resolveProps(sep2 ?? [], {
             flow: fcName,
             indicator: "map-value-ind",
             next: value3,
@@ -4305,8 +4305,8 @@ var require_resolve_flow_collection = __commonJS({
           });
           if (valueProps.found) {
             if (!isMap && !props.found && ctx.options.strict) {
-              if (sep)
-                for (const st of sep) {
+              if (sep2)
+                for (const st of sep2) {
                   if (st === valueProps.found)
                     break;
                   if (st.type === "newline") {
@@ -4323,7 +4323,7 @@ var require_resolve_flow_collection = __commonJS({
             else
               onError(valueProps.start, "MISSING_CHAR", `Missing , or : between ${fcName} items`);
           }
-          const valueNode = value3 ? composeNode(ctx, value3, valueProps, onError) : valueProps.found ? composeEmptyNode(ctx, valueProps.end, sep, null, valueProps, onError) : null;
+          const valueNode = value3 ? composeNode(ctx, value3, valueProps, onError) : valueProps.found ? composeEmptyNode(ctx, valueProps.end, sep2, null, valueProps, onError) : null;
           if (valueNode) {
             if (isBlock(value3))
               onError(valueNode.range, "BLOCK_IN_FLOW", blockMsg);
@@ -4503,7 +4503,7 @@ var require_resolve_block_scalar = __commonJS({
           chompStart = i + 1;
       }
       let value3 = "";
-      let sep = "";
+      let sep2 = "";
       let prevMoreIndented = false;
       for (let i = 0; i < contentStart; ++i)
         value3 += lines[i][0].slice(trimIndent) + "\n";
@@ -4520,24 +4520,24 @@ var require_resolve_block_scalar = __commonJS({
           indent = "";
         }
         if (type3 === Scalar2.Scalar.BLOCK_LITERAL) {
-          value3 += sep + indent.slice(trimIndent) + content2;
-          sep = "\n";
+          value3 += sep2 + indent.slice(trimIndent) + content2;
+          sep2 = "\n";
         } else if (indent.length > trimIndent || content2[0] === "	") {
-          if (sep === " ")
-            sep = "\n";
-          else if (!prevMoreIndented && sep === "\n")
-            sep = "\n\n";
-          value3 += sep + indent.slice(trimIndent) + content2;
-          sep = "\n";
+          if (sep2 === " ")
+            sep2 = "\n";
+          else if (!prevMoreIndented && sep2 === "\n")
+            sep2 = "\n\n";
+          value3 += sep2 + indent.slice(trimIndent) + content2;
+          sep2 = "\n";
           prevMoreIndented = true;
         } else if (content2 === "") {
-          if (sep === "\n")
+          if (sep2 === "\n")
             value3 += "\n";
           else
-            sep = "\n";
+            sep2 = "\n";
         } else {
-          value3 += sep + content2;
-          sep = " ";
+          value3 += sep2 + content2;
+          sep2 = " ";
           prevMoreIndented = false;
         }
       }
@@ -4720,25 +4720,25 @@ var require_resolve_flow_scalar = __commonJS({
         trimBoth = /^[ \t]+|[ \t]+$/g;
       }
       let res = match2[1].replace(trimEnd, "");
-      let sep = " ";
+      let sep2 = " ";
       let pos = line4.lastIndex;
       while (match2 = line4.exec(source3)) {
         const lm = match2[1].replace(trimBoth, "");
         if (lm === "") {
-          if (sep === "\n")
-            res += sep;
+          if (sep2 === "\n")
+            res += sep2;
           else
-            sep = "\n";
+            sep2 = "\n";
         } else {
-          res += sep + lm;
-          sep = " ";
+          res += sep2 + lm;
+          sep2 = " ";
         }
         pos = line4.lastIndex;
       }
       const last = /[ \t]*(.*)/sy;
       last.lastIndex = pos;
       match2 = last.exec(source3);
-      return res + sep + (match2?.[1] ?? "");
+      return res + sep2 + (match2?.[1] ?? "");
     }
     function doubleQuotedValue(source3, onError) {
       let res = "";
@@ -5548,14 +5548,14 @@ var require_cst_stringify = __commonJS({
         }
       }
     }
-    function stringifyItem({ start, key: key2, sep, value: value3 }) {
+    function stringifyItem({ start, key: key2, sep: sep2, value: value3 }) {
       let res = "";
       for (const st of start)
         res += st.source;
       if (key2)
         res += stringifyToken(key2);
-      if (sep)
-        for (const st of sep)
+      if (sep2)
+        for (const st of sep2)
           res += st.source;
       if (value3)
         res += stringifyToken(value3);
@@ -6722,18 +6722,18 @@ var require_parser = __commonJS({
         if (this.type === "map-value-ind") {
           const prev = getPrevProps(this.peek(2));
           const start = getFirstKeyStartProps(prev);
-          let sep;
+          let sep2;
           if (scalar.end) {
-            sep = scalar.end;
-            sep.push(this.sourceToken);
+            sep2 = scalar.end;
+            sep2.push(this.sourceToken);
             delete scalar.end;
           } else
-            sep = [this.sourceToken];
+            sep2 = [this.sourceToken];
           const map4 = {
             type: "block-map",
             offset: scalar.offset,
             indent: scalar.indent,
-            items: [{ start, key: scalar, sep }]
+            items: [{ start, key: scalar, sep: sep2 }]
           };
           this.onKeyLine = true;
           this.stack[this.stack.length - 1] = map4;
@@ -6886,15 +6886,15 @@ var require_parser = __commonJS({
                 } else if (isFlowToken(it.key) && !includesToken(it.sep, "newline")) {
                   const start2 = getFirstKeyStartProps(it.start);
                   const key2 = it.key;
-                  const sep = it.sep;
-                  sep.push(this.sourceToken);
+                  const sep2 = it.sep;
+                  sep2.push(this.sourceToken);
                   delete it.key;
                   delete it.sep;
                   this.stack.push({
                     type: "block-map",
                     offset: this.offset,
                     indent: this.indent,
-                    items: [{ start: start2, key: key2, sep }]
+                    items: [{ start: start2, key: key2, sep: sep2 }]
                   });
                 } else if (start.length > 0) {
                   it.sep = it.sep.concat(start, this.sourceToken);
@@ -7088,13 +7088,13 @@ var require_parser = __commonJS({
             const prev = getPrevProps(parent);
             const start = getFirstKeyStartProps(prev);
             fixFlowSeqItems(fc);
-            const sep = fc.end.splice(1, fc.end.length);
-            sep.push(this.sourceToken);
+            const sep2 = fc.end.splice(1, fc.end.length);
+            sep2.push(this.sourceToken);
             const map4 = {
               type: "block-map",
               offset: fc.offset,
               indent: fc.indent,
-              items: [{ start, key: fc, sep }]
+              items: [{ start, key: fc, sep: sep2 }]
             };
             this.onKeyLine = true;
             this.stack[this.stack.length - 1] = map4;
@@ -7832,8 +7832,8 @@ var require_topojson_client = __commonJS({
 });
 
 // packages/course-kit/src/cli.ts
-import { existsSync as existsSync14, mkdirSync as mkdirSync10, readFileSync as readFileSync14, realpathSync as realpathSync2, writeFileSync as writeFileSync12 } from "node:fs";
-import { join as join16, resolve as resolve5 } from "node:path";
+import { existsSync as existsSync15, mkdirSync as mkdirSync10, readFileSync as readFileSync15, realpathSync as realpathSync2, writeFileSync as writeFileSync13 } from "node:fs";
+import { join as join17, resolve as resolve5 } from "node:path";
 import { fileURLToPath } from "node:url";
 
 // packages/course-kit/src/brand/tokens.ts
@@ -28388,6 +28388,16 @@ function setStatus(r, id2, to, opts = {}) {
   if (opts.approvedBy) next.approvedBy = opts.approvedBy;
   return { ...r, assets: r.assets.map((x5) => x5.id === id2 ? next : x5) };
 }
+function updateAssetText(r, id2, patch2) {
+  const a3 = r.assets.find((x5) => x5.id === id2);
+  if (!a3) throw new ValidationError(`unknown asset id ${id2}`);
+  if (a3.status === "approved") throw new ValidationError(`asset ${id2} is approved and cannot be edited`);
+  const next = { ...a3 };
+  for (const k of ["alt", "longDescription", "caption"]) {
+    if (patch2[k] !== void 0) next[k] = patch2[k];
+  }
+  return { ...r, assets: r.assets.map((x5) => x5.id === id2 ? next : x5) };
+}
 
 // packages/course-kit/src/commands-core.ts
 function jsonFlag(raw, flag2) {
@@ -28444,6 +28454,15 @@ var coreCommands = {
     saveRegistry(course, addAsset(loadRegistry(course), parsed.data));
     return { asset: parsed.data };
   },
+  "registry update": (a3) => {
+    const course = requireFlag(a3, "course");
+    const id2 = requirePositional(a3, 0, "id");
+    const patch2 = external_exports.object({ alt: external_exports.string().optional(), longDescription: external_exports.string().optional(), caption: external_exports.string().optional() }).strict().safeParse(jsonFlag(requireFlag(a3, "json"), "json"));
+    if (!patch2.success) throw new UsageError(`invalid --json: ${zodMsg(patch2.error)}`);
+    const next = updateAssetText(loadRegistry(course), id2, patch2.data);
+    saveRegistry(course, next);
+    return { asset: next.assets.find((x5) => x5.id === id2) };
+  },
   "registry status": (a3) => {
     const course = requireFlag(a3, "course");
     const id2 = requirePositional(a3, 0, "id");
@@ -28479,10 +28498,115 @@ var coreCommands = {
   }
 };
 
+// packages/course-kit/src/media/embed.ts
+import { existsSync as existsSync7, readFileSync as readFileSync9, writeFileSync as writeFileSync6 } from "node:fs";
+import { dirname, join as join7, relative, sep } from "node:path";
+var EMBED_FILES = [
+  ["02-design", "lesson-plans.md"],
+  ["04-materials", "student-handout.md"],
+  ["04-materials", "instructor-guide.md"]
+];
+var esc2 = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+var oneLine = (s) => s.replace(/\s+/g, " ").trim();
+function isApprovedAsset(x5) {
+  return "files" in x5 && x5.status === "approved";
+}
+function pendingText(x5) {
+  if ("description" in x5 && x5.description) return oneLine(x5.description);
+  const a3 = x5;
+  return oneLine(a3.caption || a3.alt || a3.id);
+}
+function buildBlock(x5, relPath) {
+  const open2 = `<!-- media:${x5.id} -->`;
+  const close = `<!-- /media:${x5.id} -->`;
+  if (!isApprovedAsset(x5)) {
+    return `${open2}
+> **Media pending approval (${x5.id}):** ${pendingText(x5)}
+${close}`;
+  }
+  const lines = [open2, `![${oneLine(x5.alt)}](${relPath.replace(/ /g, "%20")})`];
+  if (x5.caption?.trim()) lines.push("", `*${oneLine(x5.caption)}*`);
+  if (x5.longDescription?.trim()) {
+    lines.push("", "<details><summary>Description</summary>", "", x5.longDescription.trim(), "", "</details>");
+  }
+  lines.push(close);
+  return lines.join("\n");
+}
+var anchorRe = (id2) => new RegExp(`^<!-- id: ${esc2(id2)} -->[ \\t]*$`, "m");
+function hasAnchor(markdown, anchorId) {
+  return anchorRe(anchorId).test(markdown.replace(/\r\n/g, "\n"));
+}
+function embedAsset(markdown, asset, anchorId, relPath) {
+  const crlf = markdown.includes("\r\n");
+  const md2 = markdown.replace(/\r\n/g, "\n");
+  const m3 = anchorRe(anchorId).exec(md2);
+  if (!m3) throw new ValidationError(`Anchor ${anchorId} not found`);
+  const block = buildBlock(asset, relPath);
+  const markers = new RegExp(`<!-- media:${esc2(asset.id)} -->[\\s\\S]*?<!-- /media:${esc2(asset.id)} -->`);
+  let out;
+  if (markers.test(md2)) {
+    out = md2.replace(markers, () => block);
+  } else {
+    const end = m3.index + m3[0].length;
+    const rest = md2.slice(end).replace(/^\n+/, "");
+    out = md2.slice(0, end) + "\n\n" + block + "\n" + (rest ? "\n" + rest : "");
+  }
+  return crlf ? out.replace(/\n/g, "\r\n") : out;
+}
+function embedAll(courseDir) {
+  const plan = loadPlan(courseDir);
+  const registry2 = loadRegistry(courseDir);
+  const byId = new Map(registry2.assets.map((a3) => [a3.id, a3]));
+  const planIds = new Set(plan.items.map((i) => i.id));
+  const work = [];
+  for (const it of plan.items) {
+    if (it.status !== "approved") continue;
+    const a3 = byId.get(it.id);
+    const chosen = a3 && a3.status === "approved" ? a3 : it;
+    work.push({ id: it.id, module: it.module, item: chosen, files0: a3?.files[0] });
+  }
+  for (const a3 of registry2.assets) {
+    if (planIds.has(a3.id) || !a3.module) continue;
+    if (a3.status !== "approved" && a3.status !== "imported") continue;
+    work.push({ id: a3.id, module: a3.module, item: a3, files0: a3.files[0] });
+  }
+  const reports = [];
+  for (const parts of EMBED_FILES) {
+    const file2 = join7(courseDir, ...parts);
+    if (!existsSync7(file2)) continue;
+    const original = readFileSync9(file2, "utf8");
+    let text3 = original;
+    const report = { file: parts.join("/"), embedded: [], placeholders: [] };
+    for (const w2 of work) {
+      if (!hasAnchor(text3, w2.module)) continue;
+      const rel = w2.files0 ? relative(dirname(file2), join7(courseDir, w2.files0)).split(sep).join("/") : "";
+      const item = isApprovedAsset(w2.item) && !rel ? { ...w2.item, status: "generated" } : w2.item;
+      text3 = embedAsset(text3, item, w2.module, rel);
+      (isApprovedAsset(item) ? report.embedded : report.placeholders).push(w2.id);
+    }
+    if (text3 !== original) writeFileSync6(file2, text3);
+    reports.push(report);
+  }
+  return reports;
+}
+function embedOne(courseDir, file2, id2, anchorId) {
+  const a3 = loadRegistry(courseDir).assets.find((x5) => x5.id === id2);
+  const p = loadPlan(courseDir).items.find((x5) => x5.id === id2);
+  const item = a3 && a3.status === "approved" ? a3 : p ?? a3;
+  if (!item) throw new ValidationError(`unknown asset or plan item ${id2}`);
+  if (!existsSync7(file2)) throw new ValidationError(`file not found: ${file2}`);
+  const first = a3?.files[0];
+  const rel = first ? relative(dirname(file2), join7(courseDir, first)).split(sep).join("/") : "";
+  const original = readFileSync9(file2, "utf8");
+  const out = embedAsset(original, item, anchorId, rel);
+  if (out !== original) writeFileSync6(file2, out);
+  return { embedded: isApprovedAsset(item) };
+}
+
 // packages/course-kit/src/media/ledger.ts
 import { randomUUID } from "node:crypto";
-import { appendFileSync, closeSync, existsSync as existsSync7, mkdirSync as mkdirSync4, openSync, readFileSync as readFileSync9, statSync, unlinkSync } from "node:fs";
-import { join as join7 } from "node:path";
+import { appendFileSync, closeSync, existsSync as existsSync8, mkdirSync as mkdirSync4, openSync, readFileSync as readFileSync10, statSync, unlinkSync } from "node:fs";
+import { join as join8 } from "node:path";
 var LedgerEntrySchema = external_exports.object({
   at: external_exports.string(),
   assetId: external_exports.string(),
@@ -28498,10 +28622,10 @@ var LedgerEntrySchema = external_exports.object({
 var DIR = ".course";
 var FILE4 = "cost-ledger.jsonl";
 function readLedger(courseDir) {
-  const f = join7(courseDir, DIR, FILE4);
-  if (!existsSync7(f)) return [];
+  const f = join8(courseDir, DIR, FILE4);
+  if (!existsSync8(f)) return [];
   const out = [];
-  readFileSync9(f, "utf8").split("\n").forEach((line4, i) => {
+  readFileSync10(f, "utf8").split("\n").forEach((line4, i) => {
     if (!line4.trim()) return;
     let raw;
     try {
@@ -28562,16 +28686,16 @@ function recordSpend(courseDir, e) {
   if (!r.success) {
     throw new ValidationError(`invalid ledger entry: ${r.error.issues.map((x5) => `${x5.path.join(".") || "(root)"}: ${x5.message}`).join("; ")}`);
   }
-  mkdirSync4(join7(courseDir, DIR), { recursive: true });
-  appendFileSync(join7(courseDir, DIR, FILE4), JSON.stringify(r.data) + "\n");
+  mkdirSync4(join8(courseDir, DIR), { recursive: true });
+  appendFileSync(join8(courseDir, DIR, FILE4), JSON.stringify(r.data) + "\n");
 }
 var LOCK = "ledger.lock";
 var LOCK_STALE_MS = 2 * 6e4;
 var LOCK_WAIT_MS = 3e4;
 var sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 async function withLedgerLock(courseDir, fn) {
-  mkdirSync4(join7(courseDir, DIR), { recursive: true });
-  const lock = join7(courseDir, DIR, LOCK);
+  mkdirSync4(join8(courseDir, DIR), { recursive: true });
+  const lock = join8(courseDir, DIR, LOCK);
   const deadline = Date.now() + LOCK_WAIT_MS;
   for (let attempt = 0; ; attempt++) {
     let fd;
@@ -28641,8 +28765,8 @@ function releaseSpend(courseDir, reservationId) {
 
 // packages/course-kit/src/providers/codex.ts
 import { execFile } from "node:child_process";
-import { existsSync as existsSync8, mkdirSync as mkdirSync5, statSync as statSync2 } from "node:fs";
-import { basename as basename2, dirname } from "node:path";
+import { existsSync as existsSync9, mkdirSync as mkdirSync5, statSync as statSync2 } from "node:fs";
+import { basename as basename2, dirname as dirname2 } from "node:path";
 var TIMEOUT_MS = 5 * 6e4;
 function childEnv() {
   const env = { ...process.env };
@@ -28666,12 +28790,12 @@ async function probeCodex(codexBin = "codex") {
   return { available, loggedIn };
 }
 function fileStamp(p) {
-  if (!existsSync8(p)) return null;
+  if (!existsSync9(p)) return null;
   const s = statSync2(p);
   return `${s.mtimeMs}:${s.size}`;
 }
 async function generateImageCodex(o) {
-  const dir = dirname(o.outPath);
+  const dir = dirname2(o.outPath);
   const name = basename2(o.outPath);
   mkdirSync5(dir, { recursive: true });
   const before = fileStamp(o.outPath);
@@ -28699,12 +28823,12 @@ async function generateImageCodex(o) {
 
 // packages/course-kit/src/providers/generate.ts
 import { createHash as createHash2 } from "node:crypto";
-import { existsSync as existsSync10, mkdirSync as mkdirSync7, readFileSync as readFileSync11, writeFileSync as writeFileSync7 } from "node:fs";
-import { join as join9 } from "node:path";
+import { existsSync as existsSync11, mkdirSync as mkdirSync7, readFileSync as readFileSync12, writeFileSync as writeFileSync8 } from "node:fs";
+import { join as join10 } from "node:path";
 
 // packages/course-kit/src/providers/openai.ts
-import { existsSync as existsSync9, mkdirSync as mkdirSync6, readFileSync as readFileSync10, writeFileSync as writeFileSync6 } from "node:fs";
-import { dirname as dirname2, join as join8 } from "node:path";
+import { existsSync as existsSync10, mkdirSync as mkdirSync6, readFileSync as readFileSync11, writeFileSync as writeFileSync7 } from "node:fs";
+import { dirname as dirname3, join as join9 } from "node:path";
 var ENDPOINT = "https://api.openai.com/v1/images/generations";
 var MODEL = "gpt-image-2";
 var API_QUALITY = { draft: "low", standard: "medium", high: "high" };
@@ -28714,9 +28838,9 @@ function resolveOpenAIKey(env, dataDir2) {
     if (v2 && v2.trim()) return v2.trim();
   }
   if (dataDir2) {
-    const f = join8(dataDir2, "openai.key");
-    if (existsSync9(f)) {
-      const v2 = readFileSync10(f, "utf8").trim();
+    const f = join9(dataDir2, "openai.key");
+    if (existsSync10(f)) {
+      const v2 = readFileSync11(f, "utf8").trim();
       if (v2) return v2;
     }
   }
@@ -28772,8 +28896,8 @@ async function generateImageOpenAI(o) {
   const b64 = body.data?.[0]?.b64_json;
   if (!b64) throw billed(new ProviderUnavailableError("OpenAI response had no image data (data[0].b64_json); the request may have been billed"));
   try {
-    mkdirSync6(dirname2(o.outPath), { recursive: true });
-    writeFileSync6(o.outPath, Buffer.from(b64, "base64"));
+    mkdirSync6(dirname3(o.outPath), { recursive: true });
+    writeFileSync7(o.outPath, Buffer.from(b64, "base64"));
   } catch (e) {
     throw billed(new ProviderUnavailableError(`cannot write ${o.outPath}: ${e instanceof Error ? e.message : String(e)}`));
   }
@@ -28808,13 +28932,13 @@ async function generateAssetImage(courseDir, assetId, provider, o) {
   if (prior && (prior.status === "approved" || prior.status === "imported")) {
     throw new ValidationError(`Asset ${assetId} is ${prior.status}; reject it first to regenerate`);
   }
-  const anchorsFile = join9(courseDir, "05-media", "style", "prompt-anchors.md");
-  if (!existsSync10(anchorsFile)) throw new ValidationError("Run generate-style-guide first.");
-  const anchors = readFileSync11(anchorsFile, "utf8");
+  const anchorsFile = join10(courseDir, "05-media", "style", "prompt-anchors.md");
+  if (!existsSync11(anchorsFile)) throw new ValidationError("Run generate-style-guide first.");
+  const anchors = readFileSync12(anchorsFile, "utf8");
   const prompt = composeImagePrompt(anchors, item.description);
   const source3 = `05-media/src/${assetId}.prompt.txt`;
-  mkdirSync7(join9(courseDir, "05-media", "src"), { recursive: true });
-  writeFileSync7(join9(courseDir, source3), prompt);
+  mkdirSync7(join10(courseDir, "05-media", "src"), { recursive: true });
+  writeFileSync8(join10(courseDir, source3), prompt);
   const pricing = provider === "openai" ? loadPricing(o.dataDir) : void 0;
   const estimate2 = pricing ? { usd: openaiPrice(pricing, o.quality), quota: 0 } : { usd: 0, quota: 1 };
   const reservationId = await reserveSpend(courseDir, manifest, {
@@ -28825,7 +28949,7 @@ async function generateAssetImage(courseDir, assetId, provider, o) {
     quotaUnits: estimate2.quota
   });
   const file2 = `05-media/out/${assetId}.png`;
-  const outPath = join9(courseDir, file2);
+  const outPath = join10(courseDir, file2);
   let model;
   try {
     if (provider === "openai") {
@@ -28854,7 +28978,7 @@ async function generateAssetImage(courseDir, assetId, provider, o) {
     status: "generated",
     costUsd: estimate2.usd,
     quotaUnits: estimate2.quota,
-    sha256: createHash2("sha256").update(readFileSync11(outPath)).digest("hex"),
+    sha256: createHash2("sha256").update(readFileSync12(outPath)).digest("hex"),
     createdAt: (/* @__PURE__ */ new Date()).toISOString()
   };
   const rest = { ...registry2, assets: registry2.assets.filter((a3) => a3.id !== assetId) };
@@ -28864,8 +28988,8 @@ async function generateAssetImage(courseDir, assetId, provider, o) {
 
 // packages/course-kit/src/providers/record.ts
 var import_yaml6 = __toESM(require_dist(), 1);
-import { existsSync as existsSync11, mkdirSync as mkdirSync8, readFileSync as readFileSync12, writeFileSync as writeFileSync8 } from "node:fs";
-import { join as join10 } from "node:path";
+import { existsSync as existsSync12, mkdirSync as mkdirSync8, readFileSync as readFileSync13, writeFileSync as writeFileSync9 } from "node:fs";
+import { join as join11 } from "node:path";
 
 // packages/course-kit/data/providers.yaml
 var providers_default = '# Name patterns (glob, * = any text) that identify detected tools and skills for each capability.\nimage: ["*generate_image*", "*image_gen*"]\ndiagram: ["*Excalidraw*", "*Mermaid*"]\ndesignSkills: ["impeccable*", "design-taste-frontend*", "ui-ux-pro-max*", "frontend-design*"]\n';
@@ -28889,15 +29013,15 @@ function parseDetectedProviders(raw, what = "detected providers") {
 }
 function recordProviders(courseDir, d) {
   const data3 = parseDetectedProviders(d);
-  mkdirSync8(join10(courseDir, FILE5[0]), { recursive: true });
-  writeFileSync8(join10(courseDir, ...FILE5), JSON.stringify(data3, null, 2) + "\n");
+  mkdirSync8(join11(courseDir, FILE5[0]), { recursive: true });
+  writeFileSync9(join11(courseDir, ...FILE5), JSON.stringify(data3, null, 2) + "\n");
 }
 function loadProviders(courseDir) {
-  const f = join10(courseDir, ...FILE5);
-  if (!existsSync11(f)) return null;
+  const f = join11(courseDir, ...FILE5);
+  if (!existsSync12(f)) return null;
   let raw;
   try {
-    raw = JSON.parse(readFileSync12(f, "utf8"));
+    raw = JSON.parse(readFileSync13(f, "utf8"));
   } catch {
     throw new ValidationError(`cannot parse ${f}`);
   }
@@ -28909,8 +29033,8 @@ function providerPatterns() {
 
 // packages/course-kit/src/render/deps.ts
 import { execFileSync } from "node:child_process";
-import { existsSync as existsSync12, mkdirSync as mkdirSync9 } from "node:fs";
-import { join as join11 } from "node:path";
+import { existsSync as existsSync13, mkdirSync as mkdirSync9 } from "node:fs";
+import { join as join12 } from "node:path";
 var PACKAGES = {
   "mermaid-cli": ["@mermaid-js/mermaid-cli@12.0.0"],
   "excalidraw-to-svg": ["excalidraw-to-svg@3.1.0", "@excalidraw/utils@0.1.2", "puppeteer@25.16.0"]
@@ -28919,14 +29043,14 @@ function isDepName(n) {
   return Object.hasOwn(PACKAGES, n);
 }
 function depPath(dataDir2, dep) {
-  const nm = join11(dataDir2, "node_modules");
+  const nm = join12(dataDir2, "node_modules");
   if (dep === "mermaid-cli") {
-    const p2 = join11(nm, ".bin", "mmdc");
-    return existsSync12(p2) ? p2 : null;
+    const p2 = join12(nm, ".bin", "mmdc");
+    return existsSync13(p2) ? p2 : null;
   }
-  const p = join11(nm, "excalidraw-to-svg");
-  const needed = [p, join11(nm, "@excalidraw", "utils", "dist", "excalidraw-utils.min.js"), join11(nm, "puppeteer")];
-  return needed.every((f) => existsSync12(f)) ? p : null;
+  const p = join12(nm, "excalidraw-to-svg");
+  const needed = [p, join12(nm, "@excalidraw", "utils", "dist", "excalidraw-utils.min.js"), join12(nm, "puppeteer")];
+  return needed.every((f) => existsSync13(f)) ? p : null;
 }
 function installDeps(dataDir2, deps) {
   for (const d of deps) if (!isDepName(d)) throw new UsageError(`unknown dependency: ${d}`);
@@ -28936,9 +29060,9 @@ function installDeps(dataDir2, deps) {
 }
 
 // packages/course-kit/src/render/excalidraw.ts
-import { readFileSync as readFileSync13, writeFileSync as writeFileSync9 } from "node:fs";
+import { readFileSync as readFileSync14, writeFileSync as writeFileSync10 } from "node:fs";
 import { createRequire } from "node:module";
-import { join as join12, resolve as resolve3 } from "node:path";
+import { join as join13, resolve as resolve3 } from "node:path";
 var CHROME_FAILURE = /Target closed|Protocol error|Session closed|Execution context was destroyed|crash|disconnected/i;
 function classifyEvaluateError(err, ctx = {}) {
   const msg = err instanceof Error ? err.message : String(err);
@@ -28950,7 +29074,7 @@ function classifyEvaluateError(err, ctx = {}) {
 async function renderExcalidraw(srcPath, outSvg, dataDir2) {
   let diagram;
   try {
-    diagram = JSON.parse(readFileSync13(srcPath, "utf8"));
+    diagram = JSON.parse(readFileSync14(srcPath, "utf8"));
   } catch (e) {
     throw new ValidationError(`cannot read excalidraw source ${srcPath}: ${e instanceof Error ? e.message : String(e)}`);
   }
@@ -28958,10 +29082,10 @@ async function renderExcalidraw(srcPath, outSvg, dataDir2) {
     throw new ProviderUnavailableError("excalidraw-to-svg is not installed; run: deps install excalidraw-to-svg --data-dir <dir>");
   }
   const root = resolve3(dataDir2);
-  const bundle2 = join12(root, "node_modules", "@excalidraw", "utils", "dist", "excalidraw-utils.min.js");
+  const bundle2 = join13(root, "node_modules", "@excalidraw", "utils", "dist", "excalidraw-utils.min.js");
   let puppeteer;
   try {
-    puppeteer = createRequire(join12(root, "noop.js"))("puppeteer");
+    puppeteer = createRequire(join13(root, "noop.js"))("puppeteer");
   } catch {
     throw new ProviderUnavailableError("puppeteer is not installed; run: deps install excalidraw-to-svg --data-dir <dir>");
   }
@@ -28976,7 +29100,7 @@ async function renderExcalidraw(srcPath, outSvg, dataDir2) {
     try {
       page = await browser.newPage();
       await page.setContent("<html><body></body></html>");
-      await page.addScriptTag({ content: readFileSync13(bundle2, "utf8") });
+      await page.addScriptTag({ content: readFileSync14(bundle2, "utf8") });
     } catch (e) {
       throw new ProviderUnavailableError(`Chrome page setup failed: ${e instanceof Error ? e.message : String(e)}`);
     }
@@ -28989,7 +29113,7 @@ async function renderExcalidraw(srcPath, outSvg, dataDir2) {
     } catch (e) {
       throw classifyEvaluateError(e, { browserConnected: browser.connected, pageClosed: page.isClosed?.() });
     }
-    writeFileSync9(outSvg, svg);
+    writeFileSync10(outSvg, svg);
   } finally {
     try {
       await browser.close();
@@ -29000,13 +29124,13 @@ async function renderExcalidraw(srcPath, outSvg, dataDir2) {
 
 // packages/course-kit/src/render/mermaid.ts
 import { execFileSync as execFileSync2 } from "node:child_process";
-import { existsSync as existsSync13, mkdtempSync, rmSync, writeFileSync as writeFileSync10 } from "node:fs";
+import { existsSync as existsSync14, mkdtempSync, rmSync, writeFileSync as writeFileSync11 } from "node:fs";
 import { tmpdir } from "node:os";
-import { join as join13 } from "node:path";
+import { join as join14 } from "node:path";
 async function renderMermaid(srcPath, outSvg, dataDir2, tokens = {}) {
   const mmdc = depPath(dataDir2, "mermaid-cli");
   if (!mmdc) throw new ProviderUnavailableError("mermaid-cli is not installed; run: deps install mermaid-cli --data-dir <dir>");
-  const tmp = mkdtempSync(join13(tmpdir(), "ck-mmd-"));
+  const tmp = mkdtempSync(join14(tmpdir(), "ck-mmd-"));
   try {
     const c3 = tokens.color ?? {};
     const themeVariables = {};
@@ -29015,11 +29139,11 @@ async function renderMermaid(srcPath, outSvg, dataDir2, tokens = {}) {
     if (c3.fg) themeVariables.lineColor = c3.fg;
     if (c3.bg) themeVariables.background = c3.bg;
     if (tokens.font?.body) themeVariables.fontFamily = tokens.font.body;
-    const cfg = join13(tmp, "config.json");
-    writeFileSync10(cfg, JSON.stringify({ theme: "base", themeVariables }));
-    const pup = join13(tmp, "puppeteer.json");
-    writeFileSync10(pup, JSON.stringify({ args: ["--no-sandbox"] }));
-    if (!existsSync13(srcPath)) throw new ValidationError(`mermaid source not found: ${srcPath}`);
+    const cfg = join14(tmp, "config.json");
+    writeFileSync11(cfg, JSON.stringify({ theme: "base", themeVariables }));
+    const pup = join14(tmp, "puppeteer.json");
+    writeFileSync11(pup, JSON.stringify({ args: ["--no-sandbox"] }));
+    if (!existsSync14(srcPath)) throw new ValidationError(`mermaid source not found: ${srcPath}`);
     try {
       execFileSync2(mmdc, ["-i", srcPath, "-o", outSvg, "-c", cfg, "-p", pup, ...c3.bg ? ["-b", c3.bg] : []], { stdio: ["ignore", "ignore", "pipe"] });
     } catch (e) {
@@ -29036,14 +29160,14 @@ async function renderMermaid(srcPath, outSvg, dataDir2, tokens = {}) {
 }
 
 // packages/course-kit/src/render/overlay.ts
-var esc2 = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
+var esc3 = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
 function buildLabelOverlay(imageHref, width2, height2, labels2, tokens = {}) {
   const fill2 = tokens.color?.fg ?? "#1a1a1a";
   const family = tokens.font?.body ?? "sans-serif";
-  const texts = labels2.map((l) => `  <text x="${esc2(String(l.x))}" y="${esc2(String(l.y))}" text-anchor="${esc2(l.anchor ?? "start")}" fill="${esc2(fill2)}" font-family="${esc2(family)}">${esc2(l.text)}</text>`);
+  const texts = labels2.map((l) => `  <text x="${esc3(String(l.x))}" y="${esc3(String(l.y))}" text-anchor="${esc3(l.anchor ?? "start")}" fill="${esc3(fill2)}" font-family="${esc3(family)}">${esc3(l.text)}</text>`);
   return [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width2}" height="${height2}" viewBox="0 0 ${width2} ${height2}">`,
-    `  <image href="${esc2(imageHref)}" width="${width2}" height="${height2}"/>`,
+    `  <image href="${esc3(imageHref)}" width="${width2}" height="${height2}"/>`,
     ...texts,
     "</svg>",
     ""
@@ -29051,7 +29175,7 @@ function buildLabelOverlay(imageHref, width2, height2, labels2, tokens = {}) {
 }
 
 // packages/course-kit/src/render/vegalite.ts
-import { writeFileSync as writeFileSync11 } from "node:fs";
+import { writeFileSync as writeFileSync12 } from "node:fs";
 
 // node_modules/vega-util/build/accessor.js
 function accessor(fn, fields, name) {
@@ -41526,9 +41650,9 @@ var Tau = Math.PI * 2;
 var HalfSqrt3 = Math.sqrt(3) / 2;
 var segmentCache = {};
 var bezierCache = {};
-var join14 = [].join;
+var join15 = [].join;
 function segments(x5, y5, rx, ry, large, sweep, rotateX, ox, oy) {
-  const key2 = join14.call(arguments);
+  const key2 = join15.call(arguments);
   if (segmentCache[key2]) {
     return segmentCache[key2];
   }
@@ -41578,7 +41702,7 @@ function segments(x5, y5, rx, ry, large, sweep, rotateX, ox, oy) {
   return segmentCache[key2] = result;
 }
 function bezier(params2) {
-  const key2 = join14.call(params2);
+  const key2 = join15.call(params2);
   if (bezierCache[key2]) {
     return bezierCache[key2];
   }
@@ -45680,12 +45804,12 @@ function Overlap(params2) {
 }
 var methods = {
   parity: (items) => items.filter((item, i) => i % 2 ? item.opacity = 0 : 1),
-  greedy: (items, sep) => {
+  greedy: (items, sep2) => {
     let a3;
-    return items.filter((b10, i) => !i || !intersect3(a3.bounds, b10.bounds, sep) ? (a3 = b10, 1) : b10.opacity = 0);
+    return items.filter((b10, i) => !i || !intersect3(a3.bounds, b10.bounds, sep2) ? (a3 = b10, 1) : b10.opacity = 0);
   }
 };
-var intersect3 = (a3, b10, sep) => sep > Math.max(b10.x1 - a3.x2, a3.x1 - b10.x2, b10.y1 - a3.y2, a3.y1 - b10.y2);
+var intersect3 = (a3, b10, sep2) => sep2 > Math.max(b10.x1 - a3.x2, a3.x1 - b10.x2, b10.y1 - a3.y2, a3.y1 - b10.y2);
 var hasOverlap = (items, pad4) => {
   for (var i = 1, n = items.length, a3 = items[0].bounds, b10; i < n; a3 = b10, ++i) {
     if (intersect3(a3, b10 = items[i].bounds, pad4)) return true;
@@ -45712,7 +45836,7 @@ var reset = (source3) => {
 var reflow = (pulse2, _) => pulse2.reflow(_.modified()).modifies("opacity");
 inherits_default(Overlap, Transform, {
   transform(_, pulse2) {
-    const reduce2 = methods[_.method] || methods.parity, sep = _.separation || 0;
+    const reduce2 = methods[_.method] || methods.parity, sep2 = _.separation || 0;
     let source3 = pulse2.materialize(pulse2.SOURCE).source, items, test2;
     if (!source3 || !source3.length) return;
     if (!_.method) {
@@ -45729,10 +45853,10 @@ inherits_default(Overlap, Transform, {
     }
     items = reset(source3);
     pulse2 = reflow(pulse2, _);
-    if (items.length >= 3 && hasOverlap(items, sep)) {
+    if (items.length >= 3 && hasOverlap(items, sep2)) {
       do {
-        items = reduce2(items, sep);
-      } while (items.length >= 3 && hasOverlap(items, sep));
+        items = reduce2(items, sep2);
+      } while (items.length >= 3 && hasOverlap(items, sep2));
       if (items.length < 3 && !peek(source3).opacity) {
         if (items.length > 1) peek(items).opacity = 0;
         peek(source3).opacity = 1;
@@ -58431,7 +58555,7 @@ function array3(seq) {
 function sequence2(seq) {
   return array3(seq) || (isString(seq) ? seq : null);
 }
-function join15(seq, ...args) {
+function join16(seq, ...args) {
   return array3(seq).join(...args);
 }
 function indexof(seq, ...args) {
@@ -58626,7 +58750,7 @@ var functionContext = {
   toNumber,
   toString,
   indexof,
-  join: join15,
+  join: join16,
   lastindexof,
   replace: replace2,
   reverse,
@@ -62119,9 +62243,9 @@ function parseMark(spec, scope) {
   }
 }
 function parseOverlap(overlap, source3, scope) {
-  const method2 = overlap.method, bound2 = overlap.bound, sep = overlap.separation;
+  const method2 = overlap.method, bound2 = overlap.bound, sep2 = overlap.separation;
   const params2 = {
-    separation: isSignal(sep) ? scope.signalRef(sep.signal) : sep,
+    separation: isSignal(sep2) ? scope.signalRef(sep2.signal) : sep2,
     method: isSignal(method2) ? scope.signalRef(method2.signal) : method2,
     pulse: source3
   };
@@ -81671,13 +81795,13 @@ async function renderVegaLite(spec, outSvg, tokens = {}) {
   };
   const vl = compile2({ ...spec, config: { ...config2, ...spec.config ?? {} } });
   const view = new View(parse13(vl.spec), { renderer: "none" });
-  writeFileSync11(outSvg, await view.toSVG());
+  writeFileSync12(outSvg, await view.toSVG());
 }
 
 // packages/course-kit/src/cli.ts
 function readJson(path3, what) {
   try {
-    return JSON.parse(readFileSync14(path3, "utf8"));
+    return JSON.parse(readFileSync15(path3, "utf8"));
   } catch (e) {
     throw new ValidationError(`cannot read ${what} ${path3}: ${e instanceof Error ? e.message : String(e)}`);
   }
@@ -81733,7 +81857,7 @@ var studioCommands = {
     const out = requirePositional(a3, 2, "out");
     const width2 = optNum(a3, "width") ?? 1024;
     const height2 = optNum(a3, "height") ?? 1024;
-    writeFileSync12(out, buildLabelOverlay(image4, width2, height2, labels2, tokensOf(a3)));
+    writeFileSync13(out, buildLabelOverlay(image4, width2, height2, labels2, tokensOf(a3)));
     return { out };
   },
   "ledger totals": (a3) => ledgerTotals(requireFlag(a3, "course")),
@@ -81751,6 +81875,11 @@ var studioCommands = {
     const dataDirFlag = typeof a3.flags["data-dir"] === "string" ? a3.flags["data-dir"] : void 0;
     return { asset: await generateAssetImage(course, assetId, provider, { quality, dataDir: dataDirFlag }) };
   },
+  embed: (a3) => {
+    const course = requireFlag(a3, "course");
+    return embedOne(course, resolve5(requirePositional(a3, 0, "file")), requireFlag(a3, "asset"), requireFlag(a3, "anchor"));
+  },
+  "embed all": (a3) => ({ files: embedAll(requireFlag(a3, "course")) }),
   "providers probe-codex": () => probeCodex(),
   "providers record": (a3) => {
     const course = requireFlag(a3, "course");
@@ -81772,18 +81901,18 @@ var studioCommands = {
     if (typeof a3.flags.brand === "string") brandPath = resolve5(a3.flags.brand);
     else {
       const rel = loadManifest(course).brand;
-      const theme = join16(course, "05-media", "style", "theme.yaml");
+      const theme = join17(course, "05-media", "style", "theme.yaml");
       if (rel) brandPath = resolve5(course, rel);
-      else if (existsSync14(theme)) brandPath = theme;
+      else if (existsSync15(theme)) brandPath = theme;
     }
     if (!brandPath) throw new UsageError("no brand file: pass --brand, set brand in course.yaml, or create 05-media/style/theme.yaml");
     const tokens = deriveTokens(loadBrand(brandPath));
     const issues = checkTokens(tokens);
     const errors = issues.filter((i) => i.level === "error");
     if (errors.length) throw new ValidationError(`brand tokens fail contrast checks: ${errors.map((i) => `${i.path}: ${i.message}`).join("; ")}`);
-    const dir = join16(course, "05-media", "style");
+    const dir = join17(course, "05-media", "style");
     mkdirSync10(dir, { recursive: true });
-    writeFileSync12(join16(dir, "tokens.json"), JSON.stringify(tokens, null, 2) + "\n");
+    writeFileSync13(join17(dir, "tokens.json"), JSON.stringify(tokens, null, 2) + "\n");
     return { tokens, issues };
   },
   "providers patterns": () => providerPatterns()

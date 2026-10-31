@@ -56,4 +56,4 @@ Write `05-media/media-plan.yaml`. `KIT` means `node "${CLAUDE_PLUGIN_ROOT}/skill
 6. Show a table for each module: item ID, description, function and tool. Under each table show that module's cost from `plan estimate` (`perModule`: USD and plan images). Do not invent per-item costs. Then the totals (`totalUsd`, `totalQuota`) against `media.budgetUsd` and `media.maxPlanImages` from `course.yaml`.
 7. Budget defaults: `manifest sync --write` (step 1) already wrote `media.budgetUsd: 20` and `maxPlanImages: 40`. If the studio settings `default_media_budget_usd` and `max_plan_images` differ and `course.yaml` still has 20 and 40, ask the user whether to apply the studio values. Do not change other values.
 8. Ask (AskUserQuestion): approve all items, approve per module, or edit. For edits, change the plan and repeat from step 4. Set `status` to `approved` on approved items and `rejected` on dropped ones. Leave the rest `proposed`.
-9. Run `plan validate` once more. Tell the user the next step: `/course-studio:generate-media` (arrives in the next release of this plugin).
+9. Run `plan validate` once more. Tell the user the next step: `/course-studio:generate-media`.

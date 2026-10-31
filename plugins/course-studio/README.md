@@ -21,7 +21,9 @@ Run these in a course folder.
 2. `/course-studio:setup-brand` (optional) builds and validates a `<name>.brand.yaml` from your answers or from a website or PDF.
 3. `/course-studio:generate-style-guide` writes `05-media/style/` (theme, WCAG-checked `tokens.json`, `style-guide.md`, `prompt-anchors.md`).
 4. `/course-studio:plan-media` writes `05-media/media-plan.yaml` with costs, and asks you to approve.
-5. `/course-studio:generate-media`, `/course-studio:review-media` and `/course-studio:embed-media` arrive in the next task of this release series. They are not in this version.
+5. `/course-studio:generate-media` makes the approved items (diagrams and charts locally, images through Codex or the `course-media` server) within your budget.
+6. `/course-studio:review-media` checks each result against the lesson, writes alt text and captions, and records your approval.
+7. `/course-studio:embed-media` writes approved assets into the lesson plans, student handout and instructor guide. Anything not approved shows a "Media pending approval" placeholder.
 
 Two knowledge skills, `course-kit` (the CLI) and `media-pedagogy` (function taxonomy, Mayer's principles, UDL and accessibility rules), are used by the others and are not run by hand.
 
