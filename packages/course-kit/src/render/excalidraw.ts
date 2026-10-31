@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { join, resolve } from 'node:path';
-import { ProviderUnavailableError } from '../errors.js';
+import { ProviderUnavailableError, ValidationError } from '../errors.js';
 import { depPath } from './deps.js';
 
 interface Page {
@@ -13,6 +13,9 @@ interface Browser { newPage(): Promise<Page>; close(): Promise<void> }
 interface Puppeteer { launch(o: { args: string[] }): Promise<Browser> }
 
 export async function renderExcalidraw(srcPath: string, outSvg: string, dataDir: string): Promise<void> {
+  let diagram: unknown;
+  try { diagram = JSON.parse(readFileSync(srcPath, 'utf8')); }
+  catch (e) { throw new ValidationError(`cannot read excalidraw source ${srcPath}: ${e instanceof Error ? e.message : String(e)}`); }
   if (!depPath(dataDir, 'excalidraw-to-svg')) {
     throw new ProviderUnavailableError('excalidraw-to-svg is not installed; run: deps install excalidraw-to-svg --data-dir <dir>');
   }
@@ -24,8 +27,9 @@ export async function renderExcalidraw(srcPath: string, outSvg: string, dataDir:
   } catch {
     throw new ProviderUnavailableError('puppeteer is not installed; run: deps install excalidraw-to-svg --data-dir <dir>');
   }
-  const diagram = JSON.parse(readFileSync(srcPath, 'utf8')) as unknown;
-  const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
+  let browser: Browser;
+  try { browser = await puppeteer.launch({ args: ['--no-sandbox'] }); }
+  catch (e) { throw new ProviderUnavailableError(`Chrome failed to launch: ${e instanceof Error ? e.message : String(e)}`); }
   try {
     const page = await browser.newPage();
     await page.setContent('<html><body></body></html>');

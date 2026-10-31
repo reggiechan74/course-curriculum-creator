@@ -1,9 +1,9 @@
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Tokens } from '../brand/tokens.js';
-import { ProviderUnavailableError } from '../errors.js';
+import { ProviderUnavailableError, ValidationError } from '../errors.js';
 import { depPath } from './deps.js';
 
 export async function renderMermaid(
@@ -25,7 +25,14 @@ export async function renderMermaid(
     writeFileSync(cfg, JSON.stringify({ theme: 'base', themeVariables }));
     const pup = join(tmp, 'puppeteer.json');
     writeFileSync(pup, JSON.stringify({ args: ['--no-sandbox'] }));
-    execFileSync(mmdc, ['-i', srcPath, '-o', outSvg, '-c', cfg, '-p', pup, ...(c.bg ? ['-b', c.bg] : [])], { stdio: ['ignore', 'ignore', 'pipe'] });
+    if (!existsSync(srcPath)) throw new ValidationError(`mermaid source not found: ${srcPath}`);
+    try {
+      execFileSync(mmdc, ['-i', srcPath, '-o', outSvg, '-c', cfg, '-p', pup, ...(c.bg ? ['-b', c.bg] : [])], { stdio: ['ignore', 'ignore', 'pipe'] });
+    } catch (e) {
+      const err = e as Error & { stderr?: Buffer };
+      const detail = err.stderr?.toString().trim() || err.message;
+      throw new ProviderUnavailableError(`mermaid-cli failed: ${detail}`);
+    }
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }

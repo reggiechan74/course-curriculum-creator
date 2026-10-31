@@ -18,10 +18,14 @@ export function isDepName(n: string): n is DepName {
 }
 
 export function depPath(dataDir: string, dep: DepName): string | null {
-  const p = dep === 'mermaid-cli'
-    ? join(dataDir, 'node_modules', '.bin', 'mmdc')
-    : join(dataDir, 'node_modules', 'excalidraw-to-svg');
-  return existsSync(p) ? p : null;
+  const nm = join(dataDir, 'node_modules');
+  if (dep === 'mermaid-cli') {
+    const p = join(nm, '.bin', 'mmdc');
+    return existsSync(p) ? p : null;
+  }
+  const p = join(nm, 'excalidraw-to-svg');
+  const needed = [p, join(nm, '@excalidraw', 'utils', 'dist', 'excalidraw-utils.min.js'), join(nm, 'puppeteer')];
+  return needed.every((f) => existsSync(f)) ? p : null;
 }
 
 export function installDeps(dataDir: string, deps: DepName[]): void {

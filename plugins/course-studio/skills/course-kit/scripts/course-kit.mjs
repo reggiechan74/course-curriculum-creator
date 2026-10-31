@@ -28445,8 +28445,14 @@ function isDepName(n) {
   return Object.hasOwn(PACKAGES, n);
 }
 function depPath(dataDir2, dep) {
-  const p = dep === "mermaid-cli" ? join8(dataDir2, "node_modules", ".bin", "mmdc") : join8(dataDir2, "node_modules", "excalidraw-to-svg");
-  return existsSync8(p) ? p : null;
+  const nm = join8(dataDir2, "node_modules");
+  if (dep === "mermaid-cli") {
+    const p2 = join8(nm, ".bin", "mmdc");
+    return existsSync8(p2) ? p2 : null;
+  }
+  const p = join8(nm, "excalidraw-to-svg");
+  const needed = [p, join8(nm, "@excalidraw", "utils", "dist", "excalidraw-utils.min.js"), join8(nm, "puppeteer")];
+  return needed.every((f) => existsSync8(f)) ? p : null;
 }
 function installDeps(dataDir2, deps) {
   for (const d of deps) if (!isDepName(d)) throw new UsageError(`unknown dependency: ${d}`);
@@ -28460,6 +28466,12 @@ import { readFileSync as readFileSync9, writeFileSync as writeFileSync6 } from "
 import { createRequire } from "node:module";
 import { join as join9, resolve as resolve3 } from "node:path";
 async function renderExcalidraw(srcPath, outSvg, dataDir2) {
+  let diagram;
+  try {
+    diagram = JSON.parse(readFileSync9(srcPath, "utf8"));
+  } catch (e) {
+    throw new ValidationError(`cannot read excalidraw source ${srcPath}: ${e instanceof Error ? e.message : String(e)}`);
+  }
   if (!depPath(dataDir2, "excalidraw-to-svg")) {
     throw new ProviderUnavailableError("excalidraw-to-svg is not installed; run: deps install excalidraw-to-svg --data-dir <dir>");
   }
@@ -28471,8 +28483,12 @@ async function renderExcalidraw(srcPath, outSvg, dataDir2) {
   } catch {
     throw new ProviderUnavailableError("puppeteer is not installed; run: deps install excalidraw-to-svg --data-dir <dir>");
   }
-  const diagram = JSON.parse(readFileSync9(srcPath, "utf8"));
-  const browser = await puppeteer.launch({ args: ["--no-sandbox"] });
+  let browser;
+  try {
+    browser = await puppeteer.launch({ args: ["--no-sandbox"] });
+  } catch (e) {
+    throw new ProviderUnavailableError(`Chrome failed to launch: ${e instanceof Error ? e.message : String(e)}`);
+  }
   try {
     const page = await browser.newPage();
     await page.setContent("<html><body></body></html>");
@@ -28489,7 +28505,7 @@ async function renderExcalidraw(srcPath, outSvg, dataDir2) {
 
 // packages/course-kit/src/render/mermaid.ts
 import { execFileSync as execFileSync2 } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync as writeFileSync7 } from "node:fs";
+import { existsSync as existsSync9, mkdtempSync, rmSync, writeFileSync as writeFileSync7 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join as join10 } from "node:path";
 async function renderMermaid(srcPath, outSvg, dataDir2, tokens = {}) {
@@ -28508,7 +28524,14 @@ async function renderMermaid(srcPath, outSvg, dataDir2, tokens = {}) {
     writeFileSync7(cfg, JSON.stringify({ theme: "base", themeVariables }));
     const pup = join10(tmp, "puppeteer.json");
     writeFileSync7(pup, JSON.stringify({ args: ["--no-sandbox"] }));
-    execFileSync2(mmdc, ["-i", srcPath, "-o", outSvg, "-c", cfg, "-p", pup, ...c3.bg ? ["-b", c3.bg] : []], { stdio: ["ignore", "ignore", "pipe"] });
+    if (!existsSync9(srcPath)) throw new ValidationError(`mermaid source not found: ${srcPath}`);
+    try {
+      execFileSync2(mmdc, ["-i", srcPath, "-o", outSvg, "-c", cfg, "-p", pup, ...c3.bg ? ["-b", c3.bg] : []], { stdio: ["ignore", "ignore", "pipe"] });
+    } catch (e) {
+      const err = e;
+      const detail = err.stderr?.toString().trim() || err.message;
+      throw new ProviderUnavailableError(`mermaid-cli failed: ${detail}`);
+    }
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }

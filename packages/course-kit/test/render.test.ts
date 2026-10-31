@@ -1,8 +1,8 @@
-import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { chmodSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { expect, test } from 'vitest';
-import { ProviderUnavailableError } from '../src/errors.js';
+import { ProviderUnavailableError, ValidationError } from '../src/errors.js';
 import { depPath, installDeps } from '../src/render/deps.js';
 import { renderExcalidraw } from '../src/render/excalidraw.js';
 import { renderMermaid } from '../src/render/mermaid.js';
@@ -36,7 +36,32 @@ test('renderMermaid throws ProviderUnavailableError when mermaid-cli is not inst
 });
 test('renderExcalidraw throws ProviderUnavailableError when not installed', async () => {
   const d = tmp();
+  writeFileSync(join(d, 'a.excalidraw'), '{}');
   await expect(renderExcalidraw(join(d, 'a.excalidraw'), join(d, 'o.svg'), d)).rejects.toBeInstanceOf(ProviderUnavailableError);
+});
+test('renderExcalidraw with a partial install (empty excalidraw-to-svg dir) is ProviderUnavailableError', async () => {
+  const d = tmp();
+  mkdirSync(join(d, 'node_modules', 'excalidraw-to-svg'), { recursive: true });
+  writeFileSync(join(d, 'a.excalidraw'), '{}');
+  expect(depPath(d, 'excalidraw-to-svg')).toBeNull();
+  await expect(renderExcalidraw(join(d, 'a.excalidraw'), join(d, 'o.svg'), d)).rejects.toBeInstanceOf(ProviderUnavailableError);
+});
+test('renderExcalidraw with a missing or invalid source is ValidationError', async () => {
+  const d = tmp();
+  await expect(renderExcalidraw(join(d, 'nope.excalidraw'), join(d, 'o.svg'), d)).rejects.toBeInstanceOf(ValidationError);
+  writeFileSync(join(d, 'bad.excalidraw'), 'not json');
+  await expect(renderExcalidraw(join(d, 'bad.excalidraw'), join(d, 'o.svg'), d)).rejects.toBeInstanceOf(ValidationError);
+});
+test('renderMermaid maps a failing mmdc to ProviderUnavailableError with its message', async () => {
+  const d = tmp();
+  mkdirSync(join(d, 'node_modules', '.bin'), { recursive: true });
+  const fake = join(d, 'node_modules', '.bin', 'mmdc');
+  writeFileSync(fake, '#!/bin/sh\necho "chrome exploded" >&2\nexit 3\n');
+  chmodSync(fake, 0o755);
+  writeFileSync(join(d, 'a.mmd'), 'flowchart LR; A-->B');
+  await expect(renderMermaid(join(d, 'a.mmd'), join(d, 'o.svg'), d)).rejects.toThrow(/chrome exploded/);
+  await expect(renderMermaid(join(d, 'a.mmd'), join(d, 'o.svg'), d)).rejects.toBeInstanceOf(ProviderUnavailableError);
+  await expect(renderMermaid(join(d, 'missing.mmd'), join(d, 'o.svg'), d)).rejects.toBeInstanceOf(ValidationError);
 });
 test('depPath is null when nothing is installed; installDeps rejects unknown names', () => {
   const d = tmp();
