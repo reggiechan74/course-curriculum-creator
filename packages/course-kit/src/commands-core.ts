@@ -7,6 +7,7 @@ import { UsageError, ValidationError } from './errors.js';
 import { checkStale, hashFile, writeHashes } from './hash.js';
 import { InitOptionsSchema, initManifest, loadManifest, saveManifest, validateManifest } from './manifest/io.js';
 import { syncManifest } from './manifest/sync.js';
+import { migrateV2 } from './migrate/v2.js';
 import { estimatePlan, loadPlan, validatePlan } from './media/plan.js';
 import { loadPricing } from './media/pricing.js';
 import { addAsset, loadRegistry, saveRegistry, setStatus, updateAssetText } from './media/registry.js';
@@ -45,6 +46,16 @@ export const coreCommands: CommandTable = {
     mkdirSync(course, { recursive: true });
     saveManifest(course, m);
     return { manifest: m };
+  },
+  'migrate-course': (a) => {
+    const raw = a.flags.answers;
+    let answers: Record<string, string> | undefined;
+    if (typeof raw === 'string') {
+      const parsed = z.record(z.string(), z.string()).safeParse(jsonFlag(raw, 'answers'));
+      if (!parsed.success) throw new UsageError(`invalid --answers: ${zodMsg(parsed.error)}`);
+      answers = parsed.data;
+    }
+    return migrateV2(requireFlag(a, 'course'), { dryRun: a.flags['dry-run'] === true, ...(answers ? { answers } : {}) });
   },
   'manifest sync': (a) => syncManifest(requireFlag(a, 'course'), { write: a.flags.write === true }),
   'manifest validate': (a) => {

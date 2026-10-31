@@ -7457,8 +7457,8 @@ async function runCli(argv, commands) {
 }
 
 // packages/course-kit/src/commands-core.ts
-import { existsSync as existsSync6, mkdirSync as mkdirSync3 } from "node:fs";
-import { join as join6 } from "node:path";
+import { existsSync as existsSync7, mkdirSync as mkdirSync4 } from "node:fs";
+import { join as join7 } from "node:path";
 
 // node_modules/zod/v4/classic/external.js
 var external_exports = {};
@@ -12527,7 +12527,7 @@ var recursive = /* @__PURE__ */ new WeakMap();
 var NONE = 0;
 var ASSUMED = 1;
 var PROVEN = 2;
-function isRecursive(inst, stack, resolve3) {
+function isRecursive(inst, stack, resolve4) {
   const cached2 = recursive.get(inst);
   if (cached2 !== void 0)
     return cached2 ? PROVEN : NONE;
@@ -12537,7 +12537,7 @@ function isRecursive(inst, stack, resolve3) {
   let result = NONE;
   const check2 = (child) => {
     if (result !== PROVEN && child?._zod) {
-      const answer = isRecursive(child, stack, resolve3);
+      const answer = isRecursive(child, stack, resolve4);
       if (answer > result)
         result = answer;
     }
@@ -12548,7 +12548,7 @@ function isRecursive(inst, stack, resolve3) {
       const desc = Object.getOwnPropertyDescriptor(sh, key);
       if (spread && !desc.enumerable)
         continue;
-      const child = desc.get ? ASSUMED : desc.value?._zod ? isRecursive(desc.value, stack, resolve3) : NONE;
+      const child = desc.get ? ASSUMED : desc.value?._zod ? isRecursive(desc.value, stack, resolve4) : NONE;
       if (child > answer)
         answer = child;
     }
@@ -12612,7 +12612,7 @@ function isRecursive(inst, stack, resolve3) {
       break;
     // `$ZodLazy` caches its inner on the def, so a resolved edge is followed exactly
     case "lazy": {
-      const inner = def._cachedInner ?? (resolve3 ? inst._zod.innerType : void 0);
+      const inner = def._cachedInner ?? (resolve4 ? inst._zod.innerType : void 0);
       merge2(inner ? isRecursive(inner, stack, false) : ASSUMED);
       break;
     }
@@ -27608,8 +27608,12 @@ function syncManifest(courseDir, opts) {
   return { manifest, issues };
 }
 
-// packages/course-kit/src/media/plan.ts
-var import_yaml4 = __toESM(require_dist(), 1);
+// packages/course-kit/src/migrate/v2.ts
+import { cpSync, existsSync as existsSync4, mkdirSync as mkdirSync2, mkdtempSync, readFileSync as readFileSync6, readdirSync, rmSync, writeFileSync as writeFileSync5 } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join as join4, posix, resolve as resolve3 } from "node:path";
+
+// packages/course-kit/src/media/registry.ts
 import { existsSync as existsSync3, mkdirSync, readFileSync as readFileSync5, writeFileSync as writeFileSync4 } from "node:fs";
 import { join as join3 } from "node:path";
 
@@ -27680,15 +27684,265 @@ var PricingSchema = external_exports.object({
   image: external_exports.record(external_exports.string(), external_exports.object({ draft: external_exports.number(), standard: external_exports.number(), high: external_exports.number() }))
 });
 
-// packages/course-kit/src/media/plan.ts
-var FILE2 = ["05-media", "media-plan.yaml"];
-var DIAGRAM_ONLY = /* @__PURE__ */ new Set(["concept-map", "process-flow", "comparison", "hierarchy", "cycle", "timeline"]);
-function loadPlan(courseDir) {
+// packages/course-kit/src/media/registry.ts
+var FILE2 = ["05-media", "registry.json"];
+function loadRegistry(courseDir) {
   const f = join3(courseDir, ...FILE2);
-  if (!existsSync3(f)) return { schema: "media-plan/v1", items: [] };
+  if (!existsSync3(f)) return { schema: "registry/v1", assets: [] };
   let raw;
   try {
-    raw = (0, import_yaml4.parse)(readFileSync5(f, "utf8"));
+    raw = JSON.parse(readFileSync5(f, "utf8"));
+  } catch {
+    throw new ValidationError(`cannot parse ${f}`);
+  }
+  const r = RegistrySchema.safeParse(raw);
+  if (!r.success) {
+    throw new ValidationError(`invalid registry: ${r.error.issues.map((i) => `${i.path.join(".") || "(root)"}: ${i.message}`).join("; ")}`);
+  }
+  return r.data;
+}
+function saveRegistry(courseDir, r) {
+  mkdirSync(join3(courseDir, FILE2[0]), { recursive: true });
+  writeFileSync4(join3(courseDir, ...FILE2), JSON.stringify(r, null, 2) + "\n");
+}
+function addAsset(r, a) {
+  if (a.status === "approved") {
+    throw new ValidationError("Assets cannot be added as approved; add as generated or imported, then approve with registry status");
+  }
+  if (r.assets.some((x) => x.id === a.id)) throw new ValidationError(`duplicate asset id ${a.id}`);
+  return { ...r, assets: [...r.assets, a] };
+}
+var TRANSITIONS = {
+  generated: ["approved", "rejected"],
+  rejected: ["generated"],
+  imported: ["approved", "rejected"],
+  approved: []
+};
+function setStatus(r, id, to, opts = {}) {
+  const a = r.assets.find((x) => x.id === id);
+  if (!a) throw new ValidationError(`unknown asset id ${id}`);
+  if (!TRANSITIONS[a.status].includes(to)) throw new ValidationError(`cannot change asset ${id} from ${a.status} to ${to}`);
+  if (to === "approved") {
+    if (!a.alt.trim()) throw new ValidationError(`asset ${id} needs alt text before approval`);
+    if (opts.approvedBy !== "user") throw new ValidationError(`asset ${id} must be approved by the user (approvedBy: user)`);
+  }
+  const next = { ...a, status: to };
+  if (opts.review) next.review = opts.review;
+  if (opts.approvedBy) next.approvedBy = opts.approvedBy;
+  return { ...r, assets: r.assets.map((x) => x.id === id ? next : x) };
+}
+function updateAssetText(r, id, patch) {
+  const a = r.assets.find((x) => x.id === id);
+  if (!a) throw new ValidationError(`unknown asset id ${id}`);
+  if (a.status === "approved") throw new ValidationError(`asset ${id} is approved and cannot be edited`);
+  const next = { ...a };
+  for (const k of ["alt", "longDescription", "caption"]) {
+    if (patch[k] !== void 0) next[k] = patch[k];
+  }
+  return { ...r, assets: r.assets.map((x) => x.id === id ? next : x) };
+}
+
+// packages/course-kit/src/migrate/v2.ts
+var POSITIONING = "01-planning/course-positioning.md";
+var ID_COMMENT_FILES = [
+  "01-planning/learning-objectives.md",
+  "02-design/course-outline.md",
+  "02-design/lesson-plans.md",
+  "04-materials/student-handout.md",
+  "04-materials/instructor-guide.md"
+];
+var V2_PLANNING = /* @__PURE__ */ new Set([
+  "README.md",
+  "course-positioning.md",
+  "course-description.md",
+  "learning-objectives.md",
+  "training-needs-analysis.md",
+  "learner-profile.md",
+  "content-sources.md"
+]);
+var STAGE_FILES = {
+  positioning: POSITIONING,
+  objectives: "01-planning/learning-objectives.md",
+  rubrics: "03-assessment/rubrics.md",
+  outline: "02-design/course-outline.md",
+  lessonPlans: "02-design/lesson-plans.md"
+};
+var MATERIAL_STAGE_FILES = ["04-materials/student-handout.md", "04-materials/instructor-guide.md"];
+var IMAGE_EXT = /\.(png|jpe?g|svg)$/i;
+var MAPPED_KEYS = /* @__PURE__ */ new Set(["title", "status", "audience", "version", "date"]);
+function parseDuration(s) {
+  const n = /(\d+)\s*-?\s*day/i.exec(s);
+  const days = n ? Number(n[1]) : void 0;
+  if (days !== void 0) return { shape: days > 2 || /week/i.test(s) ? "cohort" : "workshop", days };
+  if (/week/i.test(s)) return { shape: "cohort" };
+  return { shape: "workshop" };
+}
+function listFiles(root, rel = "") {
+  const out = [];
+  for (const e of readdirSync(join4(root, rel), { withFileTypes: true })) {
+    if (e.name.startsWith(".") || e.name === "node_modules") continue;
+    const r = rel ? `${rel}/${e.name}` : e.name;
+    if (e.isDirectory()) out.push(...listFiles(root, r));
+    else out.push(r);
+  }
+  return out.sort();
+}
+function externalLinks(readme) {
+  const found = /* @__PURE__ */ new Set();
+  for (const m of readme.matchAll(/\]\(\s*<?([^)\s>]+)/g)) {
+    const target = m[1].split("#")[0];
+    if (!target || /^[a-z][a-z0-9+.-]*:/i.test(target) || target.startsWith("/")) continue;
+    if (posix.normalize(target).startsWith("../")) found.add(target);
+  }
+  return [...found].sort();
+}
+function computeSources(dir) {
+  const files = listFiles(dir);
+  const has = new Set(files);
+  const derived2 = [], variant = [], source = [], material = [];
+  for (const f of files) {
+    const dirName = posix.dirname(f), name = posix.basename(f);
+    if (f.endsWith(".pdf") && has.has(f.replace(/\.pdf$/, ".md"))) derived2.push({ path: f, role: "derived", of: f.replace(/\.pdf$/, ".md") });
+    if (dirName === "02-design" && /^course-outline-.+\.md$/.test(name)) variant.push({ path: f, role: "variant", of: "02-design/course-outline.md" });
+    if (dirName === "01-planning" && name.endsWith(".md") && !V2_PLANNING.has(name)) source.push({ path: f, role: "source" });
+    if (dirName === "04-materials" && name.endsWith(".md") && name !== "README.md" && !MATERIAL_STAGE_FILES.includes(f)) {
+      material.push({ path: f, role: "material" });
+    }
+  }
+  const external = has.has("README.md") ? externalLinks(readFileSync6(join4(dir, "README.md"), "utf8")).map((path) => ({ path, role: "external" })) : [];
+  return [...derived2, ...variant, ...source, ...material, ...external];
+}
+function migrateV2(courseDir, o) {
+  const answers = o.answers ?? {};
+  const dir = resolve3(courseDir);
+  const actions = [];
+  const questions = [];
+  const scratch = mkdtempSync(join4(tmpdir(), "migrate-"));
+  try {
+    for (const rel of [...ID_COMMENT_FILES, "course.yaml"]) {
+      if (!existsSync4(join4(dir, rel))) continue;
+      mkdirSync2(dirname(join4(scratch, rel)), { recursive: true });
+      cpSync(join4(dir, rel), join4(scratch, rel));
+    }
+    const synced = syncManifest(scratch, { write: true }).manifest;
+    const existing = existsSync4(join4(dir, "course.yaml")) ? loadManifest(dir) : void 0;
+    const fm = existsSync4(join4(dir, POSITIONING)) ? readFrontmatter(join4(dir, POSITIONING)).data : {};
+    const extraNew = {};
+    for (const [k, v] of Object.entries(fm)) if (!MAPPED_KEYS.has(k)) extraNew[k] = v;
+    let target;
+    if (existing) {
+      target = { ...synced };
+    } else {
+      const rawTitle = typeof fm.title === "string" ? fm.title : synced.title;
+      const title = rawTitle.replace(/\s+-\s+Course Positioning\s*$/, "");
+      const dur = typeof fm.duration === "string" ? fm.duration : typeof fm.format === "string" ? fm.format : "";
+      const parsed = parseDuration(dur);
+      let shape = parsed.shape;
+      if (parsed.shape === "workshop" && parsed.days === void 0) {
+        if (answers.shape === void 0) {
+          questions.push({ id: "shape", text: "What is the course shape: workshop (1-2 sessions), cohort (several sessions with work between) or self-paced?", default: "workshop" });
+        }
+      }
+      if (answers.shape !== void 0) {
+        const s = ShapeSchema.safeParse(answers.shape);
+        if (!s.success) throw new ValidationError(`answer "shape" must be one of workshop, cohort, self-paced`);
+        shape = s.data;
+      }
+      const sessions = shape === "self-paced" ? [] : synced.timeBudget.live?.sessions ?? [];
+      target = initManifest({
+        title,
+        shape,
+        delivery: "in-person",
+        sessions,
+        audienceLevel: "professional",
+        audienceSummary: typeof fm.audience === "string" ? fm.audience : "",
+        budgetUsd: 20,
+        maxPlanImages: 40
+      }, typeof fm.date === "string" && /^\d{4}-\d\d-\d\d$/.test(fm.date) ? fm.date : (/* @__PURE__ */ new Date()).toISOString().slice(0, 10));
+      target.objectives = synced.objectives;
+      target.modules = synced.modules;
+      if (typeof fm.status === "string" && ["draft", "review", "final"].includes(fm.status)) target.status = fm.status;
+      if (typeof fm.version === "string") target.version = fm.version;
+    }
+    const computed = computeSources(dir);
+    const kept = (existing?.sources ?? []).filter((s) => !computed.some((c) => c.path === s.path));
+    target.sources = [...computed, ...kept];
+    const present = (rel) => existsSync4(join4(dir, rel));
+    const stages = {};
+    for (const [k, rel] of Object.entries(STAGE_FILES)) stages[k] = present(rel) ? "present" : "missing";
+    stages.materials = MATERIAL_STAGE_FILES.some(present) ? "present" : "missing";
+    target.stages = stages;
+    target.extra = { ...extraNew, ...existing?.extra ?? {} };
+    let registry2 = loadRegistry(dir);
+    const imported = [];
+    const registryActions = [];
+    const matDir = join4(dir, "04-materials");
+    const images = existsSync4(matDir) ? readdirSync(matDir).filter((f) => IMAGE_EXT.test(f)).sort() : [];
+    const now = (/* @__PURE__ */ new Date()).toISOString();
+    for (const name of images) {
+      const id = `IMG-${name.replace(/\.[^.]+$/, "")}`;
+      if (imported.includes(id)) continue;
+      imported.push(id);
+      const answered = answers[`alt:${id}`];
+      const found = registry2.assets.find((a) => a.id === id);
+      if (found) {
+        if (found.alt === "" && answered) {
+          registry2 = { ...registry2, assets: registry2.assets.map((a) => a.id === id ? { ...a, alt: answered } : a) };
+          registryActions.push(`set alt on registry asset ${id}`);
+        } else if (found.alt === "") {
+          questions.push({ id: `alt:${id}`, text: `Alt text for 04-materials/${name}` });
+        }
+        continue;
+      }
+      const asset = {
+        id,
+        kind: "image",
+        objectives: [],
+        provider: "imported",
+        files: [`04-materials/${name}`],
+        alt: answered ?? "",
+        status: "imported",
+        costUsd: 0,
+        quotaUnits: 0,
+        createdAt: now
+      };
+      registry2 = addAsset(registry2, asset);
+      registryActions.push(`add registry asset ${id}`);
+      if (!answered) questions.push({ id: `alt:${id}`, text: `Alt text for 04-materials/${name}` });
+    }
+    imported.sort();
+    const probe = join4(scratch, "probe");
+    mkdirSync2(probe);
+    saveManifest(probe, target);
+    const next = readFileSync6(join4(probe, "course.yaml"), "utf8");
+    const manifestChanged = !existing || readFileSync6(join4(dir, "course.yaml"), "utf8") !== next;
+    if (manifestChanged) actions.push("write course.yaml");
+    actions.push(...registryActions);
+    const idChanges = ID_COMMENT_FILES.filter((rel) => existsSync4(join4(scratch, rel)) && existsSync4(join4(dir, rel)) && readFileSync6(join4(scratch, rel), "utf8") !== readFileSync6(join4(dir, rel), "utf8"));
+    for (const rel of idChanges) actions.push(`insert ID comments in ${rel}`);
+    if (!o.dryRun) {
+      if (manifestChanged) writeFileSync5(join4(dir, "course.yaml"), next);
+      if (registryActions.length) saveRegistry(dir, registry2);
+      for (const rel of idChanges) writeFileSync5(join4(dir, rel), readFileSync6(join4(scratch, rel), "utf8"));
+    }
+    return { manifest: target, actions, questions, imported };
+  } finally {
+    rmSync(scratch, { recursive: true, force: true });
+  }
+}
+
+// packages/course-kit/src/media/plan.ts
+var import_yaml4 = __toESM(require_dist(), 1);
+import { existsSync as existsSync5, mkdirSync as mkdirSync3, readFileSync as readFileSync7, writeFileSync as writeFileSync6 } from "node:fs";
+import { join as join5 } from "node:path";
+var FILE3 = ["05-media", "media-plan.yaml"];
+var DIAGRAM_ONLY = /* @__PURE__ */ new Set(["concept-map", "process-flow", "comparison", "hierarchy", "cycle", "timeline"]);
+function loadPlan(courseDir) {
+  const f = join5(courseDir, ...FILE3);
+  if (!existsSync5(f)) return { schema: "media-plan/v1", items: [] };
+  let raw;
+  try {
+    raw = (0, import_yaml4.parse)(readFileSync7(f, "utf8"));
   } catch {
     throw new ValidationError(`cannot parse ${f}`);
   }
@@ -27757,8 +28011,8 @@ function estimatePlan(p, pricing, quality) {
 }
 
 // packages/course-kit/src/media/pricing.ts
-import { existsSync as existsSync4, readFileSync as readFileSync6 } from "node:fs";
-import { join as join4 } from "node:path";
+import { existsSync as existsSync6, readFileSync as readFileSync8 } from "node:fs";
+import { join as join6 } from "node:path";
 
 // packages/course-kit/data/pricing.json
 var pricing_default = {
@@ -27773,10 +28027,10 @@ var pricing_default = {
 function loadPricing(dataDir) {
   let raw = pricing_default;
   if (dataDir) {
-    const f = join4(dataDir, "pricing.json");
-    if (existsSync4(f)) {
+    const f = join6(dataDir, "pricing.json");
+    if (existsSync6(f)) {
       try {
-        raw = JSON.parse(readFileSync6(f, "utf8"));
+        raw = JSON.parse(readFileSync8(f, "utf8"));
       } catch {
         throw new ValidationError(`cannot parse ${f}`);
       }
@@ -27785,66 +28039,6 @@ function loadPricing(dataDir) {
   const r = PricingSchema.safeParse(raw);
   if (!r.success) throw new ValidationError(`invalid pricing.json: ${r.error.issues.map((i) => i.message).join("; ")}`);
   return r.data;
-}
-
-// packages/course-kit/src/media/registry.ts
-import { existsSync as existsSync5, mkdirSync as mkdirSync2, readFileSync as readFileSync7, writeFileSync as writeFileSync5 } from "node:fs";
-import { join as join5 } from "node:path";
-var FILE3 = ["05-media", "registry.json"];
-function loadRegistry(courseDir) {
-  const f = join5(courseDir, ...FILE3);
-  if (!existsSync5(f)) return { schema: "registry/v1", assets: [] };
-  let raw;
-  try {
-    raw = JSON.parse(readFileSync7(f, "utf8"));
-  } catch {
-    throw new ValidationError(`cannot parse ${f}`);
-  }
-  const r = RegistrySchema.safeParse(raw);
-  if (!r.success) {
-    throw new ValidationError(`invalid registry: ${r.error.issues.map((i) => `${i.path.join(".") || "(root)"}: ${i.message}`).join("; ")}`);
-  }
-  return r.data;
-}
-function saveRegistry(courseDir, r) {
-  mkdirSync2(join5(courseDir, FILE3[0]), { recursive: true });
-  writeFileSync5(join5(courseDir, ...FILE3), JSON.stringify(r, null, 2) + "\n");
-}
-function addAsset(r, a) {
-  if (a.status === "approved") {
-    throw new ValidationError("Assets cannot be added as approved; add as generated or imported, then approve with registry status");
-  }
-  if (r.assets.some((x) => x.id === a.id)) throw new ValidationError(`duplicate asset id ${a.id}`);
-  return { ...r, assets: [...r.assets, a] };
-}
-var TRANSITIONS = {
-  generated: ["approved", "rejected"],
-  rejected: ["generated"],
-  imported: ["approved", "rejected"],
-  approved: []
-};
-function setStatus(r, id, to, opts = {}) {
-  const a = r.assets.find((x) => x.id === id);
-  if (!a) throw new ValidationError(`unknown asset id ${id}`);
-  if (!TRANSITIONS[a.status].includes(to)) throw new ValidationError(`cannot change asset ${id} from ${a.status} to ${to}`);
-  if (to === "approved") {
-    if (!a.alt.trim()) throw new ValidationError(`asset ${id} needs alt text before approval`);
-    if (opts.approvedBy !== "user") throw new ValidationError(`asset ${id} must be approved by the user (approvedBy: user)`);
-  }
-  const next = { ...a, status: to };
-  if (opts.review) next.review = opts.review;
-  if (opts.approvedBy) next.approvedBy = opts.approvedBy;
-  return { ...r, assets: r.assets.map((x) => x.id === id ? next : x) };
-}
-function updateAssetText(r, id, patch) {
-  const a = r.assets.find((x) => x.id === id);
-  if (!a) throw new ValidationError(`unknown asset id ${id}`);
-  if (a.status === "approved") throw new ValidationError(`asset ${id} is approved and cannot be edited`);
-  const next = { ...a };
-  for (const k of ["alt", "longDescription", "caption"]) {
-    if (patch[k] !== void 0) next[k] = patch[k];
-  }
-  return { ...r, assets: r.assets.map((x) => x.id === id ? next : x) };
 }
 
 // packages/course-kit/src/commands-core.ts
@@ -27877,16 +28071,26 @@ var coreCommands = {
     if (!parsed.success) {
       throw new UsageError(`invalid --json: ${parsed.error.issues.map((i) => `${i.path.join(".") || "(root)"}: ${i.message}`).join("; ")}`);
     }
-    if (existsSync6(join6(course, "course.yaml")) && a.flags.force !== true) {
+    if (existsSync7(join7(course, "course.yaml")) && a.flags.force !== true) {
       throw new UsageError(`course.yaml already exists in ${course}; pass --force to overwrite`);
     }
     const opts = parsed.data;
     const m = initManifest(opts, (/* @__PURE__ */ new Date()).toISOString().slice(0, 10));
     const issues = validateManifest(m).filter((i) => i.level === "error");
     if (issues.length) throw new ValidationError(JSON.stringify({ issues }));
-    mkdirSync3(course, { recursive: true });
+    mkdirSync4(course, { recursive: true });
     saveManifest(course, m);
     return { manifest: m };
+  },
+  "migrate-course": (a) => {
+    const raw = a.flags.answers;
+    let answers;
+    if (typeof raw === "string") {
+      const parsed = external_exports.record(external_exports.string(), external_exports.string()).safeParse(jsonFlag(raw, "answers"));
+      if (!parsed.success) throw new UsageError(`invalid --answers: ${zodMsg(parsed.error)}`);
+      answers = parsed.data;
+    }
+    return migrateV2(requireFlag(a, "course"), { dryRun: a.flags["dry-run"] === true, ...answers ? { answers } : {} });
   },
   "manifest sync": (a) => syncManifest(requireFlag(a, "course"), { write: a.flags.write === true }),
   "manifest validate": (a) => {

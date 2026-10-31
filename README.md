@@ -113,6 +113,7 @@ The workflow steps are skills you run as slash commands (`/course-curriculum-cre
 | `/course-curriculum-creator:assess-needs` | Conduct a training needs assessment to determine if a course is the right intervention |
 | `/course-curriculum-creator:create-course` | Initialize new course project with directory structure |
 | `/course-curriculum-creator:design-series` | Design a leveled course series (101/201/301/401) |
+| `/course-curriculum-creator:migrate-course` | Migrate a v2 course folder to v3 (course.yaml, media registry for existing images, stable IDs) without moving files |
 | `/course-curriculum-creator:generate-learner-profile` | Generate learner profile analyzing prior knowledge, motivations, constraints, and transfer environment |
 
 ### Stage 1: Desired Results (`workflow/1-desired-results/`)
