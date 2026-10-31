@@ -1,8 +1,16 @@
 # Course Curriculum Creator — Enhancement Design
 
 **Date:** 2026-03-15
-**Scope:** 10 enhancements — 7 new files (3 commands, 4 references) and 6 modified files (3 enhancements, 3 integration updates)
+**Scope:** 10 enhancements — 7 new files (3 workflow skills, originally commands; 4 references) and 6 modified files (3 enhancements, 3 integration updates)
 **Approach:** Additive only — no restructuring of existing files or patterns
+
+> **Status (2026-10-31): Implemented.** Everything here shipped in v1.1.0. In v2.0.0 the plugin moved to the current Claude Code plugin spec, and this document was updated to match:
+> - Commands are now workflow skills at `workflow/<stage>/<name>/SKILL.md` (formerly `commands/<stage>/<name>.md`), invoked as `/course-curriculum-creator:<name>`.
+> - Settings come from plugin `userConfig` (`${user_config.<key>}` placeholders with stated defaults). `.claude/course-curriculum-creator.local.md` is now only a per-project override.
+> - The affective domain section of `skills/blooms-taxonomy/SKILL.md` now lives in `skills/blooms-taxonomy/references/affective-domain.md`, and SKILL.md keeps a short summary.
+> - The repo is standalone: paths are relative to the repo root, not `course-curriculum-creator/` inside cc-plugins.
+>
+> Keep this as a record of the design. Don't re-run it.
 
 ---
 
@@ -10,15 +18,15 @@
 
 These enhancements address gaps identified in an expert instructional design review. They add learner analysis, pre-work design, spaced practice, formative assessment guidance, accessibility specifications, affective domain objectives, co-teaching support, cultural adaptation, content curation, and series transition design.
 
-All new files follow existing plugin conventions: YAML frontmatter, staleness checks via md5 hashes, settings integration from `.claude/course-curriculum-creator.local.md`, and AskUserQuestion-driven interactive workflows.
+All new files follow existing plugin conventions: YAML frontmatter, staleness checks via md5 hashes, settings integration via plugin `userConfig` (with `.claude/course-curriculum-creator.local.md` as a per-project override), `disable-model-invocation: true` on workflow skills, and AskUserQuestion-driven interactive workflows.
 
 ---
 
-## Part 1: New Commands
+## Part 1: New Workflow Skills
 
-### 1.1 `/generate-learner-profile` (Stage 0 — Analysis)
+### 1.1 `/course-curriculum-creator:generate-learner-profile` (Stage 0 — Analysis)
 
-**File:** `commands/0-analysis/generate-learner-profile.md`
+**File:** `workflow/0-analysis/generate-learner-profile/SKILL.md`
 
 **Frontmatter:**
 ```yaml
@@ -160,9 +168,9 @@ sourceHashes:
 
 ---
 
-### 1.2 `/generate-pre-work` (Stage 3 — Learning Plan)
+### 1.2 `/course-curriculum-creator:generate-pre-work` (Stage 3 — Learning Plan)
 
-**File:** `commands/3-learning-plan/generate-pre-work.md`
+**File:** `workflow/3-learning-plan/generate-pre-work/SKILL.md`
 
 **Frontmatter:**
 ```yaml
@@ -317,15 +325,15 @@ If you answered correctly, skip to Unit 2. If not, complete the Full Path below.
 - `curriculum-architect` agent adds pre-work generation as Phase 7.5 (after lesson plans, before description)
 
 **Error handling:**
-- Missing learning objectives: "Error: learning-objectives.md not found. Cannot identify prerequisites. Run `/generate-objectives` first."
+- Missing learning objectives: "Error: learning-objectives.md not found. Cannot identify prerequisites. Run `/course-curriculum-creator:generate-objectives` first."
 - No Remember/Understand objectives found: "Advisory: No Remember/Understand-level objectives found. Pre-work will focus on implied prerequisites for Apply+ objectives."
 - Pre-work already exists: Prompt with overwrite/update/cancel options
 
 ---
 
-### 1.3 `/generate-spaced-practice` (Stage 6 — Delivery)
+### 1.3 `/course-curriculum-creator:generate-spaced-practice` (Stage 6 — Delivery)
 
-**File:** `commands/6-delivery/generate-spaced-practice.md`
+**File:** `workflow/6-delivery/generate-spaced-practice/SKILL.md`
 
 **Frontmatter:**
 ```yaml
@@ -519,7 +527,7 @@ Here's your Day [N] practice for [Course Title]. Takes about [N] minutes.
 - `curriculum-architect` agent adds spaced practice generation as Phase 9e (after evaluation plan)
 
 **Error handling:**
-- Missing learning objectives: "Error: learning-objectives.md not found. Run `/generate-objectives` first."
+- Missing learning objectives: "Error: learning-objectives.md not found. Run `/course-curriculum-creator:generate-objectives` first."
 - Missing lesson plans: "Warning: lesson-plans.md not found. Questions will be based on objectives only (less specific). Generate lesson plans first for better question quality."
 - Spaced practice already exists: Prompt with overwrite/update/cancel options
 
@@ -597,7 +605,7 @@ When inserting formative assessment into a lesson plan, select based on:
 
 ## Integration with Lesson Plans
 
-When using this reference in `/generate-lesson-plans`:
+When using this reference in `/course-curriculum-creator:generate-lesson-plans`:
 - Insert at least one formative check per module (after instruction, before independent practice)
 - Name the specific technique (not just "check understanding")
 - Include the decision rule: "If <50% correct on the concept check, re-teach using [alternative explanation] before proceeding to guided practice"
@@ -949,7 +957,7 @@ Before including any third-party content, check for these warning signs:
 
 ### 3.1 Affective Domain — Bloom's Taxonomy Skill
 
-**File:** `skills/blooms-taxonomy/SKILL.md`
+**File:** `skills/blooms-taxonomy/SKILL.md` (v2.0.0: full content moved to `skills/blooms-taxonomy/references/affective-domain.md`, with a summary kept in SKILL.md)
 
 **Change:** Append a new section titled `## Affective Domain (Krathwohl's Taxonomy)` after the existing `## Scaffolding Strategies` section and before `## Intensive Workshop Considerations`.
 
@@ -1060,14 +1068,14 @@ Effective workshops often pair a cognitive objective with a related affective ob
 
 **Avoid:** Do not grade or score affective outcomes. Affective assessment is formative (informing facilitation adjustments) not summative (passing/failing participants).
 
-**Integration with `/generate-objectives`:** When a user's stated goal sounds affective ("I want them to appreciate..." / "They need to buy in to..."), offer to formulate an explicit affective objective alongside the cognitive one. Present both and let the user choose whether to include the affective objective.
+**Integration with `/course-curriculum-creator:generate-objectives`:** When a user's stated goal sounds affective ("I want them to appreciate..." / "They need to buy in to..."), offer to formulate an explicit affective objective alongside the cognitive one. Present both and let the user choose whether to include the affective objective.
 ```
 
 ---
 
 ### 3.2 Co-Facilitation Support — generate-lesson-plans
 
-**File:** `commands/3-learning-plan/generate-lesson-plans.md`
+**File:** `workflow/3-learning-plan/generate-lesson-plans/SKILL.md`
 
 **Change:** Append a new section titled `## Co-Facilitation Support` after the existing `## Delivery Mode Adaptations` section and before the final `---` separator.
 
@@ -1156,7 +1164,7 @@ Add to the Instructor Preparation Checklist at the end of lesson plans:
 
 ### 3.3 Inter-Course Transition Design — design-series
 
-**File:** `commands/0-analysis/design-series.md`
+**File:** `workflow/0-analysis/design-series/SKILL.md`
 
 **Change:** Append a new section titled `## Inter-Course Transition Design` after the existing `## Output Format` section (before `## Settings Integration`).
 
@@ -1289,9 +1297,9 @@ These are minor updates to existing files to reference the new additions. Each i
 **File:** `agents/curriculum-architect.md`
 
 **Changes:**
-- Add Phase 3.5 (after course initialization, before objectives): "If sufficient audience information is available, generate learner profile using `/generate-learner-profile`"
-- Add Phase 7.5 (after lesson plans, before description): "If Remember/Understand prerequisites exist, generate pre-work using `/generate-pre-work`"
-- Add Phase 9e (after evaluation plan): "Generate spaced practice sequence using `/generate-spaced-practice`"
+- Add Phase 3.5 (after course initialization, before objectives): "If sufficient audience information is available, generate learner profile using `/course-curriculum-creator:generate-learner-profile`"
+- Add Phase 7.5 (after lesson plans, before description): "If Remember/Understand prerequisites exist, generate pre-work using `/course-curriculum-creator:generate-pre-work`"
+- Add Phase 9e (after evaluation plan): "Generate spaced practice sequence using `/course-curriculum-creator:generate-spaced-practice`"
 - Update Phase 10 deliverables list to include new files
 
 ### 4.2 quality-reviewer agent
@@ -1308,7 +1316,7 @@ These are minor updates to existing files to reference the new additions. Each i
 **File:** `README.md`
 
 **Changes:**
-- Add new commands to command reference sections
+- Add new workflow skills to the workflow skill reference sections
 - Update feature list
 - Add reference files to skills reference
 
@@ -1319,9 +1327,9 @@ These are minor updates to existing files to reference the new additions. Each i
 ### New Files (7)
 | File | Type | Location |
 |---|---|---|
-| `generate-learner-profile.md` | Command | `commands/0-analysis/` |
-| `generate-pre-work.md` | Command | `commands/3-learning-plan/` |
-| `generate-spaced-practice.md` | Command | `commands/6-delivery/` |
+| `generate-learner-profile/SKILL.md` | Workflow skill | `workflow/0-analysis/` |
+| `generate-pre-work/SKILL.md` | Workflow skill | `workflow/3-learning-plan/` |
+| `generate-spaced-practice/SKILL.md` | Workflow skill | `workflow/6-delivery/` |
 | `formative-assessment-techniques.md` | Reference | `skills/backward-design-methodology/references/` |
 | `accessibility-specifications.md` | Reference | `skills/universal-design-for-learning/references/` |
 | `cultural-adaptation.md` | Reference | `skills/universal-design-for-learning/references/` |
@@ -1330,10 +1338,10 @@ These are minor updates to existing files to reference the new additions. Each i
 ### Modified Files (5)
 | File | Change Type |
 |---|---|
-| `skills/blooms-taxonomy/SKILL.md` | Append affective domain section |
-| `commands/3-learning-plan/generate-lesson-plans.md` | Append co-facilitation section |
-| `commands/0-analysis/design-series.md` | Append inter-course transition section |
-| `agents/curriculum-architect.md` | Add new phases for new commands |
+| `skills/blooms-taxonomy/SKILL.md` | Append affective domain section (v2.0.0: moved to `references/affective-domain.md`) |
+| `workflow/3-learning-plan/generate-lesson-plans/SKILL.md` | Append co-facilitation section |
+| `workflow/0-analysis/design-series/SKILL.md` | Append inter-course transition section |
+| `agents/curriculum-architect.md` | Add new phases for new workflow skills |
 | `agents/quality-reviewer.md` | Add validation checks for new artifacts |
 
 ### Updated Files (1)
