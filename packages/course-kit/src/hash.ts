@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { Scalar } from 'yaml';
 import { readFrontmatter, writeFrontmatter } from './frontmatter.js';
 
 /** First 8 hex chars of MD5, matching v2 `md5sum | cut -c1-8`. */
@@ -23,7 +24,7 @@ export function checkStale(
   courseDir: string,
 ): { status: 'missing-output' | 'fresh' | 'stale'; changed: string[] } {
   if (!existsSync(outputPath)) return { status: 'missing-output', changed: [] };
-  const { data } = readFrontmatter(outputPath);
+  const { data } = readFrontmatter(outputPath, { strings: true });
   const stored = (data.sourceHashes && typeof data.sourceHashes === 'object' ? data.sourceHashes : {}) as Record<string, string>;
   const changed = Object.entries(sourceFilesOf(data))
     .filter(([key, rel]) => currentHash(courseDir, rel) !== stored[key])
@@ -33,10 +34,14 @@ export function checkStale(
 
 export function writeHashes(outputPath: string, courseDir: string): void {
   const { data } = readFrontmatter(outputPath);
-  const hashes: Record<string, string> = {};
+  const hashes: Record<string, Scalar> = {};
   for (const [key, rel] of Object.entries(sourceFilesOf(data))) {
     const h = currentHash(courseDir, rel);
-    if (h) hashes[key] = h;
+    if (h) {
+      const node = new Scalar(h);
+      node.type = 'QUOTE_DOUBLE';
+      hashes[key] = node;
+    }
   }
   data.sourceHashes = hashes;
   writeFrontmatter(outputPath, data);
