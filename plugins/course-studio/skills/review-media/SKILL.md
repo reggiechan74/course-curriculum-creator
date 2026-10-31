@@ -42,8 +42,7 @@ Check every generated asset, then let the user decide. `KIT` means `node "${CLAU
    - Approve: `KIT registry status <id> approved --course "<dir>" --approved-by user --review '<json>'`. Do this only after the user explicitly approves in this conversation. Never approve on your own, never because checks passed, and never for an asset whose alt text is empty.
    - Reject: `KIT registry status <id> rejected --course "<dir>" --review '<json>'`.
    - Regenerate: remake it (see `generate-media`, "Remake") and review it again. Record the earlier failure with `registry status <id> rejected --review '<json>'` first if you want to keep the review.
-
-   - Revoke an approval (the user wants to change an asset that is already approved): `KIT registry status <id> rejected --course "<dir>"`. This removes `approvedBy`; run `KIT embed all --course "<dir>"` so the lesson shows the placeholder again, then edit or regenerate the asset and approve it again.
+   - Revoke an approval (the user wants to change an asset that is already approved): `KIT registry status <id> rejected --course "<dir>"`. This removes `approvedBy`. Run `KIT embed all --course "<dir>"` so the lessons show the placeholder again. Then either regenerate it, or edit its text and set it back with `KIT registry status <id> generated --course "<dir>"`, and review it again.
 
    `--review` is JSON like `{"checks":{"no-stray-text":"pass","factual":"pass","representation":"pass","style":"pass","contrast":"pass","physical":"n/a"},"notes":"…","at":"<iso>"}` with all six checks.
 7. Tell the user the next step: `/course-studio:embed-media`.
