@@ -28490,13 +28490,23 @@ async function renderExcalidraw(srcPath, outSvg, dataDir2) {
     throw new ProviderUnavailableError(`Chrome failed to launch: ${e instanceof Error ? e.message : String(e)}`);
   }
   try {
-    const page = await browser.newPage();
-    await page.setContent("<html><body></body></html>");
-    await page.addScriptTag({ content: readFileSync9(bundle2, "utf8") });
-    const svg = await page.evaluate(
-      async (d) => (await globalThis.ExcalidrawUtils.exportToSvg(d)).outerHTML,
-      diagram
-    );
+    let page;
+    try {
+      page = await browser.newPage();
+      await page.setContent("<html><body></body></html>");
+      await page.addScriptTag({ content: readFileSync9(bundle2, "utf8") });
+    } catch (e) {
+      throw new ProviderUnavailableError(`Chrome page setup failed: ${e instanceof Error ? e.message : String(e)}`);
+    }
+    let svg;
+    try {
+      svg = await page.evaluate(
+        async (d) => (await globalThis.ExcalidrawUtils.exportToSvg(d)).outerHTML,
+        diagram
+      );
+    } catch (e) {
+      throw new ValidationError(`not a usable Excalidraw scene: ${e instanceof Error ? e.message : String(e)}`);
+    }
     writeFileSync6(outSvg, svg);
   } finally {
     await browser.close();
@@ -28530,6 +28540,9 @@ async function renderMermaid(srcPath, outSvg, dataDir2, tokens = {}) {
     } catch (e) {
       const err = e;
       const detail = err.stderr?.toString().trim() || err.message;
+      if (/parse error|syntax error|lexical error|no diagram type detected/i.test(detail)) {
+        throw new ValidationError(`invalid mermaid diagram: ${detail}`);
+      }
       throw new ProviderUnavailableError(`mermaid-cli failed: ${detail}`);
     }
   } finally {

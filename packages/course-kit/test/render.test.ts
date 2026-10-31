@@ -52,6 +52,28 @@ test('renderExcalidraw with a missing or invalid source is ValidationError', asy
   writeFileSync(join(d, 'bad.excalidraw'), 'not json');
   await expect(renderExcalidraw(join(d, 'bad.excalidraw'), join(d, 'o.svg'), d)).rejects.toBeInstanceOf(ValidationError);
 });
+function fakeMmdc(msg: string): string {
+  const d = tmp();
+  mkdirSync(join(d, 'node_modules', '.bin'), { recursive: true });
+  const fake = join(d, 'node_modules', '.bin', 'mmdc');
+  writeFileSync(fake, `#!/bin/sh\necho "${msg}" >&2\nexit 1\n`);
+  chmodSync(fake, 0o755);
+  writeFileSync(join(d, 'a.mmd'), 'flowchart LR; A-->');
+  return d;
+}
+test('renderMermaid: mmdc parse/syntax errors are ValidationError, launch failures are ProviderUnavailableError', async () => {
+  for (const msg of ['Parse error on line 1', 'Lexical error on line 2', 'No diagram type detected']) {
+    const d = fakeMmdc(msg);
+    await expect(renderMermaid(join(d, 'a.mmd'), join(d, 'o.svg'), d)).rejects.toBeInstanceOf(ValidationError);
+  }
+  const d = fakeMmdc('Failed to launch the browser process');
+  await expect(renderMermaid(join(d, 'a.mmd'), join(d, 'o.svg'), d)).rejects.toBeInstanceOf(ProviderUnavailableError);
+});
+test.skipIf(!depPath(DATA, 'excalidraw-to-svg'))('renderExcalidraw: valid JSON that is not a scene is ValidationError', async () => {
+  const d = tmp();
+  writeFileSync(join(d, 'a.excalidraw'), '{"type":"excalidraw","elements":42}');
+  await expect(renderExcalidraw(join(d, 'a.excalidraw'), join(d, 'o.svg'), DATA)).rejects.toBeInstanceOf(ValidationError);
+}, 60000);
 test('renderMermaid maps a failing mmdc to ProviderUnavailableError with its message', async () => {
   const d = tmp();
   mkdirSync(join(d, 'node_modules', '.bin'), { recursive: true });

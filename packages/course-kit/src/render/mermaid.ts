@@ -31,6 +31,9 @@ export async function renderMermaid(
     } catch (e) {
       const err = e as Error & { stderr?: Buffer };
       const detail = err.stderr?.toString().trim() || err.message;
+      if (/parse error|syntax error|lexical error|no diagram type detected/i.test(detail)) {
+        throw new ValidationError(`invalid mermaid diagram: ${detail}`);
+      }
       throw new ProviderUnavailableError(`mermaid-cli failed: ${detail}`);
     }
   } finally {

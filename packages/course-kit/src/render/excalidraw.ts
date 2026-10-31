@@ -31,13 +31,23 @@ export async function renderExcalidraw(srcPath: string, outSvg: string, dataDir:
   try { browser = await puppeteer.launch({ args: ['--no-sandbox'] }); }
   catch (e) { throw new ProviderUnavailableError(`Chrome failed to launch: ${e instanceof Error ? e.message : String(e)}`); }
   try {
-    const page = await browser.newPage();
-    await page.setContent('<html><body></body></html>');
-    await page.addScriptTag({ content: readFileSync(bundle, 'utf8') });
-    const svg = await page.evaluate(
-      async (d) => (await (globalThis as unknown as { ExcalidrawUtils: { exportToSvg(d: unknown): Promise<{ outerHTML: string }> } }).ExcalidrawUtils.exportToSvg(d)).outerHTML,
-      diagram,
-    );
+    let page: Page;
+    try {
+      page = await browser.newPage();
+      await page.setContent('<html><body></body></html>');
+      await page.addScriptTag({ content: readFileSync(bundle, 'utf8') });
+    } catch (e) {
+      throw new ProviderUnavailableError(`Chrome page setup failed: ${e instanceof Error ? e.message : String(e)}`);
+    }
+    let svg: string;
+    try {
+      svg = await page.evaluate(
+        async (d) => (await (globalThis as unknown as { ExcalidrawUtils: { exportToSvg(d: unknown): Promise<{ outerHTML: string }> } }).ExcalidrawUtils.exportToSvg(d)).outerHTML,
+        diagram,
+      );
+    } catch (e) {
+      throw new ValidationError(`not a usable Excalidraw scene: ${e instanceof Error ? e.message : String(e)}`);
+    }
     writeFileSync(outSvg, svg);
   } finally {
     await browser.close();
