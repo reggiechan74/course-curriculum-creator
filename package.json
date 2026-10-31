@@ -1,0 +1,11 @@
+{
+  "name": "course-studio-monorepo",
+  "private": true,
+  "workspaces": ["packages/*"],
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "test": "npm -w @course/kit test",
+    "build": "node packages/course-kit/scripts/build.mjs",
+    "check": "npm run build && git diff --exit-code plugins/"
+  }
+}

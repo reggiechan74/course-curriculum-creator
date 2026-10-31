@@ -47,9 +47,11 @@ This plugin helps independent consultants, trainers, and instructional designers
 When you install the plugin, Claude Code asks for your [settings](#configuration). Every one is optional.
 
 ### Local Development
+This repository is a marketplace. It contains more than one plugin.
+
 To load your working copy for a single session without installing:
 ```
-claude --plugin-dir /path/to/course-curriculum-creator
+claude --plugin-dir /path/to/course-curriculum-creator/plugins/course-curriculum-creator
 ```
 Or register the clone as a local marketplace, so it loads in place and picks up edits on `/reload-plugins`:
 ```

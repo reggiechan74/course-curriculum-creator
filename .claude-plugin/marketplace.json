@@ -7,8 +7,8 @@
   "plugins": [
     {
       "name": "course-curriculum-creator",
-      "source": "./",
-      "description": "Create professional course curricula for 1-2 day workshops using backward design methodology and Bloom's taxonomy",
+      "source": "./plugins/course-curriculum-creator",
+      "description": "Design blended courses (workshop, cohort, self-paced) using backward design and Bloom's taxonomy",
       "category": "education"
     }
   ]
