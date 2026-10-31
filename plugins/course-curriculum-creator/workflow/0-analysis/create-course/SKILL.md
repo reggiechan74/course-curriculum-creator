@@ -2,7 +2,7 @@
 name: create-course
 description: Initialize a new course curriculum project with directory structure and foundational files
 disable-model-invocation: true
-argument-hint: "[Course Title] [--duration 1-day|2-day] [--mode in-person|virtual|hybrid] [--location path] [--series name --level N]"
+argument-hint: "[Course Title] [--shape workshop|cohort|self-paced] [--duration 1-day|2-day] [--mode in-person|virtual|hybrid] [--location path] [--series name --level N]"
 allowed-tools:
   - AskUserQuestion
   - Bash
@@ -39,8 +39,12 @@ When user invokes `/course-curriculum-creator:create-course [CourseName]`:
    │   └── lesson-plans.md
    ├── 03-assessment/
    │   └── rubrics.md
-   └── 04-materials/
-       └── README.md
+   ├── 04-materials/
+   │   └── README.md
+   └── 05-media/
+       ├── src/
+       ├── out/
+       └── style/
    ```
 
 3. **Generate initial files**:
@@ -49,13 +53,16 @@ When user invokes `/course-curriculum-creator:create-course [CourseName]`:
    - `README.md` in project root with course overview
    - `.gitignore` (optional, based on settings)
 
-4. **Report completion** with next steps
+4. **Run `manifest init`** to write `course.yaml` (see "Course Manifest" below)
+
+5. **Report completion** with next steps
 
 ## Argument Handling
 
 **Interactive mode (no args or partial args):**
 Use AskUserQuestion to gather missing information:
 - Course title (if not provided)
+- Course shape: workshop, cohort, or self-paced (ask this first)
 - Duration: 1-day or 2-day workshop
 - Target audience description
 - Delivery mode: in-person (default), virtual, or hybrid
@@ -80,8 +87,30 @@ Plugin settings (configured with `/plugin configure`). If the project has a `.cl
 - `courses_directory` = `${user_config.courses_directory}` (default `~/courses`): Default output location if not specified
 - `default_duration` = `${user_config.default_duration}` (default `2-day`): Default if not specified
 - `default_audience_level` = `${user_config.default_audience_level}` (default `professional`): Suggest in prompts
+- `default_shape` = `${user_config.default_shape}` (default `workshop`): Course shape used when the user gives no shape
 
 If a value is empty and not overridden, use sensible defaults or prompt user.
+
+## Course Manifest
+
+After the folders and initial files exist, create `course.yaml` with the course-kit CLI (see the `course-kit` skill for the call form):
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/skills/course-kit/scripts/course-kit.mjs" manifest init --course "<course-dir>" --json '<options>'
+```
+
+`<options>` is a JSON object: `{"title", "shape", "delivery", "sessions": [{"id","label","minutes"}], "audienceLevel", "audienceSummary", "budgetUsd": 20, "maxPlanImages": 40}`.
+
+- **shape**: ask the user for the shape first (workshop, cohort, self-paced). If they give none, use `default_shape`.
+- **delivery**: the `--mode` value (`in-person`, `virtual`, `hybrid`); default `in-person`.
+- **sessions** (ids `S1`, `S2`, ...):
+  - workshop with `--duration 1-day`: one session of 420 minutes.
+  - workshop with `--duration 2-day`: two sessions of 420 minutes each.
+  - cohort: ask for the number of sessions and the minutes in each session.
+  - self-paced: write no live sessions (`"sessions": []`).
+- **audienceLevel** / **audienceSummary**: from the gathered audience information and `default_audience_level`.
+
+Exit code 2 means the options failed validation; show the error, fix the options and retry. Never use `--force` unless the user asks. Afterwards run `manifest validate --course "<course-dir>"` and report any problem.
 
 ## Series Integration
 
@@ -281,6 +310,7 @@ lastUpdated: YYYY-MM-DD
 02-design/            Course outline and lesson plans
 03-assessment/        Rubrics and evaluation criteria
 04-materials/         Student handouts and instructor materials
+05-media/             Diagrams and images (src/, out/, style/)
 ```
 
 ## Development Workflow
@@ -478,8 +508,10 @@ Structure created:
   │   └── lesson-plans.md (pending)
   ├── 03-assessment/
   │   └── rubrics.md (pending)
-  └── 04-materials/
-      └── README.md (✓ created)
+  ├── 04-materials/
+  │   └── README.md (✓ created)
+  ├── 05-media/ (src/, out/, style/ created)
+  └── course.yaml (✓ initialized)
 
 Next Steps (Backward Design):
 1. Define learning objectives: /course-curriculum-creator:generate-objectives

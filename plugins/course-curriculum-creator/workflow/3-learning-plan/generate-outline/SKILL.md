@@ -42,6 +42,7 @@ When generating, always compute and write current source hashes to the output fi
 5. Allocate timing for instruction, practice, breaks
 6. Generate structured outline
 7. Write to `02-design/course-outline.md`
+8. Run `manifest sync --write` and show each issue to the user (see "Manifest Sync" below)
 
 ## Module Structure Logic
 
@@ -198,6 +199,16 @@ sourceHashes:
 2. Generate detailed lesson plans for each module: `/course-curriculum-creator:generate-lesson-plans`
 3. Ensure all learning objectives are addressed across modules
 ```
+
+## Manifest Sync
+
+**Last step: sync the manifest.** Run `manifest sync --write` (call form in the `course-kit` skill):
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/skills/course-kit/scripts/course-kit.mjs" manifest sync --course "<course-dir>" --write
+```
+
+It returns `{ manifest, issues }`. Show each issue to the user.
 
 ## Post-Generation
 

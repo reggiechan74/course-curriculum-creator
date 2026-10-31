@@ -1,7 +1,7 @@
 # Course Curriculum Creator
 
 <!-- badges-start -->
-![Version](https://img.shields.io/badge/version-1.1.0-blue)
+![Version](https://img.shields.io/badge/version-2.1.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Claude Code Plugin](https://img.shields.io/badge/Claude%20Code-plugin-blueviolet)
 <!-- badges-end -->
@@ -239,6 +239,8 @@ You can also edit them in `/config`.
 | `rubric_scale` | `1-5` | `generate-rubrics` |
 | `rubric_type` | `analytical` | `generate-rubrics` |
 | `template_directory` | `~/.claude/course-templates` | Template commands |
+| `default_shape` | `workshop` | `create-course` |
+| `brand_config` | (empty) | `course-studio` (optional brand file) |
 
 ### Per-project overrides
 
@@ -270,12 +272,14 @@ CourseName-YYYY-MM-DD/
 │   └── lesson-plans.md            # Detailed module plans
 ├── 03-assessment/
 │   └── rubrics.md                 # 1-5 scale evaluation criteria
-└── 04-materials/
-    ├── pre-work.md                # Pre-workshop micro-learning (optional)
-    ├── spaced-practice.md         # Post-workshop retrieval practice (optional)
-    ├── student-handout.md
-    ├── instructor-guide.md
-    └── [other artifacts]
+├── 04-materials/
+│   ├── pre-work.md                # Pre-workshop micro-learning (optional)
+│   ├── spaced-practice.md         # Post-workshop retrieval practice (optional)
+│   ├── student-handout.md
+│   ├── instructor-guide.md
+│   └── [other artifacts]
+├── 05-media/                      # Diagrams and images (src/, out/, style/)
+└── course.yaml                    # Course manifest (shape, sessions, stable IDs)
 ```
 
 ## Template System
@@ -343,6 +347,13 @@ See `skills/` subdirectories for worked examples:
 - `skills/backward-design-methodology/examples/example-backward-design-1day.md` - Full backward design walkthrough
 
 ## What's New
+
+### v2.1.0 - Course Manifest
+- New: `course.yaml` manifest, written by `create-course` and kept in sync by `generate-objectives` and `generate-outline` (`manifest sync --write`)
+- New: Stable IDs for modules and objectives, stored as `<!-- id: M1 -->` comments in the markdown files so they survive renames and reordering
+- New: `05-media/` folders (`src/`, `out/`, `style/`) in every new course
+- New: Settings `default_shape` (workshop, cohort, self-paced) and `brand_config` (optional brand file for course-studio)
+- Changed: Node 20 or later is now required (bundled `course-kit` CLI)
 
 ### v2.0.0 - Current Claude Code Plugin Spec
 - Changed: Workflow commands migrated from the legacy `commands/` format to skills under `workflow/<stage>/<name>/SKILL.md`. Command names are unchanged (`/course-curriculum-creator:<name>`)

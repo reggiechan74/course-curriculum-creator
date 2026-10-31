@@ -106,6 +106,17 @@ In the generated `Cognitive Level Distribution` section, add a series compliance
 4. **Generate learning objectives**: Create SMART objectives with appropriate action verbs
 5. **Write to file**: Save to `01-planning/learning-objectives.md`
 6. **Update positioning**: Suggest updating course-positioning.md with outcomes summary
+7. **Sync the manifest**: Run `manifest sync --write` and show each issue to the user (see "Manifest Sync" below)
+
+## Manifest Sync
+
+**Last step: sync the manifest.** Run `manifest sync --write` (call form in the `course-kit` skill):
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/skills/course-kit/scripts/course-kit.mjs" manifest sync --course "<course-dir>" --write
+```
+
+It returns `{ manifest, issues }`. Show each issue to the user.
 
 ## Skill Loading
 
