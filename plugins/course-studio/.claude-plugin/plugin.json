@@ -1,0 +1,16 @@
+{
+  "name": "course-studio",
+  "displayName": "Course Studio",
+  "version": "0.1.0",
+  "description": "Plan, generate, review and embed diagrams, charts and images for course-curriculum-creator courses",
+  "author": { "name": "Reggie Chan" },
+  "license": "MIT",
+  "dependencies": ["course-curriculum-creator"],
+  "userConfig": {
+    "openai_api_key": { "type": "string", "title": "OpenAI API key", "description": "Optional. Used by the course-media server when Codex is not available", "sensitive": true, "default": "" },
+    "default_media_budget_usd": { "type": "number", "title": "Default media budget (USD)", "description": "Spend cap for each new course", "default": 20, "min": 0 },
+    "max_plan_images": { "type": "number", "title": "Plan-billed image cap", "description": "Cap for images billed to your ChatGPT plan (Codex) in each course", "default": 40, "min": 0 },
+    "image_quality": { "type": "string", "title": "Image quality", "description": "Quality for generated images", "options": ["draft", "standard", "high"], "default": "standard" },
+    "preferred_diagram_style": { "type": "string", "title": "Diagram style", "description": "hand-drawn prefers Excalidraw; clean prefers Mermaid", "options": ["hand-drawn", "clean"], "default": "clean" }
+  }
+}

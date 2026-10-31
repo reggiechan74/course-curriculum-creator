@@ -3,12 +3,18 @@
   "owner": {
     "name": "Reggie Chan"
   },
-  "description": "Single-plugin marketplace for Course Curriculum Creator",
+  "description": "Course Curriculum Creator plugins: curriculum design (core) and course media studio",
   "plugins": [
     {
       "name": "course-curriculum-creator",
       "source": "./plugins/course-curriculum-creator",
       "description": "Design blended courses (workshop, cohort, self-paced) using backward design and Bloom's taxonomy",
+      "category": "education"
+    },
+    {
+      "name": "course-studio",
+      "source": "./plugins/course-studio",
+      "description": "Plan, generate, review and embed diagrams, charts and images for course-curriculum-creator courses",
       "category": "education"
     }
   ]

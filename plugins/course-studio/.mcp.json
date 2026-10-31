@@ -1,0 +1,5 @@
+{ "mcpServers": { "course-media": {
+  "command": "node",
+  "args": ["${CLAUDE_PLUGIN_ROOT}/skills/course-kit/scripts/course-media-server.mjs"],
+  "env": { "COURSE_MEDIA_OPENAI_KEY": "${user_config.openai_api_key}", "COURSE_MEDIA_DATA_DIR": "${CLAUDE_PLUGIN_DATA}" }
+} } }

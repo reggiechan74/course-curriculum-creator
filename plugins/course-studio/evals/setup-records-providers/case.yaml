@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: setup-records-providers
+context:
+  scaffold_script: scaffold.sh

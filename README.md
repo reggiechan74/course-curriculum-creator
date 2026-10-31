@@ -46,6 +46,14 @@ This plugin helps independent consultants, trainers, and instructional designers
 
 When you install the plugin, Claude Code asks for your [settings](#configuration). Every one is optional.
 
+### Course Studio (media plugin)
+
+`plugins/course-studio` adds diagrams, charts and images to courses made with this plugin: brand and style guide, a media plan with cost estimates, and (in the next release) generation, review and embedding. See [plugins/course-studio/README.md](plugins/course-studio/README.md).
+
+```
+/plugin install course-studio@course-curriculum-creator
+```
+
 ### Local Development
 This repository is a marketplace. It contains more than one plugin.
 
