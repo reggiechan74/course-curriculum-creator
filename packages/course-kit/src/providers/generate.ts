@@ -8,7 +8,7 @@ import { loadPlan } from '../media/plan.js';
 import { loadPricing } from '../media/pricing.js';
 import { addAsset, loadRegistry, saveRegistry } from '../media/registry.js';
 import type { Asset } from '../media/schema.js';
-import { generateImageCodex } from './codex.js';
+import { generateImageCodex, requirePlanBilledCodex } from './codex.js';
 import { generateImageOpenAI, type ImageQuality, openaiPrice, possiblyBilled, resolveOpenAIKey } from './openai.js';
 import { composeImagePrompt } from './prompt.js';
 
@@ -68,6 +68,7 @@ export async function generateAssetImage(courseDir: string, assetId: string, pro
       if (!apiKey) throw new ProviderUnavailableError('OpenAI API key not configured: set COURSE_MEDIA_OPENAI_KEY or OPENAI_API_KEY, or write <data-dir>/openai.key');
       model = (await generateImageOpenAI({ prompt, outPath, quality: o.quality, apiKey, fetchImpl: o.fetchImpl, pricing })).model;
     } else {
+      await requirePlanBilledCodex(o.codexBin);
       await generateImageCodex({ prompt, outPath, codexBin: o.codexBin });
     }
   } catch (e) {

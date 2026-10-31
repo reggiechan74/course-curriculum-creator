@@ -29074,18 +29074,33 @@ function childEnv() {
 }
 function run(bin3, args, opts = {}) {
   return new Promise((resolve7) => {
-    execFile(bin3, args, { ...opts, env: childEnv(), maxBuffer: 64 * 1024 * 1024, windowsHide: true }, (error64, _stdout, stderr) => {
-      if (!error64) return resolve7({ code: 0, stderr: String(stderr) });
+    execFile(bin3, args, { ...opts, env: childEnv(), maxBuffer: 64 * 1024 * 1024, windowsHide: true }, (error64, stdout, stderr) => {
+      if (!error64) return resolve7({ code: 0, stdout: String(stdout), stderr: String(stderr) });
       const code = typeof error64.code === "number" ? error64.code : null;
-      resolve7({ code, stderr: String(stderr), error: error64 });
+      resolve7({ code, stdout: String(stdout), stderr: String(stderr), error: error64 });
     });
   });
 }
 async function probeCodex(codexBin = "codex") {
   const available = (await run(codexBin, ["--version"], { timeout: 3e4 })).code === 0;
-  if (!available) return { available, loggedIn: false };
-  const loggedIn = (await run(codexBin, ["login", "status"], { timeout: 3e4 })).code === 0;
-  return { available, loggedIn };
+  if (!available) return { available, loggedIn: false, billing: "unknown" };
+  const r = await run(codexBin, ["login", "status"], { timeout: 3e4 });
+  const loggedIn = r.code === 0;
+  const text3 = `${r.stdout}
+${r.stderr}`;
+  const billing = !loggedIn ? "unknown" : /\bAPI key\b/i.test(text3) ? "api-key" : /\bChatGPT\b/i.test(text3) ? "plan" : "unknown";
+  return { available, loggedIn, billing };
+}
+async function requirePlanBilledCodex(codexBin = "codex") {
+  const p = await probeCodex(codexBin);
+  if (!p.available) throw new ProviderUnavailableError(`codex not found (${codexBin}); install the Codex CLI or use --provider openai`);
+  if (!p.loggedIn) throw new ProviderUnavailableError("codex is not signed in; run `codex login` and sign in with ChatGPT, or use --provider openai");
+  if (p.billing === "api-key") {
+    throw new ProviderUnavailableError("codex is signed in with an API key, so the image would be billed to that key outside the course budget. Sign in with ChatGPT (`codex logout`, then `codex login`) to use plan images, or use --provider openai, which records spend in the ledger");
+  }
+  if (p.billing !== "plan") {
+    throw new ProviderUnavailableError("cannot confirm that codex is signed in with ChatGPT (plan billing) from `codex login status`; sign in with ChatGPT, or use --provider openai");
+  }
 }
 function fileStamp(p) {
   if (!existsSync10(p)) return null;
@@ -29255,6 +29270,7 @@ async function generateAssetImage(courseDir, assetId, provider, o) {
       if (!apiKey) throw new ProviderUnavailableError("OpenAI API key not configured: set COURSE_MEDIA_OPENAI_KEY or OPENAI_API_KEY, or write <data-dir>/openai.key");
       model = (await generateImageOpenAI({ prompt, outPath, quality: o.quality, apiKey, fetchImpl: o.fetchImpl, pricing })).model;
     } else {
+      await requirePlanBilledCodex(o.codexBin);
       await generateImageCodex({ prompt, outPath, codexBin: o.codexBin });
     }
   } catch (e) {
@@ -29298,7 +29314,12 @@ var DetectedProvidersSchema = external_exports.object({
   image: external_exports.array(external_exports.string()),
   diagram: external_exports.array(external_exports.string()),
   designSkills: external_exports.array(external_exports.string()),
-  codex: external_exports.object({ available: external_exports.boolean(), loggedIn: external_exports.boolean() })
+  codex: external_exports.object({
+    available: external_exports.boolean(),
+    loggedIn: external_exports.boolean(),
+    /** Absent in files written before 0.1.0 shipped billing detection; treat as unknown. */
+    billing: external_exports.enum(["plan", "api-key", "unknown"]).optional()
+  })
 });
 var PatternsSchema = external_exports.object({ image: external_exports.array(external_exports.string()), diagram: external_exports.array(external_exports.string()), designSkills: external_exports.array(external_exports.string()) });
 var FILE5 = [".course", "providers.json"];

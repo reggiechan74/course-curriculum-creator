@@ -10,7 +10,13 @@ if (process.env.CODEX_STUB_LOG) appendFileSync(process.env.CODEX_STUB_LOG, JSON.
 const PNG_1PX = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
 
 if (args[0] === '--version') { process.stdout.write('codex-cli 0.0.0-stub\n'); process.exit(0); }
-if (args[0] === 'login' && args[1] === 'status') process.exit(NOFILE ? 1 : 0);
+if (args[0] === 'login' && args[1] === 'status') {
+  // Real codex 0.166.0 prints this to stderr. CODEX_STUB_LOGIN=apikey|other selects other sign-in kinds.
+  if (NOFILE) { process.stderr.write('Not logged in\n'); process.exit(1); }
+  const kind = process.env.CODEX_STUB_LOGIN;
+  process.stderr.write(kind === 'apikey' ? 'Logged in using an API key - sk-proj-***ABCDE\n' : kind === 'other' ? 'Logged in\n' : 'Logged in using ChatGPT\n');
+  process.exit(0);
+}
 if (args[0] === 'exec') {
   if (NOFILE) process.exit(0);
   const m = /Save the image as (.+)\.\s*$/.exec(args[args.length - 1] ?? '');

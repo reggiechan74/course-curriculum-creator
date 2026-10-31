@@ -5,7 +5,7 @@ import { ProviderUnavailableError } from '../errors.js';
 
 const TIMEOUT_MS = 5 * 60_000;
 
-type RunResult = { code: number | null; stderr: string; error?: ExecFileException };
+type RunResult = { code: number | null; stdout: string; stderr: string; error?: ExecFileException };
 
 /** The child never sees the OpenAI keys, so a plan-billed run cannot bill the API key. */
 function childEnv(): NodeJS.ProcessEnv {
@@ -17,19 +17,48 @@ function childEnv(): NodeJS.ProcessEnv {
 
 function run(bin: string, args: string[], opts: { cwd?: string; timeout?: number } = {}): Promise<RunResult> {
   return new Promise((resolve) => {
-    execFile(bin, args, { ...opts, env: childEnv(), maxBuffer: 64 * 1024 * 1024, windowsHide: true }, (error, _stdout, stderr) => {
-      if (!error) return resolve({ code: 0, stderr: String(stderr) });
+    execFile(bin, args, { ...opts, env: childEnv(), maxBuffer: 64 * 1024 * 1024, windowsHide: true }, (error, stdout, stderr) => {
+      if (!error) return resolve({ code: 0, stdout: String(stdout), stderr: String(stderr) });
       const code = typeof error.code === 'number' ? error.code : null;
-      resolve({ code, stderr: String(stderr), error });
+      resolve({ code, stdout: String(stdout), stderr: String(stderr), error });
     });
   });
 }
 
-export async function probeCodex(codexBin = 'codex'): Promise<{ available: boolean; loggedIn: boolean }> {
+/** plan: signed in with ChatGPT (images count against the plan); api-key: billed to an API key; unknown: anything else. */
+export type CodexBilling = 'plan' | 'api-key' | 'unknown';
+export type CodexProbe = { available: boolean; loggedIn: boolean; billing: CodexBilling };
+
+/**
+ * Reads `codex login status`. codex 0.166.0 prints `Logged in using ChatGPT` or
+ * `Logged in using an API key - <masked>` (to stderr) and exits 0; it exits non-zero when signed out.
+ */
+export async function probeCodex(codexBin = 'codex'): Promise<CodexProbe> {
   const available = (await run(codexBin, ['--version'], { timeout: 30_000 })).code === 0;
-  if (!available) return { available, loggedIn: false };
-  const loggedIn = (await run(codexBin, ['login', 'status'], { timeout: 30_000 })).code === 0;
-  return { available, loggedIn };
+  if (!available) return { available, loggedIn: false, billing: 'unknown' };
+  const r = await run(codexBin, ['login', 'status'], { timeout: 30_000 });
+  const loggedIn = r.code === 0;
+  const text = `${r.stdout}\n${r.stderr}`;
+  const billing: CodexBilling = !loggedIn ? 'unknown'
+    : /\bAPI key\b/i.test(text) ? 'api-key'
+      : /\bChatGPT\b/i.test(text) ? 'plan'
+        : 'unknown';
+  return { available, loggedIn, billing };
+}
+
+/** Throws ProviderUnavailableError unless codex is installed and signed in with ChatGPT (plan billing). */
+export async function requirePlanBilledCodex(codexBin = 'codex'): Promise<void> {
+  const p = await probeCodex(codexBin);
+  if (!p.available) throw new ProviderUnavailableError(`codex not found (${codexBin}); install the Codex CLI or use --provider openai`);
+  if (!p.loggedIn) throw new ProviderUnavailableError('codex is not signed in; run `codex login` and sign in with ChatGPT, or use --provider openai');
+  if (p.billing === 'api-key') {
+    throw new ProviderUnavailableError('codex is signed in with an API key, so the image would be billed to that key outside the course budget. '
+      + 'Sign in with ChatGPT (`codex logout`, then `codex login`) to use plan images, or use --provider openai, which records spend in the ledger');
+  }
+  if (p.billing !== 'plan') {
+    throw new ProviderUnavailableError('cannot confirm that codex is signed in with ChatGPT (plan billing) from `codex login status`; '
+      + 'sign in with ChatGPT, or use --provider openai');
+  }
 }
 
 function fileStamp(p: string): string | null {

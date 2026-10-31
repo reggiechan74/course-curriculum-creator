@@ -57,9 +57,9 @@ Rendering:
 
 Providers, brand and style:
 
-- `providers probe-codex`: report whether `codex` is installed and logged in.
+- `providers probe-codex`: `{available, loggedIn, billing}`. `billing` is `plan` (signed in with ChatGPT), `api-key` (signed in with an API key) or `unknown`, read from `codex login status`. `gen image --provider codex` refuses with exit 4 unless `billing` is `plan`, because API-key use would be billed outside the ledger.
 - `providers patterns`: the tool-name patterns from `data/providers.yaml`.
-- `providers record --course "<dir>" --json '{"detectedAt":"<iso>","image":[],"diagram":[],"designSkills":[],"codex":{"available":false,"loggedIn":false}}'`: write `.course/providers.json`.
+- `providers record --course "<dir>" --json '{"detectedAt":"<iso>","image":[],"diagram":[],"designSkills":[],"codex":{"available":false,"loggedIn":false,"billing":"unknown"}}'`: write `.course/providers.json`.
 - `providers show --course "<dir>"`: read it back.
 - `brand validate <file>`: validate a `*.brand.yaml` or `theme.yaml`.
 - `style tokens --course "<dir>" [--brand <file>]`: derive `05-media/style/tokens.json` and check WCAG 2.2 AA contrast; exit 2 on failure. Without `--brand` it uses `brand` from `course.yaml`, then `05-media/style/theme.yaml`.

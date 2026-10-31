@@ -54,7 +54,7 @@ After a diagram or chart renders, register it with `KIT registry add --course "<
 
 Choose the provider in this order, using `.course/providers.json`:
 
-1. `codex`, when `codex.loggedIn` is true: `KIT gen image --course "<dir>" --asset <id> --provider codex --quality <image_quality>`.
+1. `codex`, when `codex.billing` is `plan` (signed in with ChatGPT; an API-key sign-in is refused with exit 4): `KIT gen image --course "<dir>" --asset <id> --provider codex --quality <image_quality>`.
 2. The `course-media` MCP tool `generate_image({courseDir, assetId, quality})` (OpenAI key from the plugin settings), when Codex is not available or gave exit 4. Use `estimate_cost` first if the user wants the price.
 3. A detected third-party image tool, as the last choice. Run `KIT ledger check --course "<dir>" --usd <n> --quota <n>` before you use it, then register the result with `registry add` (`kind: image`, `status: generated`, `alt: ""`).
 

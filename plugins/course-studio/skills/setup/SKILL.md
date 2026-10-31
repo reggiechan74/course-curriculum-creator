@@ -19,11 +19,11 @@ The course folder is the argument, or the current directory if it contains `cour
 ## Steps
 
 1. Run `node --version`. If it is below 20, stop and tell the user Node 20 or later is necessary.
-2. Run `KIT providers probe-codex`. Keep `available` and `loggedIn`.
+2. Run `KIT providers probe-codex`. Keep `available`, `loggedIn` and `billing`. Codex images are free only with a ChatGPT sign-in (`billing: "plan"`). With `billing: "api-key"` Codex would bill an API key outside the course budget, so `gen image --provider codex` refuses it; tell the user to sign in with ChatGPT (`codex logout`, then `codex login`) if they want plan images.
 3. Run `KIT providers patterns`. Look at the tools you have now. List every tool whose name matches an `image` pattern and every tool whose name matches a `diagram` pattern (`*` matches any text). Include the `course-media` tools of this plugin if you have them.
 4. Look at your available skills. List every skill whose name matches a `designSkills` pattern.
-5. Run `KIT providers record --course "<dir>" --json '<json>'` with `detectedAt` (current ISO time), `image`, `diagram`, `designSkills` (the names you found) and `codex` (`{"available":..., "loggedIn":...}`).
-6. Show a table: capability, what was found, status (available or missing). Rows: Codex image generation, image tools, diagram tools, Node, and each design companion below.
+5. Run `KIT providers record --course "<dir>" --json '<json>'` with `detectedAt` (current ISO time), `image`, `diagram`, `designSkills` (the names you found) and `codex` (`{"available":..., "loggedIn":..., "billing":...}`).
+6. Show a table: capability, what was found, status (available or missing). Rows: Codex image generation (available only when `billing` is `plan`), image tools, diagram tools, Node, and each design companion below.
 
    | Companion | Install | What it adds |
    | --- | --- | --- |

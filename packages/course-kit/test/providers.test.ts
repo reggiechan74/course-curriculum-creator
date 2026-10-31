@@ -146,7 +146,9 @@ test('generateAssetImage with codex uses a stub codex binary and records quota 1
   } finally { vi.unstubAllEnvs(); }
   expect(ledgerTotals(dir)).toEqual({ spentUsd: 0, quotaUsed: 1 });
   expect(existsSync(join(dir, '05-media', 'out', `${ID}.png`))).toBe(true);
-  const call = JSON.parse(readFileSync(log, 'utf8').trim());
+  const calls = readFileSync(log, 'utf8').trim().split('\n').map((l) => JSON.parse(l));
+  expect(calls.map((c) => c.args.slice(0, 2).join(' '))).toEqual(['--version', 'login status', expect.stringMatching(/^exec /)]);
+  const call = calls[2];
   const outDir = join(dir, '05-media', 'out');
   expect(call.cwd).toBe(outDir);
   expect(call.args.slice(0, 6)).toEqual(['exec', '--skip-git-repo-check', '--sandbox', 'workspace-write', '-C', outDir]);
@@ -173,7 +175,7 @@ test('codex runs without the OpenAI key variables in its environment', async () 
     await probeCodex(CODEX);
   } finally { vi.unstubAllEnvs(); }
   const calls = readFileSync(log, 'utf8').trim().split('\n').map((l) => JSON.parse(l));
-  expect(calls).toHaveLength(3);
+  expect(calls).toHaveLength(5); // generation: --version, login status, exec; then probe: --version, login status
   for (const c of calls) expect(c.keys).toEqual({ OPENAI_API_KEY: false, COURSE_MEDIA_OPENAI_KEY: false });
 });
 
@@ -281,15 +283,39 @@ test('openai without a key is ProviderUnavailableError and makes no request', as
   expect(fetchImpl).not.toHaveBeenCalled();
 });
 
-test('probeCodex reports availability and login', async () => {
-  expect(await probeCodex(CODEX)).toEqual({ available: true, loggedIn: true });
-  expect(await probeCodex(CODEX_NOFILE)).toEqual({ available: true, loggedIn: false });
-  expect(await probeCodex(join(stubs, 'no-such-codex'))).toEqual({ available: false, loggedIn: false });
+test('probeCodex reports availability, login and billing from the login status text', async () => {
+  expect(await probeCodex(CODEX)).toEqual({ available: true, loggedIn: true, billing: 'plan' });
+  expect(await probeCodex(CODEX_NOFILE)).toEqual({ available: true, loggedIn: false, billing: 'unknown' });
+  expect(await probeCodex(join(stubs, 'no-such-codex'))).toEqual({ available: false, loggedIn: false, billing: 'unknown' });
+  vi.stubEnv('CODEX_STUB_LOGIN', 'apikey');
+  try { expect(await probeCodex(CODEX)).toEqual({ available: true, loggedIn: true, billing: 'api-key' }); }
+  finally { vi.unstubAllEnvs(); }
+  vi.stubEnv('CODEX_STUB_LOGIN', 'other');
+  try { expect(await probeCodex(CODEX)).toEqual({ available: true, loggedIn: true, billing: 'unknown' }); }
+  finally { vi.unstubAllEnvs(); }
+});
+
+test('codex generation is refused unless codex is signed in with ChatGPT (plan billing); nothing is spent', async () => {
+  for (const kind of ['apikey', 'other']) {
+    const dir = course({ items: [item({ provider: 'codex' })] });
+    const log = join(mkdtempSync(join(tmpdir(), 'log-')), 'argv.jsonl');
+    vi.stubEnv('CODEX_STUB_LOGIN', kind);
+    vi.stubEnv('CODEX_STUB_LOG', log);
+    try {
+      const p = generateAssetImage(dir, ID, 'codex', { quality: 'standard', codexBin: CODEX });
+      await expect(p).rejects.toBeInstanceOf(ProviderUnavailableError);
+      await expect(p).rejects.toThrow(kind === 'apikey' ? /API key/ : /ChatGPT/);
+    } finally { vi.unstubAllEnvs(); }
+    const calls = readFileSync(log, 'utf8').trim().split('\n').map((l) => JSON.parse(l).args[0]);
+    expect(calls).not.toContain('exec');
+    expect(ledgerTotals(dir)).toEqual({ spentUsd: 0, quotaUsed: 0 });
+    expect(loadRegistry(dir).assets).toEqual([]);
+  }
 });
 
 const detected: DetectedProviders = {
   detectedAt: '2026-10-31T00:00:00Z', image: ['mcp__x__generate_image'], diagram: ['mcp__claude_ai_Excalidraw__x'],
-  designSkills: ['impeccable:impeccable'], codex: { available: true, loggedIn: false },
+  designSkills: ['impeccable:impeccable'], codex: { available: true, loggedIn: false, billing: 'unknown' },
 };
 
 test('recordProviders and loadProviders round-trip through .course/providers.json', () => {

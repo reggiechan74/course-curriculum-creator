@@ -10,7 +10,11 @@ export const DetectedProvidersSchema = z.object({
   image: z.array(z.string()),
   diagram: z.array(z.string()),
   designSkills: z.array(z.string()),
-  codex: z.object({ available: z.boolean(), loggedIn: z.boolean() }),
+  codex: z.object({
+    available: z.boolean(), loggedIn: z.boolean(),
+    /** Absent in files written before 0.1.0 shipped billing detection; treat as unknown. */
+    billing: z.enum(['plan', 'api-key', 'unknown']).optional(),
+  }),
 });
 export type DetectedProviders = z.infer<typeof DetectedProvidersSchema>;
 

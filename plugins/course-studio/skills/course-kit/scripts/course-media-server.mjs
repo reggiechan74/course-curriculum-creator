@@ -44465,12 +44465,33 @@ function childEnv() {
 }
 function run(bin, args, opts = {}) {
   return new Promise((resolve) => {
-    execFile(bin, args, { ...opts, env: childEnv(), maxBuffer: 64 * 1024 * 1024, windowsHide: true }, (error62, _stdout, stderr) => {
-      if (!error62) return resolve({ code: 0, stderr: String(stderr) });
+    execFile(bin, args, { ...opts, env: childEnv(), maxBuffer: 64 * 1024 * 1024, windowsHide: true }, (error62, stdout, stderr) => {
+      if (!error62) return resolve({ code: 0, stdout: String(stdout), stderr: String(stderr) });
       const code = typeof error62.code === "number" ? error62.code : null;
-      resolve({ code, stderr: String(stderr), error: error62 });
+      resolve({ code, stdout: String(stdout), stderr: String(stderr), error: error62 });
     });
   });
+}
+async function probeCodex(codexBin = "codex") {
+  const available = (await run(codexBin, ["--version"], { timeout: 3e4 })).code === 0;
+  if (!available) return { available, loggedIn: false, billing: "unknown" };
+  const r = await run(codexBin, ["login", "status"], { timeout: 3e4 });
+  const loggedIn = r.code === 0;
+  const text = `${r.stdout}
+${r.stderr}`;
+  const billing = !loggedIn ? "unknown" : /\bAPI key\b/i.test(text) ? "api-key" : /\bChatGPT\b/i.test(text) ? "plan" : "unknown";
+  return { available, loggedIn, billing };
+}
+async function requirePlanBilledCodex(codexBin = "codex") {
+  const p = await probeCodex(codexBin);
+  if (!p.available) throw new ProviderUnavailableError(`codex not found (${codexBin}); install the Codex CLI or use --provider openai`);
+  if (!p.loggedIn) throw new ProviderUnavailableError("codex is not signed in; run `codex login` and sign in with ChatGPT, or use --provider openai");
+  if (p.billing === "api-key") {
+    throw new ProviderUnavailableError("codex is signed in with an API key, so the image would be billed to that key outside the course budget. Sign in with ChatGPT (`codex logout`, then `codex login`) to use plan images, or use --provider openai, which records spend in the ledger");
+  }
+  if (p.billing !== "plan") {
+    throw new ProviderUnavailableError("cannot confirm that codex is signed in with ChatGPT (plan billing) from `codex login status`; sign in with ChatGPT, or use --provider openai");
+  }
 }
 function fileStamp(p) {
   if (!existsSync5(p)) return null;
@@ -44635,6 +44656,7 @@ async function generateAssetImage(courseDir, assetId, provider, o) {
       if (!apiKey) throw new ProviderUnavailableError("OpenAI API key not configured: set COURSE_MEDIA_OPENAI_KEY or OPENAI_API_KEY, or write <data-dir>/openai.key");
       model = (await generateImageOpenAI({ prompt, outPath, quality: o.quality, apiKey, fetchImpl: o.fetchImpl, pricing })).model;
     } else {
+      await requirePlanBilledCodex(o.codexBin);
       await generateImageCodex({ prompt, outPath, codexBin: o.codexBin });
     }
   } catch (e) {
