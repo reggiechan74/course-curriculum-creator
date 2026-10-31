@@ -48,7 +48,7 @@ test('course-media-server bundle answers over stdio and studio bundle prints pro
   }));
   try {
     expect((await client.listTools()).tools.map((t) => t.name).sort()).toEqual(['estimate_cost', 'generate_image']);
-    const r = await client.callTool({ name: 'estimate_cost', arguments: { courseDir: dataDir } }) as { isError?: boolean; content: { text: string }[] };
+    const r = await client.callTool({ name: 'generate_image', arguments: { courseDir: dataDir, assetId: 'A-M1-01' } }) as { isError?: boolean; content: { text: string }[] };
     expect(r.isError).toBe(true);
     expect(r.content[0].text).toBe(`course-media is not configured: set openai_api_key, OPENAI_API_KEY, or ${dataDir}/openai.key`);
   } finally { await client.close(); }
