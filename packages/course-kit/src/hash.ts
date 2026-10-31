@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { Scalar } from 'yaml';
-import { readFrontmatter, writeFrontmatter } from './frontmatter.js';
+import { readFrontmatter, updateFrontmatter } from './frontmatter.js';
 
 /** First 8 hex chars of MD5, matching v2 `md5sum | cut -c1-8`. */
 export function hashFile(path: string): string {
@@ -33,7 +33,7 @@ export function checkStale(
 }
 
 export function writeHashes(outputPath: string, courseDir: string): void {
-  const { data } = readFrontmatter(outputPath);
+  const { data } = readFrontmatter(outputPath, { strings: true });
   const hashes: Record<string, Scalar> = {};
   for (const [key, rel] of Object.entries(sourceFilesOf(data))) {
     const h = currentHash(courseDir, rel);
@@ -43,6 +43,5 @@ export function writeHashes(outputPath: string, courseDir: string): void {
       hashes[key] = node;
     }
   }
-  data.sourceHashes = hashes;
-  writeFrontmatter(outputPath, data);
+  updateFrontmatter(outputPath, { sourceHashes: hashes });
 }

@@ -58,3 +58,17 @@ test('writeHashes writes hashes quoted', () => {
   expect(readFileSync(out, 'utf8')).toContain('a: "90015098"');
   expect(checkStale(out, dir).status).toBe('fresh');
 });
+
+test('writeHashes leaves untouched frontmatter lines byte-identical', () => {
+  const dir = tmp();
+  writeFileSync(join(dir, 's.md'), 'abc');
+  const out = join(dir, 'o.md');
+  const keep = '# keep this comment\nversion: 1.10\ncode: 00123\nbig: 1234e567\n';
+  writeFileSync(out, `---\n${keep}sourceFiles:\n  a: s.md\n---\nB\n`);
+  writeHashes(out, dir);
+  const text = readFileSync(out, 'utf8');
+  expect(text).toContain(keep);
+  expect(text).toContain('a: "90015098"');
+  expect(text.endsWith('---\nB\n')).toBe(true);
+  expect(checkStale(out, dir).status).toBe('fresh');
+});
