@@ -44698,14 +44698,17 @@ function createServer(deps = {}) {
   const { dataDir, fetchImpl } = deps;
   const server = new McpServer({ name: "course-media", version: "0.1.0" });
   const guarded = async (fn) => {
-    if (resolveOpenAIKey(env, dataDir) === null) {
-      return fail(`course-media is not configured: set openai_api_key, OPENAI_API_KEY, or ${dataDir ?? "<dataDir>"}/openai.key`);
-    }
     try {
       return ok(await fn());
     } catch (e) {
       return fail(e instanceof Error ? e.message : String(e));
     }
+  };
+  const keyed = async (fn) => {
+    if (resolveOpenAIKey(env, dataDir) === null) {
+      return fail(`course-media is not configured: set openai_api_key, OPENAI_API_KEY, or ${dataDir ?? "<dataDir>"}/openai.key`);
+    }
+    return guarded(fn);
   };
   server.registerTool("generate_image", {
     title: "Generate a course image (OpenAI gpt-image-2)",
@@ -44715,10 +44718,10 @@ function createServer(deps = {}) {
       assetId: external_exports.string().min(1).describe("The media-plan item id, e.g. A-M1-01."),
       quality
     }
-  }, ({ courseDir, assetId, quality: q }) => guarded(() => generateAssetImage(courseDir, assetId, "openai", { quality: q ?? "standard", dataDir, env, fetchImpl })));
+  }, ({ courseDir, assetId, quality: q }) => keyed(() => generateAssetImage(courseDir, assetId, "openai", { quality: q ?? "standard", dataDir, env, fetchImpl })));
   server.registerTool("estimate_cost", {
     title: "Estimate media plan cost",
-    description: "Estimates the USD cost and plan-image quota of the media plan, per module and in total. No spend.",
+    description: "Estimates the USD cost and plan-image quota of the media plan, per module and in total. No spend; needs no API key.",
     inputSchema: {
       courseDir: external_exports.string().min(1).describe("Absolute path of the course folder (contains course.yaml)."),
       quality

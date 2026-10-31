@@ -205,3 +205,10 @@ describe('label overlays end to end', () => {
     expect(readFileSync(join(f, '02-design/lesson-plans.md'), 'utf8')).toContain('](../05-media/out/A-M1-01.png)');
   });
 });
+
+test('alt, caption and path are escaped for markdown', () => {
+  const a: Asset = { ...approved, alt: 'Step [1] then ]x[ and back\\slash', caption: '*Note* the_ending*', longDescription: undefined };
+  const out = embedAsset(md, a, 'M1', '../05-media/out/my (draft) img.png');
+  expect(out).toContain('![Step \\[1\\] then \\]x\\[ and back\\\\slash](../05-media/out/my%20%28draft%29%20img.png)');
+  expect(out).toContain('\n*\\*Note\\* the\\_ending\\**\n');
+});

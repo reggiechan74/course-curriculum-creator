@@ -14,6 +14,13 @@ export const EMBED_FILES = [
 
 const esc = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const oneLine = (s: string): string => s.replace(/\s+/g, ' ').trim();
+/** Image alt text: backslash and brackets would end or break the link text. */
+const escAlt = (s: string): string => s.replace(/[\\[\]]/g, '\\$&');
+/** Caption inside `*…*`: emphasis and bracket characters are escaped. */
+const escCaption = (s: string): string => s.replace(/[\\*_[\]]/g, '\\$&');
+/** Link destination: each segment percent-encoded, including spaces and parentheses. */
+const escPath = (p: string): string => p.split('/')
+  .map((seg) => encodeURIComponent(seg).replace(/[()!*']/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`)).join('/');
 
 /** The file to embed: a label overlay (`*.overlay.svg`) when the asset has one, else files[0]. */
 export function embedFileOf(a: Asset | undefined): string | undefined {
@@ -38,8 +45,8 @@ function buildBlock(x: Asset | PlanItem, relPath: string): string {
   if (!isApprovedAsset(x)) {
     return `${open}\n> **Media pending approval (${x.id}):** ${pendingText(x)}\n${close}`;
   }
-  const lines = [open, `![${oneLine(x.alt)}](${relPath.replace(/ /g, '%20')})`];
-  if (x.caption?.trim()) lines.push('', `*${oneLine(x.caption)}*`);
+  const lines = [open, `![${escAlt(oneLine(x.alt))}](${escPath(relPath)})`];
+  if (x.caption?.trim()) lines.push('', `*${escCaption(oneLine(x.caption))}*`);
   if (x.longDescription?.trim()) {
     lines.push('', '<details><summary>Description</summary>', '', x.longDescription.trim(), '', '</details>');
   }

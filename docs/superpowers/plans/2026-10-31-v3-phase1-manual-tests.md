@@ -20,8 +20,8 @@ Result: **PASS**. Evidence: every step behaved as expected. `plan estimate` retu
 
 ## 2. Codex logged in, one image item
 
-1. In a course with an approved `kind: image`, `provider: codex` item and a style guide, run `codex login status` (expect logged in), then `KIT gen image --course <dir> --asset <id> --provider codex --quality standard`.
-2. Expect exit 0, a PNG at `05-media/out/<id>.png`, a ledger `commit` line with `quotaUnits: 1`, and `05-media/src/<id>.prompt.txt` ending with the no-text rule.
+1. In a course with an approved `kind: image`, `provider: codex` item and a style guide, run `codex login status` (expect `Logged in using ChatGPT`; with `Logged in using an API key` the command must refuse with exit 4) and `KIT providers probe-codex` (expect `billing: "plan"`), then `KIT gen image --course <dir> --asset <id> --provider codex --quality standard`.
+2. Expect exit 0, a PNG at `05-media/out/<id>.png`, a ledger `reserve` line followed by a `settle` line for the same `reservationId`, each with `quotaUnits: 1`, and `05-media/src/<id>.prompt.txt` ending with the no-text rule.
 
 Result: **NEEDS USER**. Not run: spends the user's ChatGPT plan quota (real Codex generation was out of scope).
 
@@ -42,7 +42,7 @@ Result: **PASS**. Output `{"error":"Budget exceeded: cap $0.01, spent $0.00, req
 ## 5. Cowork session (local computer)
 
 1. In Cowork on the local computer, install both plugins, run `/course-studio:setup` and `/course-studio:plan-media` on a v2-sample copy.
-2. Expect `${CLAUDE_PLUGIN_ROOT}/skills/course-kit/scripts/course-kit.mjs` to resolve, and the `course-media` server to load with no key and report "not configured". If `${CLAUDE_PLUGIN_ROOT}` does not resolve in Cowork, record it and open an issue before release.
+2. Expect `${CLAUDE_PLUGIN_ROOT}/skills/course-kit/scripts/course-kit.mjs` to resolve, and the `course-media` server to load with no key: `generate_image` reports "not configured" and `estimate_cost` still returns an estimate. If `${CLAUDE_PLUGIN_ROOT}` does not resolve in Cowork, record it and open an issue before release.
 
 Result: **NEEDS USER**. Requires a Cowork session.
 

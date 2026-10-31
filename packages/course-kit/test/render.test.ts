@@ -100,6 +100,11 @@ test('depPath is null when nothing is installed; installDeps rejects unknown nam
   expect(depPath(d, 'excalidraw-to-svg')).toBeNull();
   expect(() => installDeps(d, ['nope' as never])).toThrow(/unknown dependency/);
 });
+test('installDeps turns an npm failure into ProviderUnavailableError (exit 4)', () => {
+  const d = tmp();
+  expect(() => installDeps(d, ['mermaid-cli'], 'false')).toThrow(ProviderUnavailableError);
+  expect(() => installDeps(d, ['mermaid-cli'], join(d, 'no-such-npm'))).toThrow(/npm/);
+});
 test.skipIf(!depPath(DATA, 'mermaid-cli'))('renderMermaid writes an SVG', async () => {
   const d = tmp();
   writeFileSync(join(d, 'a.mmd'), 'flowchart LR; A-->B');

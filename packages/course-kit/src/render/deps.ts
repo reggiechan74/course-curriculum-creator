@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { UsageError } from '../errors.js';
+import { ProviderUnavailableError, UsageError } from '../errors.js';
 
 export type DepName = 'mermaid-cli' | 'excalidraw-to-svg';
 
@@ -28,9 +28,16 @@ export function depPath(dataDir: string, dep: DepName): string | null {
   return needed.every((f) => existsSync(f)) ? p : null;
 }
 
-export function installDeps(dataDir: string, deps: DepName[]): void {
+/** Installs into <dataDir>/node_modules. An npm failure (offline, no npm, registry error) is ProviderUnavailableError (exit 4). */
+export function installDeps(dataDir: string, deps: DepName[], npmBin = 'npm'): void {
   for (const d of deps) if (!isDepName(d)) throw new UsageError(`unknown dependency: ${d}`);
   mkdirSync(dataDir, { recursive: true });
   const specs = deps.flatMap((d) => PACKAGES[d]);
-  execFileSync('npm', ['install', '--prefix', dataDir, '--no-audit', '--no-fund', ...specs], { stdio: ['ignore', 'ignore', 'inherit'] });
+  try {
+    execFileSync(npmBin, ['install', '--prefix', dataDir, '--no-audit', '--no-fund', ...specs], { stdio: ['ignore', 'ignore', 'inherit'] });
+  } catch (e) {
+    const err = e as NodeJS.ErrnoException & { status?: number | null };
+    const why = err.code === 'ENOENT' ? `${npmBin} not found` : `exit ${err.status ?? 'unknown'}`;
+    throw new ProviderUnavailableError(`npm install of ${deps.join(', ')} failed (${why}); check the network and npm, then run deps install again`);
+  }
 }

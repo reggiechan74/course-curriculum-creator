@@ -65,16 +65,17 @@ test('MCP generate_image refuses over budget with the same error text as the CLI
   expect(r.content[0].text).toContain(cliError);
 });
 
-test('MCP tools report "not configured" when no key exists', async () => {
+test('MCP generate_image reports "not configured" when no key exists; estimate_cost works without a key', async () => {
   const dataDir = mkdtempSync(join(tmpdir(), 'data-'));
   const c = await connect({ env: {}, dataDir, fetchImpl: okFetch() });
   const dir = course();
-  for (const [name, args] of [['generate_image', { courseDir: dir, assetId: ID }], ['estimate_cost', { courseDir: dir }]] as const) {
-    const r = await call(c, name, args);
-    expect(r.isError).toBe(true);
-    expect(r.content[0].text).toBe(`course-media is not configured: set openai_api_key, OPENAI_API_KEY, or ${dataDir}/openai.key`);
-  }
-  // The server keeps operating after an error.
+  const r = await call(c, 'generate_image', { courseDir: dir, assetId: ID });
+  expect(r.isError).toBe(true);
+  expect(r.content[0].text).toBe(`course-media is not configured: set openai_api_key, OPENAI_API_KEY, or ${dataDir}/openai.key`);
+  // The server keeps operating after an error, and estimating spends nothing, so it needs no key.
+  const e = await call(c, 'estimate_cost', { courseDir: dir, quality: 'high' });
+  expect(e.isError).toBeFalsy();
+  expect(JSON.parse(e.content[0].text)).toEqual({ perModule: { M1: { usd: 0.21, quota: 0 } }, totalUsd: 0.21, totalQuota: 0 });
   expect((await c.listTools()).tools).toHaveLength(2);
 });
 

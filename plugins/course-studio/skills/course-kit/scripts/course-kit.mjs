@@ -28825,6 +28825,9 @@ var EMBED_FILES = [
 ];
 var esc2 = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 var oneLine = (s) => s.replace(/\s+/g, " ").trim();
+var escAlt = (s) => s.replace(/[\\[\]]/g, "\\$&");
+var escCaption = (s) => s.replace(/[\\*_[\]]/g, "\\$&");
+var escPath = (p) => p.split("/").map((seg) => encodeURIComponent(seg).replace(/[()!*']/g, (c3) => `%${c3.charCodeAt(0).toString(16).toUpperCase()}`)).join("/");
 function embedFileOf(a3) {
   if (!a3) return void 0;
   return a3.files.find((f) => f.endsWith(".overlay.svg")) ?? a3.files[0];
@@ -28845,8 +28848,8 @@ function buildBlock(x5, relPath) {
 > **Media pending approval (${x5.id}):** ${pendingText(x5)}
 ${close}`;
   }
-  const lines = [open2, `![${oneLine(x5.alt)}](${relPath.replace(/ /g, "%20")})`];
-  if (x5.caption?.trim()) lines.push("", `*${oneLine(x5.caption)}*`);
+  const lines = [open2, `![${escAlt(oneLine(x5.alt))}](${escPath(relPath)})`];
+  if (x5.caption?.trim()) lines.push("", `*${escCaption(oneLine(x5.caption))}*`);
   if (x5.longDescription?.trim()) {
     lines.push("", "<details><summary>Description</summary>", "", x5.longDescription.trim(), "", "</details>");
   }
@@ -29399,11 +29402,17 @@ function depPath(dataDir2, dep) {
   const needed = [p, join14(nm, "@excalidraw", "utils", "dist", "excalidraw-utils.min.js"), join14(nm, "puppeteer")];
   return needed.every((f) => existsSync14(f)) ? p : null;
 }
-function installDeps(dataDir2, deps) {
+function installDeps(dataDir2, deps, npmBin = "npm") {
   for (const d of deps) if (!isDepName(d)) throw new UsageError(`unknown dependency: ${d}`);
   mkdirSync10(dataDir2, { recursive: true });
   const specs = deps.flatMap((d) => PACKAGES[d]);
-  execFileSync("npm", ["install", "--prefix", dataDir2, "--no-audit", "--no-fund", ...specs], { stdio: ["ignore", "ignore", "inherit"] });
+  try {
+    execFileSync(npmBin, ["install", "--prefix", dataDir2, "--no-audit", "--no-fund", ...specs], { stdio: ["ignore", "ignore", "inherit"] });
+  } catch (e) {
+    const err = e;
+    const why = err.code === "ENOENT" ? `${npmBin} not found` : `exit ${err.status ?? "unknown"}`;
+    throw new ProviderUnavailableError(`npm install of ${deps.join(", ")} failed (${why}); check the network and npm, then run deps install again`);
+  }
 }
 
 // packages/course-kit/src/render/excalidraw.ts

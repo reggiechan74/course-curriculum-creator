@@ -52,7 +52,7 @@ Ledger and generation:
 
 Rendering:
 
-- `deps install mermaid-cli excalidraw-to-svg --data-dir "<dir>"`: install the optional renderers (use `${CLAUDE_PLUGIN_DATA}`).
+- `deps install mermaid-cli excalidraw-to-svg --data-dir "<dir>"`: install the optional renderers (use `${CLAUDE_PLUGIN_DATA}`). Exit 4 if npm fails (offline, npm missing).
 - `render vegalite <spec.json> <out.svg> [--tokens <tokens.json>]`
 - `render mermaid <src.mmd> <out.svg> --data-dir "<dir>" [--tokens <tokens.json>]` (`--data-dir` required; use `${CLAUDE_PLUGIN_DATA}`)
 - `render excalidraw <scene.excalidraw> <out.svg> --data-dir "<dir>"` (`--data-dir` required)
@@ -80,7 +80,7 @@ The plugin runs a `course-media` MCP server with two tools:
 - `generate_image({courseDir, assetId, quality?})`
 - `estimate_cost({courseDir, quality?})`
 
-Claude Code exposes them as `mcp__plugin_course-studio_course-media__generate_image` and `mcp__plugin_course-studio_course-media__estimate_cost`. The server uses the OpenAI key from the plugin settings and applies the same budget rules as the CLI.
+Claude Code exposes them as `mcp__plugin_course-studio_course-media__generate_image` and `mcp__plugin_course-studio_course-media__estimate_cost`. `generate_image` uses the OpenAI key from the plugin settings (without one it returns "course-media is not configured") and applies the same budget rules as the CLI. `estimate_cost` spends nothing and needs no key. MCP results have no exit code: an error result whose text starts with `Budget exceeded` or `Plan image cap exceeded` is the same as exit 3.
 
 ## Budget, reservations and locks
 

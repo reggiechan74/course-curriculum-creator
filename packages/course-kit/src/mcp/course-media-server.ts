@@ -22,13 +22,17 @@ export function createServer(deps: ServerDeps = {}): McpServer {
   const { dataDir, fetchImpl } = deps;
   const server = new McpServer({ name: 'course-media', version: '0.1.0' });
 
-  /** Runs fn when an OpenAI key is configured; turns every error into an MCP error result. */
+  /** Turns every error into an MCP error result. */
   const guarded = async (fn: () => Promise<unknown> | unknown): Promise<ToolResult> => {
+    try { return ok(await fn()); }
+    catch (e) { return fail(e instanceof Error ? e.message : String(e)); }
+  };
+  /** As guarded, but only when an OpenAI key is configured (for tools that spend). */
+  const keyed = async (fn: () => Promise<unknown> | unknown): Promise<ToolResult> => {
     if (resolveOpenAIKey(env, dataDir) === null) {
       return fail(`course-media is not configured: set openai_api_key, OPENAI_API_KEY, or ${dataDir ?? '<dataDir>'}/openai.key`);
     }
-    try { return ok(await fn()); }
-    catch (e) { return fail(e instanceof Error ? e.message : String(e)); }
+    return guarded(fn);
   };
 
   server.registerTool('generate_image', {
@@ -40,12 +44,12 @@ export function createServer(deps: ServerDeps = {}): McpServer {
       assetId: z.string().min(1).describe('The media-plan item id, e.g. A-M1-01.'),
       quality,
     },
-  }, ({ courseDir, assetId, quality: q }) => guarded(() =>
+  }, ({ courseDir, assetId, quality: q }) => keyed(() =>
     generateAssetImage(courseDir, assetId, 'openai', { quality: q ?? 'standard', dataDir, env, fetchImpl })));
 
   server.registerTool('estimate_cost', {
     title: 'Estimate media plan cost',
-    description: 'Estimates the USD cost and plan-image quota of the media plan, per module and in total. No spend.',
+    description: 'Estimates the USD cost and plan-image quota of the media plan, per module and in total. No spend; needs no API key.',
     inputSchema: {
       courseDir: z.string().min(1).describe('Absolute path of the course folder (contains course.yaml).'),
       quality,
