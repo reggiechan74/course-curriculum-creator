@@ -44231,6 +44231,21 @@ var InitOptionsSchema = external_exports.object({
 
 // packages/course-kit/src/manifest/io.ts
 var FILE2 = "course.yaml";
+function withUnknownKeysInExtra(raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return raw;
+  const known = new Set(Object.keys(ManifestSchema.shape));
+  const obj = raw;
+  const unknown2 = Object.keys(obj).filter((k) => !known.has(k));
+  if (!unknown2.length) return raw;
+  const extra = obj.extra && typeof obj.extra === "object" && !Array.isArray(obj.extra) ? obj.extra : void 0;
+  if (obj.extra !== void 0 && !extra) return raw;
+  const out = {};
+  for (const k of Object.keys(obj)) if (known.has(k)) out[k] = obj[k];
+  const merged = { ...extra };
+  for (const k of unknown2) if (!Object.hasOwn(merged, k)) merged[k] = obj[k];
+  out.extra = merged;
+  return out;
+}
 function loadManifest(courseDir) {
   let raw;
   try {
@@ -44238,7 +44253,7 @@ function loadManifest(courseDir) {
   } catch (e) {
     throw new ValidationError(`cannot read ${FILE2}: ${e instanceof Error ? e.message : String(e)}`);
   }
-  const r = ManifestSchema.safeParse(raw);
+  const r = ManifestSchema.safeParse(withUnknownKeysInExtra(raw));
   if (!r.success) {
     const msg = r.error.issues.map((i) => `${i.path.join(".") || "(root)"}: ${i.message}`).join("; ");
     throw new ValidationError(`invalid ${FILE2}: ${msg}`);

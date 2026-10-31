@@ -1,6 +1,6 @@
 ---
 name: course-kit
-description: "Deterministic course toolkit CLI: hashing, staleness checks, course.yaml manifest init/validate/sync. Use when a course-curriculum-creator workflow tells you to run course-kit."
+description: "Deterministic course toolkit CLI: hashing, staleness checks, course.yaml manifest init/validate/sync, v2 migration, media plan and registry. Use when a course-curriculum-creator workflow tells you to run course-kit."
 user-invocable: false
 ---
 
@@ -26,7 +26,19 @@ Always quote paths; course folders may contain spaces. Output is JSON on stdout.
 - `manifest sync --course "<dir>" [--write]`: parse the objectives and outline markdown, assign stable IDs, update `course.yaml`; `--write` also writes `<!-- id: ... -->` comments into the objectives file and outline, and module ID comments (`## Module 1:` becomes `M1`) into `02-design/lesson-plans.md`, `04-materials/student-handout.md` and `04-materials/instructor-guide.md` when they exist. Safe to run repeatedly.
 - `migrate-course --course "<dir>" [--dry-run] [--answers '<json>']`: migrate a v2 course folder: writes `course.yaml`, registers `.png`/`.jpg`/`.svg` files in `04-materials/` in the media registry as `imported`, and inserts ID comments. Prints `{manifest, actions, questions, imported}`; `--dry-run` writes nothing. Answers are keyed by question id (`shape`, `alt:<asset id>`). Never moves or deletes files; a second run reports no actions.
 
-Later releases add more commands (plan, registry and media commands); they will be listed here.
+Media plan and registry (also in this bundle; the course-studio plugin uses them most):
+
+- `plan validate --course "<dir>"`: check `05-media/media-plan.yaml`; exit 2 on errors.
+- `plan estimate --course "<dir>" --quality draft|standard|high [--data-dir "<dir>"]`: estimate cost per item and in total.
+- `registry list|add|update|status ...`: read and change `05-media/registry.json` (see the course-studio course-kit skill for the arguments).
+
+Media generation, rendering and embedding commands are in the course-studio plugin's bundle.
+
+## course.yaml notes
+
+- Top-level keys that the schema does not know (for example a hand-added `notes:`) are moved into `extra` the next time a command saves `course.yaml`. They are kept there, not lost. Put your own fields under `extra` to begin with.
+- If the objectives or outline markdown file is missing, `manifest sync` keeps the objectives or modules already in `course.yaml` and reports a warning.
+- `manifest sync --write` and `migrate-course` change the objectives, outline and lesson files (ID comments). Outputs whose `sourceHashes` were fresh before are re-hashed after, so they stay fresh; outputs that were already stale stay stale.
 
 ## Exit codes
 

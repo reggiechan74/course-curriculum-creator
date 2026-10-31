@@ -146,7 +146,9 @@ export function syncManifest(courseDir: string, opts: { write: boolean }): { man
   const sessions: Session[] = parsedSessions;
 
   let manifest: Manifest;
-  if (existsSync(join(courseDir, 'course.yaml'))) {
+  const kept: ValidationIssue[] = [];
+  const hadManifest = existsSync(join(courseDir, 'course.yaml'));
+  if (hadManifest) {
     manifest = loadManifest(courseDir);
     if (sessions.length > 0) manifest.timeBudget = { ...manifest.timeBudget, live: { sessions } };
   } else {
@@ -156,10 +158,19 @@ export function syncManifest(courseDir: string, opts: { write: boolean }): { man
       audienceLevel: 'professional', audienceSummary: '', budgetUsd: 20, maxPlanImages: 40,
     }, new Date().toISOString().slice(0, 10));
   }
-  manifest.objectives = objectives.map(({ id, title, kind, bloom }) => ({ id, title, kind, ...(bloom ? { bloom } : {}) }));
-  manifest.modules = modules.map(({ id, title, session, objectives: objs, minutes }) => ({
-    id, title, ...(session ? { session } : {}), objectives: objs, ...(minutes !== undefined ? { minutes } : {}),
-  }));
+  // A missing source file keeps the existing manifest list rather than emptying it.
+  if (hadManifest && objMd === undefined) {
+    kept.push({ level: 'warning', path: 'objectives', message: `${OBJECTIVES_PATH} not found; kept the objectives already in course.yaml` });
+  } else {
+    manifest.objectives = objectives.map(({ id, title, kind, bloom }) => ({ id, title, kind, ...(bloom ? { bloom } : {}) }));
+  }
+  if (hadManifest && outMd === undefined) {
+    kept.push({ level: 'warning', path: 'modules', message: `${OUTLINE_PATH} not found; kept the modules and sessions already in course.yaml` });
+  } else {
+    manifest.modules = modules.map(({ id, title, session, objectives: objs, minutes }) => ({
+      id, title, ...(session ? { session } : {}), objectives: objs, ...(minutes !== undefined ? { minutes } : {}),
+    }));
+  }
 
   const issues: ValidationIssue[] = validateManifest(manifest).map((i) => {
     const m = i.path.match(/^modules\[(\d+)\]\.objectives\[\d+\]$/);
@@ -167,6 +178,7 @@ export function syncManifest(courseDir: string, opts: { write: boolean }): { man
     const mod = manifest.modules[Number(m[1])];
     return { ...i, message: `module ${mod.id} (${mod.title}) refers to ${i.message}` };
   });
+  issues.push(...kept);
   manifest.modules.forEach((mod, i) => {
     if (mod.objectives.length === 0) {
       issues.push({ level: 'warning', path: `modules[${i}].objectives`, message: `module ${mod.id} (${mod.title}) is not linked to any objective` });

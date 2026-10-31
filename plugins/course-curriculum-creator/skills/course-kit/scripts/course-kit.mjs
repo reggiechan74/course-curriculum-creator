@@ -27400,6 +27400,21 @@ function initManifest(opts, today) {
     targets: {}
   };
 }
+function withUnknownKeysInExtra(raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return raw;
+  const known = new Set(Object.keys(ManifestSchema.shape));
+  const obj = raw;
+  const unknown2 = Object.keys(obj).filter((k) => !known.has(k));
+  if (!unknown2.length) return raw;
+  const extra = obj.extra && typeof obj.extra === "object" && !Array.isArray(obj.extra) ? obj.extra : void 0;
+  if (obj.extra !== void 0 && !extra) return raw;
+  const out = {};
+  for (const k of Object.keys(obj)) if (known.has(k)) out[k] = obj[k];
+  const merged = { ...extra };
+  for (const k of unknown2) if (!Object.hasOwn(merged, k)) merged[k] = obj[k];
+  out.extra = merged;
+  return out;
+}
 function loadManifest(courseDir) {
   let raw;
   try {
@@ -27407,7 +27422,7 @@ function loadManifest(courseDir) {
   } catch (e) {
     throw new ValidationError(`cannot read ${FILE}: ${e instanceof Error ? e.message : String(e)}`);
   }
-  const r = ManifestSchema.safeParse(raw);
+  const r = ManifestSchema.safeParse(withUnknownKeysInExtra(raw));
   if (!r.success) {
     const msg = r.error.issues.map((i) => `${i.path.join(".") || "(root)"}: ${i.message}`).join("; ");
     throw new ValidationError(`invalid ${FILE}: ${msg}`);
@@ -27597,7 +27612,9 @@ function syncManifest(courseDir, opts) {
   const { sessions: parsedSessions, modules } = parseOutline(outMd ?? "");
   const sessions = parsedSessions;
   let manifest;
-  if (existsSync2(join3(courseDir, "course.yaml"))) {
+  const kept = [];
+  const hadManifest = existsSync2(join3(courseDir, "course.yaml"));
+  if (hadManifest) {
     manifest = loadManifest(courseDir);
     if (sessions.length > 0) manifest.timeBudget = { ...manifest.timeBudget, live: { sessions } };
   } else {
@@ -27613,20 +27630,29 @@ function syncManifest(courseDir, opts) {
       maxPlanImages: 40
     }, (/* @__PURE__ */ new Date()).toISOString().slice(0, 10));
   }
-  manifest.objectives = objectives.map(({ id, title, kind, bloom }) => ({ id, title, kind, ...bloom ? { bloom } : {} }));
-  manifest.modules = modules.map(({ id, title, session, objectives: objs, minutes }) => ({
-    id,
-    title,
-    ...session ? { session } : {},
-    objectives: objs,
-    ...minutes !== void 0 ? { minutes } : {}
-  }));
+  if (hadManifest && objMd === void 0) {
+    kept.push({ level: "warning", path: "objectives", message: `${OBJECTIVES_PATH} not found; kept the objectives already in course.yaml` });
+  } else {
+    manifest.objectives = objectives.map(({ id, title, kind, bloom }) => ({ id, title, kind, ...bloom ? { bloom } : {} }));
+  }
+  if (hadManifest && outMd === void 0) {
+    kept.push({ level: "warning", path: "modules", message: `${OUTLINE_PATH} not found; kept the modules and sessions already in course.yaml` });
+  } else {
+    manifest.modules = modules.map(({ id, title, session, objectives: objs, minutes }) => ({
+      id,
+      title,
+      ...session ? { session } : {},
+      objectives: objs,
+      ...minutes !== void 0 ? { minutes } : {}
+    }));
+  }
   const issues = validateManifest(manifest).map((i) => {
     const m = i.path.match(/^modules\[(\d+)\]\.objectives\[\d+\]$/);
     if (!m) return i;
     const mod = manifest.modules[Number(m[1])];
     return { ...i, message: `module ${mod.id} (${mod.title}) refers to ${i.message}` };
   });
+  issues.push(...kept);
   manifest.modules.forEach((mod, i) => {
     if (mod.objectives.length === 0) {
       issues.push({ level: "warning", path: `modules[${i}].objectives`, message: `module ${mod.id} (${mod.title}) is not linked to any objective` });

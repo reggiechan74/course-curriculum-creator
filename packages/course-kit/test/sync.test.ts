@@ -1,4 +1,4 @@
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
@@ -162,4 +162,33 @@ test('sync --write adds module ID comments to lesson plans, handout and guide; s
   expect(existsSync(join(dir, rels[2]))).toBe(false);
   syncManifest(dir, { write: true });
   expect(readFileSync(join(dir, rels[0]), 'utf8')).toBe(once);
+});
+
+test('hand-added top-level keys in course.yaml survive sync --write (moved into extra)', () => {
+  const dir = copyFixture('v2-sample');
+  syncManifest(dir, { write: true });
+  const y = join(dir, 'course.yaml');
+  writeFileSync(y, readFileSync(y, 'utf8') + 'notes: keep me\nextra:\n  owner: pat\n');
+  expect(loadManifest(dir).extra).toEqual({ owner: 'pat', notes: 'keep me' });
+  syncManifest(dir, { write: true });
+  expect(loadManifest(dir).extra).toEqual({ owner: 'pat', notes: 'keep me' });
+  expect(readFileSync(y, 'utf8')).toMatch(/^extra:\n {2}owner: pat\n {2}notes: keep me$/m);
+});
+
+test('a missing objectives or outline file keeps the existing manifest list and warns', () => {
+  const dir = copyFixture('v2-sample');
+  const first = syncManifest(dir, { write: true }).manifest;
+  const objFile = join(dir, '01-planning/learning-objectives.md');
+  const objText = readFileSync(objFile, 'utf8');
+  rmSync(objFile);
+  const a = syncManifest(dir, { write: true });
+  expect(a.manifest.objectives).toEqual(first.objectives);
+  expect(loadManifest(dir).objectives).toEqual(first.objectives);
+  expect(a.issues).toContainEqual(expect.objectContaining({ level: 'warning', path: 'objectives', message: expect.stringMatching(/learning-objectives\.md not found/) }));
+  writeFileSync(objFile, objText);
+  rmSync(join(dir, '02-design/course-outline.md'));
+  const b = syncManifest(dir, { write: true });
+  expect(b.manifest.modules).toEqual(first.modules);
+  expect(b.manifest.timeBudget).toEqual(first.timeBudget);
+  expect(b.issues).toContainEqual(expect.objectContaining({ level: 'warning', path: 'modules', message: expect.stringMatching(/course-outline\.md not found/) }));
 });

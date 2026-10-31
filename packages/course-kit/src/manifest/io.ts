@@ -40,6 +40,26 @@ export function initManifest(opts: InitOptions, today: string): Manifest {
   };
 }
 
+/**
+ * Top-level keys the schema does not know (hand-added, e.g. `notes:`) would be dropped on parse.
+ * Move them into `extra` instead, so a later save keeps them there. An existing `extra` key wins.
+ */
+function withUnknownKeysInExtra(raw: unknown): unknown {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return raw;
+  const known = new Set(Object.keys(ManifestSchema.shape));
+  const obj = raw as Record<string, unknown>;
+  const unknown = Object.keys(obj).filter((k) => !known.has(k));
+  if (!unknown.length) return raw;
+  const extra = obj.extra && typeof obj.extra === 'object' && !Array.isArray(obj.extra) ? (obj.extra as Record<string, unknown>) : undefined;
+  if (obj.extra !== undefined && !extra) return raw; // invalid extra: let the schema report it
+  const out: Record<string, unknown> = {};
+  for (const k of Object.keys(obj)) if (known.has(k)) out[k] = obj[k];
+  const merged: Record<string, unknown> = { ...extra };
+  for (const k of unknown) if (!Object.hasOwn(merged, k)) merged[k] = obj[k];
+  out.extra = merged;
+  return out;
+}
+
 export function loadManifest(courseDir: string): Manifest {
   let raw: unknown;
   try {
@@ -47,7 +67,7 @@ export function loadManifest(courseDir: string): Manifest {
   } catch (e) {
     throw new ValidationError(`cannot read ${FILE}: ${e instanceof Error ? e.message : String(e)}`);
   }
-  const r = ManifestSchema.safeParse(raw);
+  const r = ManifestSchema.safeParse(withUnknownKeysInExtra(raw));
   if (!r.success) {
     const msg = r.error.issues.map((i) => `${i.path.join('.') || '(root)'}: ${i.message}`).join('; ');
     throw new ValidationError(`invalid ${FILE}: ${msg}`);

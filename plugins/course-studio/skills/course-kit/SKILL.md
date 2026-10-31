@@ -64,6 +64,12 @@ Providers, brand and style:
 - `brand validate <file>`: validate a `*.brand.yaml` or `theme.yaml`.
 - `style tokens --course "<dir>" [--brand <file>]`: derive `05-media/style/tokens.json` and check WCAG 2.2 AA contrast; exit 2 on failure. Without `--brand` it uses `brand` from `course.yaml`, then `05-media/style/theme.yaml`.
 
+## course.yaml and freshness notes
+
+- Top-level keys that the schema does not know (for example a hand-added `notes:`) are moved into `extra` the next time a command saves `course.yaml`. They are kept there, not lost.
+- If the objectives or outline markdown file is missing, `manifest sync` keeps the objectives or modules already in `course.yaml` and reports a warning.
+- `manifest sync --write`, `migrate-course`, `embed` and `embed all` write into source files (ID comments, media blocks). Outputs whose `sourceHashes` were fresh before are re-hashed after, so they stay fresh; outputs that were already stale stay stale.
+
 ## course-media MCP tools
 
 The plugin runs a `course-media` MCP server with two tools:
