@@ -25,7 +25,7 @@ Core:
 - `hash-write <file> --course "<dir>"`: recompute and write `sourceHashes` into the file's frontmatter.
 - `manifest init --course "<dir>" --json '<options>' [--force]`: create `course.yaml`.
 - `manifest validate --course "<dir>"`: validate `course.yaml`; exit 2 on errors.
-- `manifest sync --course "<dir>" [--write]`: parse objectives and outline, assign stable IDs, update `course.yaml`. Safe to run repeatedly.
+- `manifest sync --course "<dir>" [--write]`: parse objectives and outline, assign stable IDs, update `course.yaml`. Without `--write` it is a read-only dry run; with `--write` it saves `course.yaml` and the ID comments. Running it again does not duplicate anything.
 
 Media plan and registry:
 
@@ -45,9 +45,9 @@ Rendering:
 
 - `deps install mermaid-cli excalidraw-to-svg --data-dir "<dir>"`: install the optional renderers (use `${CLAUDE_PLUGIN_DATA}`).
 - `render vegalite <spec.json> <out.svg> [--tokens <tokens.json>]`
-- `render mermaid <src.mmd> <out.svg> [--tokens <tokens.json>] [--data-dir "<dir>"]`
-- `render excalidraw <scene.excalidraw> <out.svg> [--data-dir "<dir>"]`
-- `render overlay <image> <labels.json> <out.svg> [--width n --height n] [--tokens <tokens.json>]`: SVG label overlay for raster images.
+- `render mermaid <src.mmd> <out.svg> --data-dir "<dir>" [--tokens <tokens.json>]` (`--data-dir` required; use `${CLAUDE_PLUGIN_DATA}`)
+- `render excalidraw <scene.excalidraw> <out.svg> --data-dir "<dir>"` (`--data-dir` required)
+- `render overlay <image> <labels.json> <out.svg> [--width n] [--height n] [--tokens <tokens.json>]`: SVG label overlay for raster images; width and height default to 1024.
 
 Providers, brand and style:
 

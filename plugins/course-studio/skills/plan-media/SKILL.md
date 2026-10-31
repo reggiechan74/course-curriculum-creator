@@ -18,7 +18,7 @@ Write `05-media/media-plan.yaml`. `KIT` means `node "${CLAUDE_PLUGIN_ROOT}/skill
 
 ## Steps
 
-1. Run `KIT manifest sync --course "<dir>"`. Stop on errors.
+1. Run `KIT manifest sync --course "<dir>" --write` (without `--write` it is a dry run). Stop on errors.
 2. Read `02-design/lesson-plans.md`, or `02-design/course-outline.md` if there are no lesson plans, plus `05-media/style/style-guide.md`. Read `.course/providers.json` (`KIT providers show`) to see which tools are available.
 3. Write `05-media/media-plan.yaml`:
 
@@ -38,7 +38,7 @@ Write `05-media/media-plan.yaml`. `KIT` means `node "${CLAUDE_PLUGIN_ROOT}/skill
        status: proposed
    ```
 
-   Rules: `objectives` has 1 or more existing IDs, `module` an existing module ID, `function` one of the taxonomy values, `kind` one of diagram, chart, image, infographic, audio, video. Leave `estimateUsd` and `quotaUnits` at 0; the estimate step fills them. Each module needs 2 or more representation modes.
+   Rules: `objectives` has 1 or more existing IDs, `module` an existing module ID, `function` one of the taxonomy values, `kind` one of diagram, chart, image, infographic, audio, video. Set `quotaUnits: 1` on `codex` image items and 0 on all others. Set `estimateUsd` to 0 (the toolkit prices `openai` image items itself from its pricing table; `plan estimate` does not write values back into the plan). Each module needs 2 or more representation modes.
    Pick `provider` with this routing (first available wins):
 
    | Function | Preferred | Fallbacks |
@@ -53,7 +53,7 @@ Write `05-media/media-plan.yaml`. `KIT` means `node "${CLAUDE_PLUGIN_ROOT}/skill
    Honor `preferred_diagram_style` (hand-drawn prefers Excalidraw, clean prefers Mermaid). If Codex is not logged in, do not choose `codex`. Use `auto` only when unsure.
 4. Run `KIT plan validate --course "<dir>"`. On exit 2, correct every error (unknown IDs, missing objectives, wrong function) and run it again. Remove any item you cannot link to an objective.
 5. Run `KIT plan estimate --course "<dir>" --quality <image_quality>` using the studio `image_quality` setting (default `standard`).
-6. Show a table for each module: item ID, description, function, tool, cost (USD and plan images). Then the totals against `media.budgetUsd` and `media.maxPlanImages` from `course.yaml`.
-7. Budget defaults: `manifest sync` already wrote `media.budgetUsd: 20` and `maxPlanImages: 40`. If the studio settings `default_media_budget_usd` and `max_plan_images` differ and `course.yaml` still has 20 and 40, ask the user whether to apply the studio values. Do not change other values.
+6. Show a table for each module: item ID, description, function and tool. Under each table show that module's cost from `plan estimate` (`perModule`: USD and plan images). Do not invent per-item costs. Then the totals (`totalUsd`, `totalQuota`) against `media.budgetUsd` and `media.maxPlanImages` from `course.yaml`.
+7. Budget defaults: `manifest sync --write` (step 1) already wrote `media.budgetUsd: 20` and `maxPlanImages: 40`. If the studio settings `default_media_budget_usd` and `max_plan_images` differ and `course.yaml` still has 20 and 40, ask the user whether to apply the studio values. Do not change other values.
 8. Ask (AskUserQuestion): approve all items, approve per module, or edit. For edits, change the plan and repeat from step 4. Set `status` to `approved` on approved items and `rejected` on dropped ones. Leave the rest `proposed`.
 9. Run `plan validate` once more. Tell the user the next step: `/course-studio:generate-media` (arrives in the next release of this plugin).
