@@ -28465,6 +28465,14 @@ function installDeps(dataDir2, deps) {
 import { readFileSync as readFileSync9, writeFileSync as writeFileSync6 } from "node:fs";
 import { createRequire } from "node:module";
 import { join as join9, resolve as resolve3 } from "node:path";
+var CHROME_FAILURE = /Target closed|Protocol error|Session closed|Execution context was destroyed|crash|disconnected/i;
+function classifyEvaluateError(err, ctx = {}) {
+  const msg = err instanceof Error ? err.message : String(err);
+  if (CHROME_FAILURE.test(msg) || ctx.browserConnected === false || ctx.pageClosed === true) {
+    return new ProviderUnavailableError(`Chrome failed during export: ${msg}`);
+  }
+  return new ValidationError(`not a usable Excalidraw scene: ${msg}`);
+}
 async function renderExcalidraw(srcPath, outSvg, dataDir2) {
   let diagram;
   try {
@@ -28505,11 +28513,14 @@ async function renderExcalidraw(srcPath, outSvg, dataDir2) {
         diagram
       );
     } catch (e) {
-      throw new ValidationError(`not a usable Excalidraw scene: ${e instanceof Error ? e.message : String(e)}`);
+      throw classifyEvaluateError(e, { browserConnected: browser.connected, pageClosed: page.isClosed?.() });
     }
     writeFileSync6(outSvg, svg);
   } finally {
-    await browser.close();
+    try {
+      await browser.close();
+    } catch {
+    }
   }
 }
 

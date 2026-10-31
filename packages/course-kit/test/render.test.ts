@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { expect, test } from 'vitest';
 import { ProviderUnavailableError, ValidationError } from '../src/errors.js';
 import { depPath, installDeps } from '../src/render/deps.js';
-import { renderExcalidraw } from '../src/render/excalidraw.js';
+import { classifyEvaluateError, renderExcalidraw } from '../src/render/excalidraw.js';
 import { renderMermaid } from '../src/render/mermaid.js';
 import { buildLabelOverlay } from '../src/render/overlay.js';
 import { renderVegaLite } from '../src/render/vegalite.js';
@@ -74,6 +74,15 @@ test.skipIf(!depPath(DATA, 'excalidraw-to-svg'))('renderExcalidraw: valid JSON t
   writeFileSync(join(d, 'a.excalidraw'), '{"type":"excalidraw","elements":42}');
   await expect(renderExcalidraw(join(d, 'a.excalidraw'), join(d, 'o.svg'), DATA)).rejects.toBeInstanceOf(ValidationError);
 }, 60000);
+test('classifyEvaluateError separates Chrome failures from bad scenes', () => {
+  for (const m of ['Target closed', 'Protocol error (Runtime.callFunctionOn)', 'Session closed', 'Execution context was destroyed', 'page crashed', 'browser disconnected']) {
+    expect(classifyEvaluateError(new Error(m))).toBeInstanceOf(ProviderUnavailableError);
+  }
+  expect(classifyEvaluateError(new Error('x.forEach is not a function'))).toBeInstanceOf(ValidationError);
+  expect(classifyEvaluateError(new Error('boom'), { browserConnected: false })).toBeInstanceOf(ProviderUnavailableError);
+  expect(classifyEvaluateError(new Error('boom'), { pageClosed: true })).toBeInstanceOf(ProviderUnavailableError);
+  expect(classifyEvaluateError(new Error('boom'), { browserConnected: true, pageClosed: false })).toBeInstanceOf(ValidationError);
+});
 test('renderMermaid maps a failing mmdc to ProviderUnavailableError with its message', async () => {
   const d = tmp();
   mkdirSync(join(d, 'node_modules', '.bin'), { recursive: true });

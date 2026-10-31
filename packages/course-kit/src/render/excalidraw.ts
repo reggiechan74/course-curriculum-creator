@@ -5,12 +5,24 @@ import { ProviderUnavailableError, ValidationError } from '../errors.js';
 import { depPath } from './deps.js';
 
 interface Page {
+  isClosed?(): boolean;
   setContent(html: string): Promise<void>;
   addScriptTag(o: { content: string }): Promise<unknown>;
   evaluate<T, A>(fn: (a: A) => Promise<T>, arg: A): Promise<T>;
 }
-interface Browser { newPage(): Promise<Page>; close(): Promise<void> }
+interface Browser { connected?: boolean; newPage(): Promise<Page>; close(): Promise<void> }
 interface Puppeteer { launch(o: { args: string[] }): Promise<Browser> }
+
+const CHROME_FAILURE = /Target closed|Protocol error|Session closed|Execution context was destroyed|crash|disconnected/i;
+
+/** Decides whether a page.evaluate failure is a Chrome/tooling failure (exit 4) or a bad scene (exit 2). */
+export function classifyEvaluateError(err: unknown, ctx: { browserConnected?: boolean; pageClosed?: boolean } = {}): Error {
+  const msg = err instanceof Error ? err.message : String(err);
+  if (CHROME_FAILURE.test(msg) || ctx.browserConnected === false || ctx.pageClosed === true) {
+    return new ProviderUnavailableError(`Chrome failed during export: ${msg}`);
+  }
+  return new ValidationError(`not a usable Excalidraw scene: ${msg}`);
+}
 
 export async function renderExcalidraw(srcPath: string, outSvg: string, dataDir: string): Promise<void> {
   let diagram: unknown;
@@ -46,10 +58,10 @@ export async function renderExcalidraw(srcPath: string, outSvg: string, dataDir:
         diagram,
       );
     } catch (e) {
-      throw new ValidationError(`not a usable Excalidraw scene: ${e instanceof Error ? e.message : String(e)}`);
+      throw classifyEvaluateError(e, { browserConnected: browser.connected, pageClosed: page.isClosed?.() });
     }
     writeFileSync(outSvg, svg);
   } finally {
-    await browser.close();
+    try { await browser.close(); } catch { /* ignore close failures */ }
   }
 }
