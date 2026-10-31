@@ -72,3 +72,28 @@ test('writeHashes leaves untouched frontmatter lines byte-identical', () => {
   expect(text.endsWith('---\nB\n')).toBe(true);
   expect(checkStale(out, dir).status).toBe('fresh');
 });
+
+test('writeHashes keeps long scalars, 4-space maps and flow sequences byte-identical and replaces the old block cleanly', () => {
+  const dir = tmp();
+  writeFileSync(join(dir, 's.md'), 'abc');
+  const out = join(dir, 'o.md');
+  const long = `revisionNote: ${'word '.repeat(40).trim()}\n`;
+  expect(long.length).toBeGreaterThan(200);
+  const nested = 'meta:\n    inner:\n        deep: 1\n    other: x\n';
+  const flow = 'tags: [a, b,  c]\n';
+  const old = 'sourceHashes:\n  a: "11111111"\n  stale: "22222222"\n  # note\n  b: "33333333"\n';
+  writeFileSync(out, `---\n${long}${nested}sourceFiles:\n  a: s.md\n${old}${flow}tail: end\n---\nB\n`);
+  writeHashes(out, dir);
+  expect(readFileSync(out, 'utf8')).toBe(
+    `---\n${long}${nested}sourceFiles:\n  a: s.md\nsourceHashes:\n  a: "90015098"\n${flow}tail: end\n---\nB\n`,
+  );
+});
+
+test('writeHashes appends sourceHashes when absent', () => {
+  const dir = tmp();
+  writeFileSync(join(dir, 's.md'), 'abc');
+  const out = join(dir, 'o.md');
+  writeFileSync(out, '---\nsourceFiles:\n  a: s.md\n---\nB\n');
+  writeHashes(out, dir);
+  expect(readFileSync(out, 'utf8')).toBe('---\nsourceFiles:\n  a: s.md\nsourceHashes:\n  a: "90015098"\n---\nB\n');
+});
