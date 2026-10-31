@@ -10,7 +10,7 @@ import { syncManifest } from './manifest/sync.js';
 import { migrateV2 } from './migrate/v2.js';
 import { estimatePlan, loadPlan, validatePlan } from './media/plan.js';
 import { loadPricing } from './media/pricing.js';
-import { addAsset, loadRegistry, saveRegistry, setStatus, updateAssetText } from './media/registry.js';
+import { addAsset, loadRegistry, saveRegistry, setAssetFiles, setStatus, updateAssetText } from './media/registry.js';
 import { AssetSchema, AssetStatusSchema, ReviewRecordSchema } from './media/schema.js';
 
 function jsonFlag(raw: string, flag: string): unknown {
@@ -74,10 +74,13 @@ export const coreCommands: CommandTable = {
   'registry update': (a) => {
     const course = requireFlag(a, 'course');
     const id = requirePositional(a, 0, 'id');
-    const patch = z.object({ alt: z.string().optional(), longDescription: z.string().optional(), caption: z.string().optional() }).strict()
-      .safeParse(jsonFlag(requireFlag(a, 'json'), 'json'));
+    const patch = z.object({
+      alt: z.string().optional(), longDescription: z.string().optional(), caption: z.string().optional(), files: z.array(z.string()).optional(),
+    }).strict().safeParse(jsonFlag(requireFlag(a, 'json'), 'json'));
     if (!patch.success) throw new UsageError(`invalid --json: ${zodMsg(patch.error)}`);
-    const next = updateAssetText(loadRegistry(course), id, patch.data);
+    const { files, ...text } = patch.data;
+    let next = updateAssetText(loadRegistry(course), id, text);
+    if (files !== undefined) next = setAssetFiles(next, id, files, course);
     saveRegistry(course, next);
     return { asset: next.assets.find((x) => x.id === id) };
   },

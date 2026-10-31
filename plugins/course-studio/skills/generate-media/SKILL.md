@@ -64,7 +64,12 @@ Choose the provider in this order, using `.course/providers.json`:
 
 Never call an image API directly with `curl` or a script. All generation goes through `gen image`, the MCP tool, or a third-party tool wrapped in `ledger reserve` and `ledger settle`, so every spend is in the ledger. If no provider operates, keep the placeholder, tell the user which provider each missing image needs. The embed step shows the placeholder until an asset is approved.
 
-If an image needs labels, run `KIT render overlay "<dir>/<image>" "<dir>/<labels.json>" "<dir>/<out.svg>"` and register the overlay file in the asset `files` after the image.
+If an image needs labels, write the labels to `<dir>/05-media/src/<id>.labels.json` (`[{"text":"…","x":…,"y":…}]`, pixel positions on the 1024x1024 image), then:
+
+1. `KIT render overlay "<dir>/05-media/out/<id>.png" "<dir>/05-media/src/<id>.labels.json" "<dir>/05-media/out/<id>.overlay.svg" --tokens "<dir>/05-media/style/tokens.json"`
+2. `KIT registry update <id> --course "<dir>" --json '{"files":["05-media/out/<id>.png","05-media/out/<id>.overlay.svg"]}'`
+
+`embed` uses the `.overlay.svg` file when an asset has one, so the lesson shows the image with its labels.
 
 ### Image exit codes
 

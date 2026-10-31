@@ -33,12 +33,12 @@ Media plan and registry:
 - `plan estimate --course "<dir>" --quality draft|standard|high [--data-dir "<dir>"]`: estimate cost per item and in total.
 - `registry list --course "<dir>"`: list assets in `05-media/registry.json`.
 - `registry add --course "<dir>" --json '<asset>'`: add an asset.
-- `registry update <id> --course "<dir>" --json '{"alt":"…","longDescription":"…","caption":"…"}'`: set alt text, long description and caption. Cannot change status; refused for approved assets.
+- `registry update <id> --course "<dir>" --json '{"alt":"…","longDescription":"…","caption":"…","files":["…"]}'`: set alt text, long description, caption and/or `files` (every key optional). `files` replaces the list; each path must be relative to the course folder and exist. Cannot change status; refused for approved assets.
 - `registry status <id> <to> --course "<dir>" [--approved-by user] [--review '<json>']`: set status to `generated`, `approved`, `rejected` or `imported`. Only the user approves an asset. Allowed: generated or imported to approved or rejected; rejected to generated; approved to rejected (revokes the approval and clears `approvedBy`).
 
 Embedding:
 
-- `embed all --course "<dir>"`: write media blocks into `02-design/lesson-plans.md`, `04-materials/student-handout.md` and `04-materials/instructor-guide.md` (each only if it exists and has the module `<!-- id: Mx -->` comment). Approved assets get an image block; everything else gets a "Media pending approval" placeholder. Output: `{files:[{file,embedded,placeholders}]}`. Safe to run again.
+- `embed all --course "<dir>"`: write media blocks into `02-design/lesson-plans.md`, `04-materials/student-handout.md` and `04-materials/instructor-guide.md` (each only if it exists and has the module `<!-- id: Mx -->` comment). Approved assets get an image block (the asset's `*.overlay.svg` file when it has one, otherwise `files[0]`); everything else gets a "Media pending approval" placeholder. Output: `{files:[{file,embedded,placeholders}]}`. Safe to run again.
 - `embed <file> --asset <id> --anchor <module-id> --course "<dir>"`: the same for one file; exit 2 if the anchor comment is missing.
 
 Ledger and generation:
@@ -56,7 +56,7 @@ Rendering:
 - `render vegalite <spec.json> <out.svg> [--tokens <tokens.json>]`
 - `render mermaid <src.mmd> <out.svg> --data-dir "<dir>" [--tokens <tokens.json>]` (`--data-dir` required; use `${CLAUDE_PLUGIN_DATA}`)
 - `render excalidraw <scene.excalidraw> <out.svg> --data-dir "<dir>"` (`--data-dir` required)
-- `render overlay <image> <labels.json> <out.svg> [--width n] [--height n] [--tokens <tokens.json>]`: SVG label overlay for raster images; width and height default to 1024.
+- `render overlay <image> <labels.json> <out.svg> [--width n] [--height n] [--tokens <tokens.json>]`: SVG label overlay for raster images; width and height default to 1024. The `<image href>` is written relative to the overlay file's folder, so keep the overlay next to the image (name it `<id>.overlay.svg`).
 
 Providers, brand and style:
 

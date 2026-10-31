@@ -1,13 +1,14 @@
 import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, beforeEach, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { stringify } from 'yaml';
 import { studioCommands } from '../src/cli.js';
 import { runCli } from '../src/cli/args.js';
 import { ValidationError } from '../src/errors.js';
-import { embedAll, embedAsset } from '../src/media/embed.js';
-import { saveRegistry, updateAssetText } from '../src/media/registry.js';
+import { embedAll, embedAsset, embedOne } from '../src/media/embed.js';
+import { loadRegistry, saveRegistry, updateAssetText } from '../src/media/registry.js';
+import { overlayHref } from '../src/render/overlay.js';
 import type { Asset, PlanItem } from '../src/media/schema.js';
 
 const md = '# Module 1\n<!-- id: M1 -->\nBody text.\n';
@@ -157,4 +158,50 @@ test('registry update CLI', async () => {
   expect(await runCli(['registry', 'update', 'A-M1-01', '--course', d, '--json', '{"alt":"Hello"}'], studioCommands)).toBe(0);
   expect(await runCli(['registry', 'update', 'A-M1-01', '--course', d, '--json', '{"status":"approved"}'], studioCommands)).toBe(1);
   expect(JSON.parse(readFileSync(join(d, '05-media/registry.json'), 'utf8')).assets[0]).toMatchObject({ alt: 'Hello', status: 'generated' });
+});
+
+describe('label overlays end to end', () => {
+  const png = '05-media/out/A-M1-01.png';
+  const overlay = '05-media/out/A-M1-01.overlay.svg';
+  const withFiles = (files: string[]) => course({ '02-design/lesson-plans.md': md, [png]: 'png', [overlay]: '<svg/>' }, [item('A-M1-01')], [{ ...approved, files }]);
+  const quiet = () => vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+
+  test('render overlay writes the image href relative to the overlay file', async () => {
+    const d = course({ [png]: 'png' }, [], []);
+    const labels = join(d, 'labels.json');
+    writeFileSync(labels, JSON.stringify([{ text: 'Rent', x: 1, y: 2 }]));
+    quiet();
+    expect(await runCli(['render', 'overlay', join(d, png), labels, join(d, overlay)], studioCommands)).toBe(0);
+    expect(readFileSync(join(d, overlay), 'utf8')).toContain('<image href="A-M1-01.png"');
+    mkdirSync(join(d, 'sub dir'));
+    expect(await runCli(['render', 'overlay', join(d, png), labels, join(d, 'sub dir', 'o.svg')], studioCommands)).toBe(0);
+    expect(readFileSync(join(d, 'sub dir', 'o.svg'), 'utf8')).toContain('<image href="../05-media/out/A-M1-01.png"');
+    expect(overlayHref(join(d, 'my img.png'), join(d, 'x.svg'))).toBe('my%20img.png');
+  });
+
+  test('registry update sets files (course-relative, existing) and never status; approved assets are refused', async () => {
+    const d = course({ [png]: 'png', [overlay]: '<svg/>' }, [], [{ ...generated, files: [png] }]);
+    quiet();
+    const upd = (json: unknown) => runCli(['registry', 'update', 'A-M1-01', '--course', d, '--json', JSON.stringify(json)], studioCommands);
+    expect(await upd({ files: [png, overlay] })).toBe(0);
+    expect(loadRegistry(d).assets[0]).toMatchObject({ files: [png, overlay], status: 'generated' });
+    for (const bad of [[join(d, png)], ['../x.png'], ['05-media/out/missing.svg'], [], ['05-media/out']]) {
+      expect(await upd({ files: bad })).toBe(2);
+    }
+    expect(await upd({ files: 'x' })).toBe(1);
+    const a = course({ [png]: 'png' }, [], [{ ...approved, files: [png] }]);
+    expect(await runCli(['registry', 'update', 'A-M1-01', '--course', a, '--json', JSON.stringify({ files: [png] })], studioCommands)).toBe(2);
+  });
+
+  test('embed prefers a .overlay.svg file over files[0]', async () => {
+    const d = withFiles([png, overlay]);
+    embedAll(d);
+    expect(readFileSync(join(d, '02-design/lesson-plans.md'), 'utf8')).toContain('](../05-media/out/A-M1-01.overlay.svg)');
+    const e = withFiles([png, overlay]);
+    embedOne(e, join(e, '02-design/lesson-plans.md'), 'A-M1-01', 'M1');
+    expect(readFileSync(join(e, '02-design/lesson-plans.md'), 'utf8')).toContain('](../05-media/out/A-M1-01.overlay.svg)');
+    const f = withFiles([png]);
+    embedAll(f);
+    expect(readFileSync(join(f, '02-design/lesson-plans.md'), 'utf8')).toContain('](../05-media/out/A-M1-01.png)');
+  });
 });

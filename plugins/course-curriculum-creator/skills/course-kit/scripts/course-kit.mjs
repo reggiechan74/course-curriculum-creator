@@ -27677,11 +27677,11 @@ function syncManifest(courseDir, opts) {
 // packages/course-kit/src/migrate/v2.ts
 import { cpSync, existsSync as existsSync4, mkdirSync as mkdirSync2, mkdtempSync, readFileSync as readFileSync6, readdirSync as readdirSync2, rmSync, writeFileSync as writeFileSync5 } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join as join5, posix, resolve as resolve3 } from "node:path";
+import { dirname, join as join5, posix as posix2, resolve as resolve3 } from "node:path";
 
 // packages/course-kit/src/media/registry.ts
-import { existsSync as existsSync3, mkdirSync, readFileSync as readFileSync5, writeFileSync as writeFileSync4 } from "node:fs";
-import { join as join4 } from "node:path";
+import { existsSync as existsSync3, mkdirSync, readFileSync as readFileSync5, statSync, writeFileSync as writeFileSync4 } from "node:fs";
+import { isAbsolute, join as join4, posix } from "node:path";
 
 // packages/course-kit/src/media/schema.ts
 var AssetFunctionSchema = external_exports.enum([
@@ -27809,6 +27809,20 @@ function updateAssetText(r, id, patch) {
   }
   return { ...r, assets: r.assets.map((x) => x.id === id ? next : x) };
 }
+function setAssetFiles(r, id, files, courseDir) {
+  const a = r.assets.find((x) => x.id === id);
+  if (!a) throw new ValidationError(`unknown asset id ${id}`);
+  if (a.status === "approved") throw new ValidationError(`asset ${id} is approved and cannot be edited`);
+  if (!files.length) throw new ValidationError("files must name at least one file");
+  for (const f of files) {
+    if (isAbsolute(f) || /^[A-Za-z]:/.test(f) || f.includes("\\") || posix.normalize(f).startsWith("../") || posix.normalize(f) === "..") {
+      throw new ValidationError(`file ${JSON.stringify(f)} must be a path relative to the course folder, e.g. 05-media/out/${id}.png`);
+    }
+    const p = join4(courseDir, f);
+    if (!existsSync3(p) || !statSync(p).isFile()) throw new ValidationError(`file not found: ${f} (relative to the course folder)`);
+  }
+  return { ...r, assets: r.assets.map((x) => x.id === id ? { ...a, files: [...files] } : x) };
+}
 
 // packages/course-kit/src/migrate/v2.ts
 var POSITIONING = "01-planning/course-positioning.md";
@@ -27860,7 +27874,7 @@ function externalLinks(readme) {
   for (const m of readme.matchAll(/\]\(\s*<?([^)\s>]+)/g)) {
     const target = m[1].split("#")[0];
     if (!target || /^[a-z][a-z0-9+.-]*:/i.test(target) || target.startsWith("/")) continue;
-    if (posix.normalize(target).startsWith("../")) found.add(target);
+    if (posix2.normalize(target).startsWith("../")) found.add(target);
   }
   return [...found].sort();
 }
@@ -27869,7 +27883,7 @@ function computeSources(dir) {
   const has = new Set(files);
   const derived2 = [], variant = [], source = [], material = [];
   for (const f of files) {
-    const dirName = posix.dirname(f), name = posix.basename(f);
+    const dirName = posix2.dirname(f), name = posix2.basename(f);
     if (f.endsWith(".pdf") && has.has(f.replace(/\.pdf$/, ".md"))) derived2.push({ path: f, role: "derived", of: f.replace(/\.pdf$/, ".md") });
     if (dirName === "02-design" && /^course-outline-.+\.md$/.test(name)) variant.push({ path: f, role: "variant", of: "02-design/course-outline.md" });
     if (dirName === "01-planning" && name.endsWith(".md") && !V2_PLANNING.has(name)) source.push({ path: f, role: "source" });
@@ -28179,9 +28193,16 @@ var coreCommands = {
   "registry update": (a) => {
     const course = requireFlag(a, "course");
     const id = requirePositional(a, 0, "id");
-    const patch = external_exports.object({ alt: external_exports.string().optional(), longDescription: external_exports.string().optional(), caption: external_exports.string().optional() }).strict().safeParse(jsonFlag(requireFlag(a, "json"), "json"));
+    const patch = external_exports.object({
+      alt: external_exports.string().optional(),
+      longDescription: external_exports.string().optional(),
+      caption: external_exports.string().optional(),
+      files: external_exports.array(external_exports.string()).optional()
+    }).strict().safeParse(jsonFlag(requireFlag(a, "json"), "json"));
     if (!patch.success) throw new UsageError(`invalid --json: ${zodMsg(patch.error)}`);
-    const next = updateAssetText(loadRegistry(course), id, patch.data);
+    const { files, ...text } = patch.data;
+    let next = updateAssetText(loadRegistry(course), id, text);
+    if (files !== void 0) next = setAssetFiles(next, id, files, course);
     saveRegistry(course, next);
     return { asset: next.assets.find((x) => x.id === id) };
   },

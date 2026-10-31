@@ -15,7 +15,7 @@ import { loadProviders, parseDetectedProviders, providerPatterns, recordProvider
 import { type DepName, installDeps, isDepName } from './render/deps.js';
 import { renderExcalidraw } from './render/excalidraw.js';
 import { renderMermaid } from './render/mermaid.js';
-import { buildLabelOverlay, type Label } from './render/overlay.js';
+import { buildLabelOverlay, type Label, overlayHref } from './render/overlay.js';
 import { renderVegaLite } from './render/vegalite.js';
 
 type PartialTokens = Partial<Tokens>;
@@ -76,7 +76,7 @@ export const studioCommands: CommandTable = {
     const out = requirePositional(a, 2, 'out');
     const width = optNum(a, 'width') ?? 1024;
     const height = optNum(a, 'height') ?? 1024;
-    writeFileSync(out, buildLabelOverlay(image, width, height, labels, tokensOf(a)));
+    writeFileSync(out, buildLabelOverlay(overlayHref(image, out), width, height, labels, tokensOf(a)));
     return { out };
   },
   'ledger totals': (a) => ledgerTotals(requireFlag(a, 'course')),

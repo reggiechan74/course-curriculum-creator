@@ -1,5 +1,5 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { isAbsolute, join, posix } from 'node:path';
 import { ValidationError } from '../errors.js';
 import { type Asset, type AssetStatus, type Registry, RegistrySchema, type ReviewRecord } from './schema.js';
 
@@ -67,4 +67,23 @@ export function updateAssetText(r: Registry, id: string, patch: AssetTextPatch):
     if (patch[k] !== undefined) next[k] = patch[k] as string;
   }
   return { ...r, assets: r.assets.map((x) => (x.id === id ? next : x)) };
+}
+
+/**
+ * Replaces an asset's `files` (for example to add a label overlay after the image). Each path must be
+ * course-relative and name an existing file. Never changes status; approved assets are frozen.
+ */
+export function setAssetFiles(r: Registry, id: string, files: string[], courseDir: string): Registry {
+  const a = r.assets.find((x) => x.id === id);
+  if (!a) throw new ValidationError(`unknown asset id ${id}`);
+  if (a.status === 'approved') throw new ValidationError(`asset ${id} is approved and cannot be edited`);
+  if (!files.length) throw new ValidationError('files must name at least one file');
+  for (const f of files) {
+    if (isAbsolute(f) || /^[A-Za-z]:/.test(f) || f.includes('\\') || posix.normalize(f).startsWith('../') || posix.normalize(f) === '..') {
+      throw new ValidationError(`file ${JSON.stringify(f)} must be a path relative to the course folder, e.g. 05-media/out/${id}.png`);
+    }
+    const p = join(courseDir, f);
+    if (!existsSync(p) || !statSync(p).isFile()) throw new ValidationError(`file not found: ${f} (relative to the course folder)`);
+  }
+  return { ...r, assets: r.assets.map((x) => (x.id === id ? { ...a, files: [...files] } : x)) };
 }

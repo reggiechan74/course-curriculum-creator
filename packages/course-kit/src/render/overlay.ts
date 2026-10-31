@@ -1,3 +1,4 @@
+import { dirname, relative, resolve, sep } from 'node:path';
 import type { Tokens } from '../brand/tokens.js';
 
 export interface Label { text: string; x: number; y: number; anchor?: 'start' | 'middle' | 'end' }
@@ -19,4 +20,9 @@ export function buildLabelOverlay(
     '</svg>',
     '',
   ].join('\n');
+}
+
+/** The `<image href>` for an overlay: the image path relative to the overlay file's folder, URL-encoded per segment. */
+export function overlayHref(imagePath: string, overlayPath: string): string {
+  return relative(dirname(resolve(overlayPath)), resolve(imagePath)).split(sep).map(encodeURIComponent).join('/');
 }

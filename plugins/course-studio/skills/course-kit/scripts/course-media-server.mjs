@@ -44425,8 +44425,8 @@ function releaseSpend(courseDir, reservationId) {
 }
 
 // packages/course-kit/src/media/registry.ts
-import { existsSync as existsSync4, mkdirSync as mkdirSync3, readFileSync as readFileSync5, writeFileSync as writeFileSync3 } from "node:fs";
-import { join as join5 } from "node:path";
+import { existsSync as existsSync4, mkdirSync as mkdirSync3, readFileSync as readFileSync5, statSync as statSync2, writeFileSync as writeFileSync3 } from "node:fs";
+import { isAbsolute, join as join5, posix } from "node:path";
 var FILE4 = ["05-media", "registry.json"];
 function loadRegistry(courseDir) {
   const f = join5(courseDir, ...FILE4);
@@ -44457,7 +44457,7 @@ function addAsset(r, a) {
 
 // packages/course-kit/src/providers/codex.ts
 import { execFile } from "node:child_process";
-import { existsSync as existsSync5, mkdirSync as mkdirSync4, statSync as statSync2 } from "node:fs";
+import { existsSync as existsSync5, mkdirSync as mkdirSync4, statSync as statSync3 } from "node:fs";
 import { basename, dirname } from "node:path";
 var TIMEOUT_MS = 5 * 6e4;
 function childEnv() {
@@ -44498,7 +44498,7 @@ async function requirePlanBilledCodex(codexBin = "codex") {
 }
 function fileStamp(p) {
   if (!existsSync5(p)) return null;
-  const s = statSync2(p);
+  const s = statSync3(p);
   return `${s.mtimeMs}:${s.size}`;
 }
 async function generateImageCodex(o) {

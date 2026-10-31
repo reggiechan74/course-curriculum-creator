@@ -15,6 +15,12 @@ export const EMBED_FILES = [
 const esc = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const oneLine = (s: string): string => s.replace(/\s+/g, ' ').trim();
 
+/** The file to embed: a label overlay (`*.overlay.svg`) when the asset has one, else files[0]. */
+export function embedFileOf(a: Asset | undefined): string | undefined {
+  if (!a) return undefined;
+  return a.files.find((f) => f.endsWith('.overlay.svg')) ?? a.files[0];
+}
+
 /** An Asset has `files`; a PlanItem does not (both can have status "approved"). */
 function isApprovedAsset(x: Asset | PlanItem): x is Asset {
   return 'files' in x && x.status === 'approved';
@@ -79,12 +85,12 @@ export function embedAll(courseDir: string): EmbedReport[] {
     const a = byId.get(it.id);
     // Approved asset wins; otherwise the plan item (it carries the description for the placeholder).
     const chosen: Asset | PlanItem = a && a.status === 'approved' ? a : it;
-    work.push({ id: it.id, module: it.module, item: chosen, files0: a?.files[0] });
+    work.push({ id: it.id, module: it.module, item: chosen, files0: embedFileOf(a) });
   }
   for (const a of registry.assets) {
     if (planIds.has(a.id) || !a.module) continue;
     if (a.status !== 'approved' && a.status !== 'imported') continue;
-    work.push({ id: a.id, module: a.module, item: a, files0: a.files[0] });
+    work.push({ id: a.id, module: a.module, item: a, files0: embedFileOf(a) });
   }
 
   const reports: EmbedReport[] = [];
@@ -116,7 +122,7 @@ export function embedOne(courseDir: string, file: string, id: string, anchorId: 
   const item: Asset | PlanItem | undefined = a && a.status === 'approved' ? a : (p ?? a);
   if (!item) throw new ValidationError(`unknown asset or plan item ${id}`);
   if (!existsSync(file)) throw new ValidationError(`file not found: ${file}`);
-  const first = a?.files[0];
+  const first = embedFileOf(a);
   const rel = first ? relative(dirname(file), join(courseDir, first)).split(sep).join('/') : '';
   const original = readFileSync(file, 'utf8');
   const out = embedAsset(original, item, anchorId, rel);

@@ -4005,10 +4005,10 @@ var require_resolve_block_map = __commonJS({
       let offset4 = bm.offset;
       let commentEnd = null;
       for (const collItem of bm.items) {
-        const { start, key: key2, sep: sep2, value: value3 } = collItem;
+        const { start, key: key2, sep: sep3, value: value3 } = collItem;
         const keyProps = resolveProps.resolveProps(start, {
           indicator: "explicit-key-ind",
-          next: key2 ?? sep2?.[0],
+          next: key2 ?? sep3?.[0],
           offset: offset4,
           onError,
           parentIndent: bm.indent,
@@ -4022,7 +4022,7 @@ var require_resolve_block_map = __commonJS({
             else if ("indent" in key2 && key2.indent !== bm.indent)
               onError(offset4, "BAD_INDENT", startColMsg);
           }
-          if (!keyProps.anchor && !keyProps.tag && !sep2) {
+          if (!keyProps.anchor && !keyProps.tag && !sep3) {
             commentEnd = keyProps.end;
             if (keyProps.comment) {
               if (map4.comment)
@@ -4046,7 +4046,7 @@ var require_resolve_block_map = __commonJS({
         ctx.atKey = false;
         if (utilMapIncludes.mapIncludes(ctx, map4.items, keyNode))
           onError(keyStart, "DUPLICATE_KEY", "Map keys must be unique");
-        const valueProps = resolveProps.resolveProps(sep2 ?? [], {
+        const valueProps = resolveProps.resolveProps(sep3 ?? [], {
           indicator: "map-value-ind",
           next: value3,
           offset: keyNode.range[2],
@@ -4062,7 +4062,7 @@ var require_resolve_block_map = __commonJS({
             if (ctx.options.strict && keyProps.start < valueProps.found.offset - 1024)
               onError(keyNode.range, "KEY_OVER_1024_CHARS", "The : indicator must be at most 1024 chars after the start of an implicit block mapping key");
           }
-          const valueNode = value3 ? composeNode(ctx, value3, valueProps, onError) : composeEmptyNode(ctx, offset4, sep2, null, valueProps, onError);
+          const valueNode = value3 ? composeNode(ctx, value3, valueProps, onError) : composeEmptyNode(ctx, offset4, sep3, null, valueProps, onError);
           if (ctx.schema.compat)
             utilFlowIndentCheck.flowIndentCheck(bm.indent, value3, onError);
           offset4 = valueNode.range[2];
@@ -4153,7 +4153,7 @@ var require_resolve_end = __commonJS({
       let comment = "";
       if (end) {
         let hasSpace = false;
-        let sep2 = "";
+        let sep3 = "";
         for (const token of end) {
           const { source: source3, type: type3 } = token;
           switch (type3) {
@@ -4167,13 +4167,13 @@ var require_resolve_end = __commonJS({
               if (!comment)
                 comment = cb;
               else
-                comment += sep2 + cb;
-              sep2 = "";
+                comment += sep3 + cb;
+              sep3 = "";
               break;
             }
             case "newline":
               if (comment)
-                sep2 += source3;
+                sep3 += source3;
               hasSpace = true;
               break;
             default:
@@ -4216,18 +4216,18 @@ var require_resolve_flow_collection = __commonJS({
       let offset4 = fc.offset + fc.start.source.length;
       for (let i = 0; i < fc.items.length; ++i) {
         const collItem = fc.items[i];
-        const { start, key: key2, sep: sep2, value: value3 } = collItem;
+        const { start, key: key2, sep: sep3, value: value3 } = collItem;
         const props = resolveProps.resolveProps(start, {
           flow: fcName,
           indicator: "explicit-key-ind",
-          next: key2 ?? sep2?.[0],
+          next: key2 ?? sep3?.[0],
           offset: offset4,
           onError,
           parentIndent: fc.indent,
           startOnNewline: false
         });
         if (!props.found) {
-          if (!props.anchor && !props.tag && !sep2 && !value3) {
+          if (!props.anchor && !props.tag && !sep3 && !value3) {
             if (i === 0 && props.comma)
               onError(props.comma, "UNEXPECTED_TOKEN", `Unexpected , in ${fcName}`);
             else if (i < fc.items.length - 1)
@@ -4281,8 +4281,8 @@ var require_resolve_flow_collection = __commonJS({
             }
           }
         }
-        if (!isMap && !sep2 && !props.found) {
-          const valueNode = value3 ? composeNode(ctx, value3, props, onError) : composeEmptyNode(ctx, props.end, sep2, null, props, onError);
+        if (!isMap && !sep3 && !props.found) {
+          const valueNode = value3 ? composeNode(ctx, value3, props, onError) : composeEmptyNode(ctx, props.end, sep3, null, props, onError);
           coll.items.push(valueNode);
           offset4 = valueNode.range[2];
           if (isBlock(value3))
@@ -4294,7 +4294,7 @@ var require_resolve_flow_collection = __commonJS({
           if (isBlock(key2))
             onError(keyNode.range, "BLOCK_IN_FLOW", blockMsg);
           ctx.atKey = false;
-          const valueProps = resolveProps.resolveProps(sep2 ?? [], {
+          const valueProps = resolveProps.resolveProps(sep3 ?? [], {
             flow: fcName,
             indicator: "map-value-ind",
             next: value3,
@@ -4305,8 +4305,8 @@ var require_resolve_flow_collection = __commonJS({
           });
           if (valueProps.found) {
             if (!isMap && !props.found && ctx.options.strict) {
-              if (sep2)
-                for (const st of sep2) {
+              if (sep3)
+                for (const st of sep3) {
                   if (st === valueProps.found)
                     break;
                   if (st.type === "newline") {
@@ -4323,7 +4323,7 @@ var require_resolve_flow_collection = __commonJS({
             else
               onError(valueProps.start, "MISSING_CHAR", `Missing , or : between ${fcName} items`);
           }
-          const valueNode = value3 ? composeNode(ctx, value3, valueProps, onError) : valueProps.found ? composeEmptyNode(ctx, valueProps.end, sep2, null, valueProps, onError) : null;
+          const valueNode = value3 ? composeNode(ctx, value3, valueProps, onError) : valueProps.found ? composeEmptyNode(ctx, valueProps.end, sep3, null, valueProps, onError) : null;
           if (valueNode) {
             if (isBlock(value3))
               onError(valueNode.range, "BLOCK_IN_FLOW", blockMsg);
@@ -4503,7 +4503,7 @@ var require_resolve_block_scalar = __commonJS({
           chompStart = i + 1;
       }
       let value3 = "";
-      let sep2 = "";
+      let sep3 = "";
       let prevMoreIndented = false;
       for (let i = 0; i < contentStart; ++i)
         value3 += lines[i][0].slice(trimIndent) + "\n";
@@ -4520,24 +4520,24 @@ var require_resolve_block_scalar = __commonJS({
           indent = "";
         }
         if (type3 === Scalar2.Scalar.BLOCK_LITERAL) {
-          value3 += sep2 + indent.slice(trimIndent) + content2;
-          sep2 = "\n";
+          value3 += sep3 + indent.slice(trimIndent) + content2;
+          sep3 = "\n";
         } else if (indent.length > trimIndent || content2[0] === "	") {
-          if (sep2 === " ")
-            sep2 = "\n";
-          else if (!prevMoreIndented && sep2 === "\n")
-            sep2 = "\n\n";
-          value3 += sep2 + indent.slice(trimIndent) + content2;
-          sep2 = "\n";
+          if (sep3 === " ")
+            sep3 = "\n";
+          else if (!prevMoreIndented && sep3 === "\n")
+            sep3 = "\n\n";
+          value3 += sep3 + indent.slice(trimIndent) + content2;
+          sep3 = "\n";
           prevMoreIndented = true;
         } else if (content2 === "") {
-          if (sep2 === "\n")
+          if (sep3 === "\n")
             value3 += "\n";
           else
-            sep2 = "\n";
+            sep3 = "\n";
         } else {
-          value3 += sep2 + content2;
-          sep2 = " ";
+          value3 += sep3 + content2;
+          sep3 = " ";
           prevMoreIndented = false;
         }
       }
@@ -4720,25 +4720,25 @@ var require_resolve_flow_scalar = __commonJS({
         trimBoth = /^[ \t]+|[ \t]+$/g;
       }
       let res = match2[1].replace(trimEnd, "");
-      let sep2 = " ";
+      let sep3 = " ";
       let pos = line4.lastIndex;
       while (match2 = line4.exec(source3)) {
         const lm = match2[1].replace(trimBoth, "");
         if (lm === "") {
-          if (sep2 === "\n")
-            res += sep2;
+          if (sep3 === "\n")
+            res += sep3;
           else
-            sep2 = "\n";
+            sep3 = "\n";
         } else {
-          res += sep2 + lm;
-          sep2 = " ";
+          res += sep3 + lm;
+          sep3 = " ";
         }
         pos = line4.lastIndex;
       }
       const last = /[ \t]*(.*)/sy;
       last.lastIndex = pos;
       match2 = last.exec(source3);
-      return res + sep2 + (match2?.[1] ?? "");
+      return res + sep3 + (match2?.[1] ?? "");
     }
     function doubleQuotedValue(source3, onError) {
       let res = "";
@@ -5548,14 +5548,14 @@ var require_cst_stringify = __commonJS({
         }
       }
     }
-    function stringifyItem({ start, key: key2, sep: sep2, value: value3 }) {
+    function stringifyItem({ start, key: key2, sep: sep3, value: value3 }) {
       let res = "";
       for (const st of start)
         res += st.source;
       if (key2)
         res += stringifyToken(key2);
-      if (sep2)
-        for (const st of sep2)
+      if (sep3)
+        for (const st of sep3)
           res += st.source;
       if (value3)
         res += stringifyToken(value3);
@@ -6722,18 +6722,18 @@ var require_parser = __commonJS({
         if (this.type === "map-value-ind") {
           const prev = getPrevProps(this.peek(2));
           const start = getFirstKeyStartProps(prev);
-          let sep2;
+          let sep3;
           if (scalar.end) {
-            sep2 = scalar.end;
-            sep2.push(this.sourceToken);
+            sep3 = scalar.end;
+            sep3.push(this.sourceToken);
             delete scalar.end;
           } else
-            sep2 = [this.sourceToken];
+            sep3 = [this.sourceToken];
           const map4 = {
             type: "block-map",
             offset: scalar.offset,
             indent: scalar.indent,
-            items: [{ start, key: scalar, sep: sep2 }]
+            items: [{ start, key: scalar, sep: sep3 }]
           };
           this.onKeyLine = true;
           this.stack[this.stack.length - 1] = map4;
@@ -6886,15 +6886,15 @@ var require_parser = __commonJS({
                 } else if (isFlowToken(it.key) && !includesToken(it.sep, "newline")) {
                   const start2 = getFirstKeyStartProps(it.start);
                   const key2 = it.key;
-                  const sep2 = it.sep;
-                  sep2.push(this.sourceToken);
+                  const sep3 = it.sep;
+                  sep3.push(this.sourceToken);
                   delete it.key;
                   delete it.sep;
                   this.stack.push({
                     type: "block-map",
                     offset: this.offset,
                     indent: this.indent,
-                    items: [{ start: start2, key: key2, sep: sep2 }]
+                    items: [{ start: start2, key: key2, sep: sep3 }]
                   });
                 } else if (start.length > 0) {
                   it.sep = it.sep.concat(start, this.sourceToken);
@@ -7088,13 +7088,13 @@ var require_parser = __commonJS({
             const prev = getPrevProps(parent);
             const start = getFirstKeyStartProps(prev);
             fixFlowSeqItems(fc);
-            const sep2 = fc.end.splice(1, fc.end.length);
-            sep2.push(this.sourceToken);
+            const sep3 = fc.end.splice(1, fc.end.length);
+            sep3.push(this.sourceToken);
             const map4 = {
               type: "block-map",
               offset: fc.offset,
               indent: fc.indent,
-              items: [{ start, key: fc, sep: sep2 }]
+              items: [{ start, key: fc, sep: sep3 }]
             };
             this.onKeyLine = true;
             this.stack[this.stack.length - 1] = map4;
@@ -7833,7 +7833,7 @@ var require_topojson_client = __commonJS({
 
 // packages/course-kit/src/cli.ts
 import { existsSync as existsSync16, mkdirSync as mkdirSync11, readFileSync as readFileSync16, realpathSync as realpathSync2, writeFileSync as writeFileSync14 } from "node:fs";
-import { join as join19, resolve as resolve6 } from "node:path";
+import { join as join19, resolve as resolve7 } from "node:path";
 import { fileURLToPath } from "node:url";
 
 // packages/course-kit/src/brand/tokens.ts
@@ -12937,7 +12937,7 @@ var recursive = /* @__PURE__ */ new WeakMap();
 var NONE = 0;
 var ASSUMED = 1;
 var PROVEN = 2;
-function isRecursive(inst, stack2, resolve7) {
+function isRecursive(inst, stack2, resolve8) {
   const cached2 = recursive.get(inst);
   if (cached2 !== void 0)
     return cached2 ? PROVEN : NONE;
@@ -12947,7 +12947,7 @@ function isRecursive(inst, stack2, resolve7) {
   let result = NONE;
   const check2 = (child) => {
     if (result !== PROVEN && child?._zod) {
-      const answer = isRecursive(child, stack2, resolve7);
+      const answer = isRecursive(child, stack2, resolve8);
       if (answer > result)
         result = answer;
     }
@@ -12958,7 +12958,7 @@ function isRecursive(inst, stack2, resolve7) {
       const desc = Object.getOwnPropertyDescriptor(sh, key2);
       if (spread && !desc.enumerable)
         continue;
-      const child = desc.get ? ASSUMED : desc.value?._zod ? isRecursive(desc.value, stack2, resolve7) : NONE;
+      const child = desc.get ? ASSUMED : desc.value?._zod ? isRecursive(desc.value, stack2, resolve8) : NONE;
       if (child > answer)
         answer = child;
     }
@@ -13022,7 +13022,7 @@ function isRecursive(inst, stack2, resolve7) {
       break;
     // `$ZodLazy` caches its inner on the def, so a resolved edge is followed exactly
     case "lazy": {
-      const inner = def2._cachedInner ?? (resolve7 ? inst._zod.innerType : void 0);
+      const inner = def2._cachedInner ?? (resolve8 ? inst._zod.innerType : void 0);
       merge6(inner ? isRecursive(inner, stack2, false) : ASSUMED);
       break;
     }
@@ -28251,11 +28251,11 @@ function syncManifest(courseDir, opts) {
 // packages/course-kit/src/migrate/v2.ts
 import { cpSync, existsSync as existsSync4, mkdirSync as mkdirSync2, mkdtempSync, readFileSync as readFileSync7, readdirSync as readdirSync2, rmSync, writeFileSync as writeFileSync5 } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join as join5, posix, resolve as resolve3 } from "node:path";
+import { dirname, join as join5, posix as posix2, resolve as resolve3 } from "node:path";
 
 // packages/course-kit/src/media/registry.ts
-import { existsSync as existsSync3, mkdirSync, readFileSync as readFileSync6, writeFileSync as writeFileSync4 } from "node:fs";
-import { join as join4 } from "node:path";
+import { existsSync as existsSync3, mkdirSync, readFileSync as readFileSync6, statSync, writeFileSync as writeFileSync4 } from "node:fs";
+import { isAbsolute, join as join4, posix } from "node:path";
 
 // packages/course-kit/src/media/schema.ts
 var AssetFunctionSchema = external_exports.enum([
@@ -28383,6 +28383,20 @@ function updateAssetText(r, id2, patch2) {
   }
   return { ...r, assets: r.assets.map((x5) => x5.id === id2 ? next : x5) };
 }
+function setAssetFiles(r, id2, files, courseDir) {
+  const a3 = r.assets.find((x5) => x5.id === id2);
+  if (!a3) throw new ValidationError(`unknown asset id ${id2}`);
+  if (a3.status === "approved") throw new ValidationError(`asset ${id2} is approved and cannot be edited`);
+  if (!files.length) throw new ValidationError("files must name at least one file");
+  for (const f of files) {
+    if (isAbsolute(f) || /^[A-Za-z]:/.test(f) || f.includes("\\") || posix.normalize(f).startsWith("../") || posix.normalize(f) === "..") {
+      throw new ValidationError(`file ${JSON.stringify(f)} must be a path relative to the course folder, e.g. 05-media/out/${id2}.png`);
+    }
+    const p = join4(courseDir, f);
+    if (!existsSync3(p) || !statSync(p).isFile()) throw new ValidationError(`file not found: ${f} (relative to the course folder)`);
+  }
+  return { ...r, assets: r.assets.map((x5) => x5.id === id2 ? { ...a3, files: [...files] } : x5) };
+}
 
 // packages/course-kit/src/migrate/v2.ts
 var POSITIONING = "01-planning/course-positioning.md";
@@ -28434,7 +28448,7 @@ function externalLinks(readme) {
   for (const m3 of readme.matchAll(/\]\(\s*<?([^)\s>]+)/g)) {
     const target2 = m3[1].split("#")[0];
     if (!target2 || /^[a-z][a-z0-9+.-]*:/i.test(target2) || target2.startsWith("/")) continue;
-    if (posix.normalize(target2).startsWith("../")) found.add(target2);
+    if (posix2.normalize(target2).startsWith("../")) found.add(target2);
   }
   return [...found].sort();
 }
@@ -28443,7 +28457,7 @@ function computeSources(dir) {
   const has2 = new Set(files);
   const derived2 = [], variant = [], source3 = [], material = [];
   for (const f of files) {
-    const dirName = posix.dirname(f), name = posix.basename(f);
+    const dirName = posix2.dirname(f), name = posix2.basename(f);
     if (f.endsWith(".pdf") && has2.has(f.replace(/\.pdf$/, ".md"))) derived2.push({ path: f, role: "derived", of: f.replace(/\.pdf$/, ".md") });
     if (dirName === "02-design" && /^course-outline-.+\.md$/.test(name)) variant.push({ path: f, role: "variant", of: "02-design/course-outline.md" });
     if (dirName === "01-planning" && name.endsWith(".md") && !V2_PLANNING.has(name)) source3.push({ path: f, role: "source" });
@@ -28753,9 +28767,16 @@ var coreCommands = {
   "registry update": (a3) => {
     const course = requireFlag(a3, "course");
     const id2 = requirePositional(a3, 0, "id");
-    const patch2 = external_exports.object({ alt: external_exports.string().optional(), longDescription: external_exports.string().optional(), caption: external_exports.string().optional() }).strict().safeParse(jsonFlag(requireFlag(a3, "json"), "json"));
+    const patch2 = external_exports.object({
+      alt: external_exports.string().optional(),
+      longDescription: external_exports.string().optional(),
+      caption: external_exports.string().optional(),
+      files: external_exports.array(external_exports.string()).optional()
+    }).strict().safeParse(jsonFlag(requireFlag(a3, "json"), "json"));
     if (!patch2.success) throw new UsageError(`invalid --json: ${zodMsg(patch2.error)}`);
-    const next = updateAssetText(loadRegistry(course), id2, patch2.data);
+    const { files, ...text3 } = patch2.data;
+    let next = updateAssetText(loadRegistry(course), id2, text3);
+    if (files !== void 0) next = setAssetFiles(next, id2, files, course);
     saveRegistry(course, next);
     return { asset: next.assets.find((x5) => x5.id === id2) };
   },
@@ -28804,6 +28825,10 @@ var EMBED_FILES = [
 ];
 var esc2 = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 var oneLine = (s) => s.replace(/\s+/g, " ").trim();
+function embedFileOf(a3) {
+  if (!a3) return void 0;
+  return a3.files.find((f) => f.endsWith(".overlay.svg")) ?? a3.files[0];
+}
 function isApprovedAsset(x5) {
   return "files" in x5 && x5.status === "approved";
 }
@@ -28859,12 +28884,12 @@ function embedAll(courseDir) {
     if (it.status !== "approved") continue;
     const a3 = byId.get(it.id);
     const chosen = a3 && a3.status === "approved" ? a3 : it;
-    work.push({ id: it.id, module: it.module, item: chosen, files0: a3?.files[0] });
+    work.push({ id: it.id, module: it.module, item: chosen, files0: embedFileOf(a3) });
   }
   for (const a3 of registry2.assets) {
     if (planIds.has(a3.id) || !a3.module) continue;
     if (a3.status !== "approved" && a3.status !== "imported") continue;
-    work.push({ id: a3.id, module: a3.module, item: a3, files0: a3.files[0] });
+    work.push({ id: a3.id, module: a3.module, item: a3, files0: embedFileOf(a3) });
   }
   const reports = [];
   keepFresh(courseDir, () => {
@@ -28893,7 +28918,7 @@ function embedOne(courseDir, file2, id2, anchorId) {
   const item = a3 && a3.status === "approved" ? a3 : p ?? a3;
   if (!item) throw new ValidationError(`unknown asset or plan item ${id2}`);
   if (!existsSync8(file2)) throw new ValidationError(`file not found: ${file2}`);
-  const first = a3?.files[0];
+  const first = embedFileOf(a3);
   const rel = first ? relative(dirname2(file2), join9(courseDir, first)).split(sep).join("/") : "";
   const original = readFileSync10(file2, "utf8");
   const out = embedAsset(original, item, anchorId, rel);
@@ -28903,7 +28928,7 @@ function embedOne(courseDir, file2, id2, anchorId) {
 
 // packages/course-kit/src/media/ledger.ts
 import { randomUUID } from "node:crypto";
-import { appendFileSync, closeSync, existsSync as existsSync9, mkdirSync as mkdirSync5, openSync, readFileSync as readFileSync11, statSync, unlinkSync } from "node:fs";
+import { appendFileSync, closeSync, existsSync as existsSync9, mkdirSync as mkdirSync5, openSync, readFileSync as readFileSync11, statSync as statSync2, unlinkSync } from "node:fs";
 import { join as join10 } from "node:path";
 var LedgerEntrySchema = external_exports.object({
   at: external_exports.string(),
@@ -29002,7 +29027,7 @@ async function withLedgerLock(courseDir, fn) {
     } catch (e) {
       if (e.code !== "EEXIST") throw e;
       try {
-        if (Date.now() - statSync(lock).mtimeMs > LOCK_STALE_MS) {
+        if (Date.now() - statSync2(lock).mtimeMs > LOCK_STALE_MS) {
           unlinkSync(lock);
           continue;
         }
@@ -29066,7 +29091,7 @@ function releaseSpend(courseDir, reservationId) {
 
 // packages/course-kit/src/providers/codex.ts
 import { execFile } from "node:child_process";
-import { existsSync as existsSync10, mkdirSync as mkdirSync6, statSync as statSync2 } from "node:fs";
+import { existsSync as existsSync10, mkdirSync as mkdirSync6, statSync as statSync3 } from "node:fs";
 import { basename as basename2, dirname as dirname3 } from "node:path";
 var TIMEOUT_MS = 5 * 6e4;
 function childEnv() {
@@ -29076,11 +29101,11 @@ function childEnv() {
   return env;
 }
 function run(bin3, args, opts = {}) {
-  return new Promise((resolve7) => {
+  return new Promise((resolve8) => {
     execFile(bin3, args, { ...opts, env: childEnv(), maxBuffer: 64 * 1024 * 1024, windowsHide: true }, (error64, stdout, stderr) => {
-      if (!error64) return resolve7({ code: 0, stdout: String(stdout), stderr: String(stderr) });
+      if (!error64) return resolve8({ code: 0, stdout: String(stdout), stderr: String(stderr) });
       const code = typeof error64.code === "number" ? error64.code : null;
-      resolve7({ code, stdout: String(stdout), stderr: String(stderr), error: error64 });
+      resolve8({ code, stdout: String(stdout), stderr: String(stderr), error: error64 });
     });
   });
 }
@@ -29107,7 +29132,7 @@ async function requirePlanBilledCodex(codexBin = "codex") {
 }
 function fileStamp(p) {
   if (!existsSync10(p)) return null;
-  const s = statSync2(p);
+  const s = statSync3(p);
   return `${s.mtimeMs}:${s.size}`;
 }
 async function generateImageCodex(o) {
@@ -29482,6 +29507,7 @@ async function renderMermaid(srcPath, outSvg, dataDir2, tokens = {}) {
 }
 
 // packages/course-kit/src/render/overlay.ts
+import { dirname as dirname5, relative as relative2, resolve as resolve5, sep as sep2 } from "node:path";
 var esc3 = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
 function buildLabelOverlay(imageHref, width2, height2, labels2, tokens = {}) {
   const fill2 = tokens.color?.fg ?? "#1a1a1a";
@@ -29494,6 +29520,9 @@ function buildLabelOverlay(imageHref, width2, height2, labels2, tokens = {}) {
     "</svg>",
     ""
   ].join("\n");
+}
+function overlayHref(imagePath, overlayPath) {
+  return relative2(dirname5(resolve5(overlayPath)), resolve5(imagePath)).split(sep2).map(encodeURIComponent).join("/");
 }
 
 // packages/course-kit/src/render/vegalite.ts
@@ -35430,7 +35459,7 @@ function createMeasure(op, param2, name) {
 function compareIndex(a3, b10) {
   return a3.idx - b10.idx;
 }
-function resolve5(agg) {
+function resolve6(agg) {
   const map4 = {};
   agg.forEach((a3) => map4[a3.name] = a3);
   const getreqs = (a3) => {
@@ -35470,7 +35499,7 @@ function set3(t) {
   return t;
 }
 function compileMeasures(agg, field3) {
-  const get6 = field3 || identity, ops2 = resolve5(agg), out = agg.slice().sort(compareIndex);
+  const get6 = field3 || identity, ops2 = resolve6(agg), out = agg.slice().sort(compareIndex);
   function ctr(cell2) {
     this._ops = ops2;
     this._out = out;
@@ -46126,12 +46155,12 @@ function Overlap(params2) {
 }
 var methods = {
   parity: (items) => items.filter((item, i) => i % 2 ? item.opacity = 0 : 1),
-  greedy: (items, sep2) => {
+  greedy: (items, sep3) => {
     let a3;
-    return items.filter((b10, i) => !i || !intersect3(a3.bounds, b10.bounds, sep2) ? (a3 = b10, 1) : b10.opacity = 0);
+    return items.filter((b10, i) => !i || !intersect3(a3.bounds, b10.bounds, sep3) ? (a3 = b10, 1) : b10.opacity = 0);
   }
 };
-var intersect3 = (a3, b10, sep2) => sep2 > Math.max(b10.x1 - a3.x2, a3.x1 - b10.x2, b10.y1 - a3.y2, a3.y1 - b10.y2);
+var intersect3 = (a3, b10, sep3) => sep3 > Math.max(b10.x1 - a3.x2, a3.x1 - b10.x2, b10.y1 - a3.y2, a3.y1 - b10.y2);
 var hasOverlap = (items, pad4) => {
   for (var i = 1, n = items.length, a3 = items[0].bounds, b10; i < n; a3 = b10, ++i) {
     if (intersect3(a3, b10 = items[i].bounds, pad4)) return true;
@@ -46158,7 +46187,7 @@ var reset = (source3) => {
 var reflow = (pulse2, _) => pulse2.reflow(_.modified()).modifies("opacity");
 inherits_default(Overlap, Transform, {
   transform(_, pulse2) {
-    const reduce2 = methods[_.method] || methods.parity, sep2 = _.separation || 0;
+    const reduce2 = methods[_.method] || methods.parity, sep3 = _.separation || 0;
     let source3 = pulse2.materialize(pulse2.SOURCE).source, items, test2;
     if (!source3 || !source3.length) return;
     if (!_.method) {
@@ -46175,10 +46204,10 @@ inherits_default(Overlap, Transform, {
     }
     items = reset(source3);
     pulse2 = reflow(pulse2, _);
-    if (items.length >= 3 && hasOverlap(items, sep2)) {
+    if (items.length >= 3 && hasOverlap(items, sep3)) {
       do {
-        items = reduce2(items, sep2);
-      } while (items.length >= 3 && hasOverlap(items, sep2));
+        items = reduce2(items, sep3);
+      } while (items.length >= 3 && hasOverlap(items, sep3));
       if (items.length < 3 && !peek(source3).opacity) {
         if (items.length > 1) peek(items).opacity = 0;
         peek(source3).opacity = 1;
@@ -62565,9 +62594,9 @@ function parseMark(spec, scope) {
   }
 }
 function parseOverlap(overlap, source3, scope) {
-  const method2 = overlap.method, bound2 = overlap.bound, sep2 = overlap.separation;
+  const method2 = overlap.method, bound2 = overlap.bound, sep3 = overlap.separation;
   const params2 = {
-    separation: isSignal(sep2) ? scope.signalRef(sep2.signal) : sep2,
+    separation: isSignal(sep3) ? scope.signalRef(sep3.signal) : sep3,
     method: isSignal(method2) ? scope.signalRef(method2.signal) : method2,
     pulse: source3
   };
@@ -71797,11 +71826,11 @@ function assembleTopLevelSignals(model, signals) {
     const store = stringValue(name + STORE);
     const hasSg = signals.filter((s) => s.name === name);
     if (hasSg.length === 0) {
-      const resolve7 = selCmpt.resolve === "global" ? "union" : selCmpt.resolve;
+      const resolve8 = selCmpt.resolve === "global" ? "union" : selCmpt.resolve;
       const isPoint2 = selCmpt.type === "point" ? ", true, true)" : ")";
       signals.push({
         name: selCmpt.name,
-        update: `${VL_SELECTION_RESOLVE}(${store}, ${stringValue(resolve7)}${isPoint2}`
+        update: `${VL_SELECTION_RESOLVE}(${store}, ${stringValue(resolve8)}${isPoint2}`
       });
     }
     hasSelections = true;
@@ -73876,8 +73905,8 @@ function parseSelectionPredicate(model, pred, dfnode, datum2 = "datum") {
     }
   }
   const fn = selCmpt.project.hasSelectionId ? "vlSelectionIdTest(" : "vlSelectionTest(";
-  const resolve7 = selCmpt.resolve === "global" ? ")" : `, ${stringValue(selCmpt.resolve)})`;
-  const test2 = `${fn}${store}, ${datum2}${resolve7}`;
+  const resolve8 = selCmpt.resolve === "global" ? ")" : `, ${stringValue(selCmpt.resolve)})`;
+  const test2 = `${fn}${store}, ${datum2}${resolve8}`;
   const length2 = `length(data(${store}))`;
   return pred.empty === false ? `${length2} && ${test2}` : `!${length2} || ${test2}`;
 }
@@ -74737,16 +74766,16 @@ function defaultScaleResolve(channel, model) {
   }
   throw new Error("invalid model type for resolve");
 }
-function parseGuideResolve(resolve7, channel) {
-  const channelScaleResolve = resolve7.scale[channel];
+function parseGuideResolve(resolve8, channel) {
+  const channelScaleResolve = resolve8.scale[channel];
   const guide = isXorY(channel) ? "axis" : "legend";
   if (channelScaleResolve === "independent") {
-    if (resolve7[guide][channel] === "shared") {
+    if (resolve8[guide][channel] === "shared") {
       warn2(independentScaleMeansIndependentGuide(channel));
     }
     return "independent";
   }
-  return resolve7[guide][channel] || "shared";
+  return resolve8[guide][channel] || "shared";
 }
 var LEGEND_COMPONENT_PROPERTY_INDEX = {
   ...COMMON_LEGEND_PROPERTY_INDEX,
@@ -75152,15 +75181,15 @@ function parseLegendForChannel(model, channel) {
   return legendCmpt;
 }
 function parseNonUnitLegend(model) {
-  const { legends, resolve: resolve7 } = model.component;
+  const { legends, resolve: resolve8 } = model.component;
   for (const child of model.children) {
     parseLegend2(child);
     for (const channel of keys3(child.component.legends)) {
-      resolve7.legend[channel] = parseGuideResolve(model.component.resolve, channel);
-      if (resolve7.legend[channel] === "shared") {
+      resolve8.legend[channel] = parseGuideResolve(model.component.resolve, channel);
+      if (resolve8.legend[channel] === "shared") {
         legends[channel] = mergeLegendComponent(legends[channel], child.component.legends[channel]);
         if (!legends[channel]) {
-          resolve7.legend[channel] = "independent";
+          resolve8.legend[channel] = "independent";
           delete legends[channel];
         }
       }
@@ -75171,7 +75200,7 @@ function parseNonUnitLegend(model) {
       if (!child.component.legends[channel]) {
         continue;
       }
-      if (resolve7.legend[channel] === "shared") {
+      if (resolve8.legend[channel] === "shared") {
         delete child.component.legends[channel];
       }
     }
@@ -77074,8 +77103,8 @@ function parseUnitScaleDomain(model) {
       while (!isFacetModel(facetParent) && facetParent.parent) {
         facetParent = facetParent.parent;
       }
-      const resolve7 = facetParent.component.resolve.scale[channel];
-      if (resolve7 === "shared") {
+      const resolve8 = facetParent.component.resolve.scale[channel];
+      if (resolve8 === "shared") {
         for (const domain4 of domains.value) {
           if (isDataRefDomain(domain4)) {
             domain4.data = FACET_SCALE_PREFIX + domain4.data.replace(FACET_SCALE_PREFIX, "");
@@ -78758,19 +78787,19 @@ var scaleTypeTieBreaker = tieBreakByComparing((st1, st2) => scaleTypePrecedence(
 function parseNonUnitScaleCore(model) {
   const scaleComponents = model.component.scales = {};
   const scaleTypeWithExplicitIndex = {};
-  const resolve7 = model.component.resolve;
+  const resolve8 = model.component.resolve;
   for (const child of model.children) {
     parseScaleCore(child);
     for (const channel of keys3(child.component.scales)) {
-      resolve7.scale[channel] ??= defaultScaleResolve(channel, model);
-      if (resolve7.scale[channel] === "shared") {
+      resolve8.scale[channel] ??= defaultScaleResolve(channel, model);
+      if (resolve8.scale[channel] === "shared") {
         const explicitScaleType = scaleTypeWithExplicitIndex[channel];
         const childScaleType = child.component.scales[channel].getWithExplicit("type");
         if (explicitScaleType) {
           if (scaleCompatible(explicitScaleType.value, childScaleType.value)) {
             scaleTypeWithExplicitIndex[channel] = mergeValuesWithExplicit(explicitScaleType, childScaleType, "type", "scale", scaleTypeTieBreaker);
           } else {
-            resolve7.scale[channel] = "independent";
+            resolve8.scale[channel] = "independent";
             delete scaleTypeWithExplicitIndex[channel];
           }
         } else {
@@ -78842,7 +78871,7 @@ var Model = class {
   signalNameMap;
   component;
   view;
-  constructor(spec, type3, parent, parentGivenName, config2, resolve7, view) {
+  constructor(spec, type3, parent, parentGivenName, config2, resolve8, view) {
     this.type = type3;
     this.parent = parent;
     this.config = config2;
@@ -78873,7 +78902,7 @@ var Model = class {
         scale: {},
         axis: {},
         legend: {},
-        ...resolve7 ? duplicate(resolve7) : {}
+        ...resolve8 ? duplicate(resolve8) : {}
       },
       selection: null,
       scales: null,
@@ -79207,8 +79236,8 @@ var DensityTransformNode = class _DensityTransformNode extends DataFlowNode {
     this.transform = duplicate(transform5);
     const specifiedAs = this.transform.as ?? [void 0, void 0];
     this.transform.as = [specifiedAs[0] ?? "value", specifiedAs[1] ?? "density"];
-    const resolve7 = this.transform.resolve ?? "shared";
-    this.transform.resolve = resolve7;
+    const resolve8 = this.transform.resolve ?? "shared";
+    this.transform.resolve = resolve8;
   }
   dependentFields() {
     return /* @__PURE__ */ new Set([this.transform.density, ...this.transform.groupby ?? []]);
@@ -80018,12 +80047,12 @@ function parseChildrenLayoutSize(model) {
 function parseNonUnitLayoutSizeForChannel(model, layoutSizeType) {
   const sizeType = getSizeTypeFromLayoutSizeType(layoutSizeType);
   const channel = getPositionScaleChannel(sizeType);
-  const resolve7 = model.component.resolve;
+  const resolve8 = model.component.resolve;
   const layoutSizeCmpt = model.component.layoutSize;
   let mergedSize;
   for (const child of model.children) {
     const childSize = child.component.layoutSize.getWithExplicit(sizeType);
-    const scaleResolve = resolve7.scale[channel] ?? defaultScaleResolve(channel, model);
+    const scaleResolve = resolve8.scale[channel] ?? defaultScaleResolve(channel, model);
     if (scaleResolve === "independent" && childSize.value === "step") {
       mergedSize = void 0;
       break;
@@ -80380,9 +80409,9 @@ function makeHeaderComponent(model, channel, labels2) {
 function mergeChildAxis(model, channel) {
   const { child } = model;
   if (child.component.axes[channel]) {
-    const { layoutHeaders: layoutHeaders2, resolve: resolve7 } = model.component;
-    resolve7.axis[channel] = parseGuideResolve(resolve7, channel);
-    if (resolve7.axis[channel] === "shared") {
+    const { layoutHeaders: layoutHeaders2, resolve: resolve8 } = model.component;
+    resolve8.axis[channel] = parseGuideResolve(resolve8, channel);
+    if (resolve8.axis[channel] === "shared") {
       const headerChannel = channel === "x" ? "column" : "row";
       const layoutHeader = layoutHeaders2[headerChannel];
       for (const axisComponent of child.component.axes[channel]) {
@@ -80859,16 +80888,16 @@ var OPPOSITE_ORIENT = {
   right: "left"
 };
 function parseLayerAxes(model) {
-  const { axes, resolve: resolve7 } = model.component;
+  const { axes, resolve: resolve8 } = model.component;
   const axisCount = { top: 0, bottom: 0, right: 0, left: 0 };
   for (const child of model.children) {
     child.parseAxesAndHeaders();
     for (const channel of keys3(child.component.axes)) {
-      resolve7.axis[channel] = parseGuideResolve(model.component.resolve, channel);
-      if (resolve7.axis[channel] === "shared") {
+      resolve8.axis[channel] = parseGuideResolve(model.component.resolve, channel);
+      if (resolve8.axis[channel] === "shared") {
         axes[channel] = mergeAxisComponents(axes[channel], child.component.axes[channel]);
         if (!axes[channel]) {
-          resolve7.axis[channel] = "independent";
+          resolve8.axis[channel] = "independent";
           delete axes[channel];
         }
       }
@@ -80879,7 +80908,7 @@ function parseLayerAxes(model) {
       if (!child.component.axes[channel]) {
         continue;
       }
-      if (resolve7.axis[channel] === "independent") {
+      if (resolve8.axis[channel] === "independent") {
         axes[channel] = (axes[channel] ?? []).concat(child.component.axes[channel]);
         for (const axisComponent of child.component.axes[channel]) {
           const { value: orient2, explicit } = axisComponent.getWithExplicit("orient");
@@ -80897,7 +80926,7 @@ function parseLayerAxes(model) {
       }
       delete child.component.axes[channel];
     }
-    if (resolve7.axis[channel] === "independent" && axes[channel] && axes[channel].length > 1) {
+    if (resolve8.axis[channel] === "independent" && axes[channel] && axes[channel].length > 1) {
       for (const [index3, axisCmpt] of (axes[channel] || []).entries()) {
         if (index3 > 0 && !!axisCmpt.get("grid") && !axisCmpt.explicit.grid) {
           axisCmpt.implicit.grid = false;
@@ -82179,7 +82208,7 @@ var studioCommands = {
     const out = requirePositional(a3, 2, "out");
     const width2 = optNum(a3, "width") ?? 1024;
     const height2 = optNum(a3, "height") ?? 1024;
-    writeFileSync14(out, buildLabelOverlay(image4, width2, height2, labels2, tokensOf(a3)));
+    writeFileSync14(out, buildLabelOverlay(overlayHref(image4, out), width2, height2, labels2, tokensOf(a3)));
     return { out };
   },
   "ledger totals": (a3) => ledgerTotals(requireFlag(a3, "course")),
@@ -82222,7 +82251,7 @@ var studioCommands = {
   },
   embed: (a3) => {
     const course = requireFlag(a3, "course");
-    return embedOne(course, resolve6(requirePositional(a3, 0, "file")), requireFlag(a3, "asset"), requireFlag(a3, "anchor"));
+    return embedOne(course, resolve7(requirePositional(a3, 0, "file")), requireFlag(a3, "asset"), requireFlag(a3, "anchor"));
   },
   "embed all": (a3) => ({ files: embedAll(requireFlag(a3, "course")) }),
   "providers probe-codex": () => probeCodex(),
@@ -82243,11 +82272,11 @@ var studioCommands = {
   "style tokens": (a3) => {
     const course = requireFlag(a3, "course");
     let brandPath;
-    if (typeof a3.flags.brand === "string") brandPath = resolve6(a3.flags.brand);
+    if (typeof a3.flags.brand === "string") brandPath = resolve7(a3.flags.brand);
     else {
       const rel = loadManifest(course).brand;
       const theme = join19(course, "05-media", "style", "theme.yaml");
-      if (rel) brandPath = resolve6(course, rel);
+      if (rel) brandPath = resolve7(course, rel);
       else if (existsSync16(theme)) brandPath = theme;
     }
     if (!brandPath) throw new UsageError("no brand file: pass --brand, set brand in course.yaml, or create 05-media/style/theme.yaml");
