@@ -1,3 +1,4 @@
+import { execFile } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
@@ -81,7 +82,8 @@ test('generateAssetImage with openai records spend and a generated asset', async
   });
   expect(a.sha256).toMatch(/^[0-9a-f]{64}$/);
   expect(ledgerTotals(dir)).toEqual({ spentUsd: 0.053, quotaUsed: 0 });
-  expect(readLedger(dir)[0]).toMatchObject({ assetId: ID, provider: 'openai', model: 'gpt-image-2', estimateUsd: 0.053, actualUsd: 0.053 });
+  expect(readLedger(dir).map((e) => e.kind)).toEqual(['reserve', 'settle']);
+  expect(readLedger(dir)[1]).toMatchObject({ assetId: ID, provider: 'openai', model: 'gpt-image-2', estimateUsd: 0.053, actualUsd: 0.053 });
   expect(loadRegistry(dir).assets).toEqual([a]);
   expect(readFileSync(join(dir, '05-media', 'out', `${ID}.png`))).toEqual(Buffer.from(PNG_1PX, 'base64'));
   expect(readFileSync(join(dir, '05-media', 'src', `${ID}.prompt.txt`), 'utf8'))
@@ -155,9 +157,49 @@ test('codex that writes no file gives ProviderUnavailableError and no ledger ent
   const dir = course({ items: [item({ provider: 'codex' })] });
   await expect(generateAssetImage(dir, ID, 'codex', { quality: 'standard', codexBin: CODEX_NOFILE }))
     .rejects.toBeInstanceOf(ProviderUnavailableError);
-  expect(readLedger(dir)).toEqual([]);
+  expect(ledgerTotals(dir)).toEqual({ spentUsd: 0, quotaUsed: 0 });
+  expect(readLedger(dir).map((e) => e.kind)).toEqual(['reserve', 'release']);
   expect(loadRegistry(dir).assets).toEqual([]);
 });
+
+test('codex runs without the OpenAI key variables in its environment', async () => {
+  const dir = course({ items: [item({ provider: 'codex' })] });
+  const log = join(mkdtempSync(join(tmpdir(), 'log-')), 'argv.jsonl');
+  vi.stubEnv('CODEX_STUB_LOG', log);
+  vi.stubEnv('OPENAI_API_KEY', KEY);
+  vi.stubEnv('COURSE_MEDIA_OPENAI_KEY', KEY);
+  try {
+    await generateAssetImage(dir, ID, 'codex', { quality: 'standard', codexBin: CODEX });
+    await probeCodex(CODEX);
+  } finally { vi.unstubAllEnvs(); }
+  const calls = readFileSync(log, 'utf8').trim().split('\n').map((l) => JSON.parse(l));
+  expect(calls).toHaveLength(3);
+  for (const c of calls) expect(c.keys).toEqual({ OPENAI_API_KEY: false, COURSE_MEDIA_OPENAI_KEY: false });
+});
+
+test('parallel generations where the budget fits one: one succeeds, one is refused, one request', async () => {
+  const dir = course({ budgetUsd: 0.06 });
+  const fetchImpl = okFetch();
+  const r = await Promise.allSettled([1, 2].map(() =>
+    generateAssetImage(dir, ID, 'openai', { quality: 'standard', env: { OPENAI_API_KEY: KEY }, fetchImpl })));
+  expect(r.filter((x) => x.status === 'fulfilled')).toHaveLength(1);
+  expect((r.find((x) => x.status === 'rejected') as PromiseRejectedResult).reason).toBeInstanceOf(BudgetExceededError);
+  expect(fetchImpl).toHaveBeenCalledTimes(1);
+  expect(ledgerTotals(dir)).toEqual({ spentUsd: 0.053, quotaUsed: 0 });
+});
+
+test('parallel CLI processes share the plan image cap through the ledger', async () => {
+  const dir = course({ maxPlanImages: 1, items: [item({ provider: 'codex' }), item({ id: 'A-M1-02', provider: 'codex' })] });
+  const bundle = join(stubs, '..', '..', '..', '..', 'plugins/course-studio/skills/course-kit/scripts/course-kit.mjs');
+  const env = { ...process.env, PATH: `${stubs}:${process.env.PATH}` };
+  const runOne = (id: string) => new Promise<number | null>((resolve) => {
+    execFile('node', [bundle, 'gen', 'image', '--course', dir, '--asset', id, '--provider', 'codex', '--quality', 'standard'], { env },
+      (err) => resolve(err ? (typeof err.code === 'number' ? err.code : null) : 0));
+  });
+  const codes = await Promise.all([runOne(ID), runOne('A-M1-02')]);
+  expect(codes.sort()).toEqual([0, 3]);
+  expect(ledgerTotals(dir)).toEqual({ spentUsd: 0, quotaUsed: 1 });
+}, 30000);
 
 test('codex refuses before running when the plan image cap is reached', async () => {
   const dir = course({ maxPlanImages: 0, items: [item({ provider: 'codex' })] });
@@ -201,8 +243,8 @@ test('OpenAI errors map to exit classes and never include the key', async () => 
     [errFetch(429, 'Rate limit reached'), ProviderUnavailableError, /429.*Rate limit reached/],
     [errFetch(503, 'overloaded'), ProviderUnavailableError, /503.*overloaded/],
     [errFetch(400, 'Your request was rejected by the safety system'), ValidationError, /400.*safety system/],
-    [vi.fn<typeof fetch>().mockRejectedValue(new TypeError('fetch failed')), ProviderUnavailableError, /fetch failed/],
-    [vi.fn<typeof fetch>().mockImplementation(async () => new Response('{"data":[]}')), ProviderUnavailableError, /no image/],
+    [vi.fn<typeof fetch>().mockRejectedValue(new TypeError('fetch failed', { cause: Object.assign(new Error('connect ECONNREFUSED'), { code: 'ECONNREFUSED' }) })),
+      ProviderUnavailableError, /fetch failed/],
   ];
   for (const [fetchImpl, cls, re] of cases) {
     const dir = course();
@@ -211,7 +253,23 @@ test('OpenAI errors map to exit classes and never include the key', async () => 
     const msg = await p.catch((e: Error) => e.message);
     expect(msg).toMatch(re);
     expect(msg).not.toContain(KEY);
-    expect(readLedger(dir)).toEqual([]);
+    expect(ledgerTotals(dir)).toEqual({ spentUsd: 0, quotaUsed: 0 });
+    expect(loadRegistry(dir).assets).toEqual([]);
+  }
+});
+
+test('a request that may have been billed is recorded as spent even when it fails', async () => {
+  const cases: typeof fetch[] = [
+    vi.fn<typeof fetch>().mockImplementation(async () => new Response('{"data":[]}')),
+    vi.fn<typeof fetch>().mockRejectedValue(Object.assign(new Error('The operation was aborted due to timeout'), { name: 'TimeoutError' })),
+    vi.fn<typeof fetch>().mockRejectedValue(new TypeError('fetch failed', { cause: Object.assign(new Error('socket hang up'), { code: 'ECONNRESET' }) })),
+  ];
+  for (const fetchImpl of cases) {
+    const dir = course();
+    await expect(generateAssetImage(dir, ID, 'openai', { quality: 'standard', env: { OPENAI_API_KEY: KEY }, fetchImpl }))
+      .rejects.toBeInstanceOf(ProviderUnavailableError);
+    expect(ledgerTotals(dir)).toEqual({ spentUsd: 0.053, quotaUsed: 0 });
+    expect(readLedger(dir).map((e) => e.kind)).toEqual(['reserve', 'settle']);
     expect(loadRegistry(dir).assets).toEqual([]);
   }
 });

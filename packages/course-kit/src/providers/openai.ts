@@ -6,7 +6,7 @@ import type { Pricing } from '../media/schema.js';
 
 export type ImageQuality = 'draft' | 'standard' | 'high';
 
-const URL = 'https://api.openai.com/v1/images/generations';
+const ENDPOINT = 'https://api.openai.com/v1/images/generations';
 const MODEL = 'gpt-image-2';
 const API_QUALITY: Record<ImageQuality, 'low' | 'medium' | 'high'> = { draft: 'low', standard: 'medium', high: 'high' };
 const TIMEOUT_MS = 5 * 60_000;
@@ -26,6 +26,17 @@ export function resolveOpenAIKey(env: NodeJS.ProcessEnv, dataDir?: string): stri
   return null;
 }
 
+/** Network errors that happen before the request is sent: OpenAI cannot have billed. */
+const PRE_SEND_CODES = new Set(['ECONNREFUSED', 'ENOTFOUND', 'EAI_AGAIN', 'EHOSTUNREACH', 'ENETUNREACH']);
+
+/** Set on errors raised after OpenAI may have billed the request (sent but outcome unknown, or 2xx without a usable image). */
+export function possiblyBilled(e: unknown): boolean {
+  return e instanceof Error && (e as { possiblyBilled?: boolean }).possiblyBilled === true;
+}
+function billed<E extends Error>(e: E): E {
+  return Object.assign(e, { possiblyBilled: true });
+}
+
 function redact(text: string, key: string): string {
   return key ? text.split(key).join('[redacted]') : text;
 }
@@ -43,16 +54,22 @@ export async function generateImageOpenAI(o: {
   const doFetch = o.fetchImpl ?? fetch;
   let res: Response;
   try {
-    res = await doFetch(URL, {
+    res = await doFetch(ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${o.apiKey}` },
       body: JSON.stringify({ model: MODEL, prompt: o.prompt, size: '1024x1024', quality: API_QUALITY[o.quality], n: 1 }),
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
   } catch (e) {
-    throw new ProviderUnavailableError(redact(`OpenAI request failed: ${e instanceof Error ? e.message : String(e)}`, o.apiKey));
+    const err = new ProviderUnavailableError(redact(`OpenAI request failed: ${e instanceof Error ? e.message : String(e)}`, o.apiKey));
+    const code = (e as { cause?: { code?: unknown } })?.cause?.code;
+    throw typeof code === 'string' && PRE_SEND_CODES.has(code) ? err : billed(err);
   }
-  const text = await res.text().catch(() => '');
+  let text = '';
+  try { text = await res.text(); }
+  catch (e) {
+    if (res.ok) throw billed(new ProviderUnavailableError(redact(`OpenAI response could not be read: ${e instanceof Error ? e.message : String(e)}`, o.apiKey)));
+  }
   let body: { data?: { b64_json?: string }[]; error?: { message?: string } } = {};
   try { body = JSON.parse(text); } catch { /* non-JSON body */ }
   if (!res.ok) {
@@ -61,8 +78,12 @@ export async function generateImageOpenAI(o: {
     throw new ProviderUnavailableError(`OpenAI image API unavailable (${res.status}): ${msg}`);
   }
   const b64 = body.data?.[0]?.b64_json;
-  if (!b64) throw new ProviderUnavailableError('OpenAI response had no image data (data[0].b64_json)');
-  mkdirSync(dirname(o.outPath), { recursive: true });
-  writeFileSync(o.outPath, Buffer.from(b64, 'base64'));
+  if (!b64) throw billed(new ProviderUnavailableError('OpenAI response had no image data (data[0].b64_json); the request may have been billed'));
+  try {
+    mkdirSync(dirname(o.outPath), { recursive: true });
+    writeFileSync(o.outPath, Buffer.from(b64, 'base64'));
+  } catch (e) {
+    throw billed(new ProviderUnavailableError(`cannot write ${o.outPath}: ${e instanceof Error ? e.message : String(e)}`));
+  }
   return { usd, model: MODEL };
 }

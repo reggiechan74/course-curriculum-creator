@@ -5,7 +5,7 @@ import { basename, join } from 'node:path';
 
 const NOFILE = basename(process.argv[1]) === 'codex-nofile';
 const args = process.argv.slice(2);
-if (process.env.CODEX_STUB_LOG) appendFileSync(process.env.CODEX_STUB_LOG, JSON.stringify({ args, cwd: process.cwd() }) + '\n');
+if (process.env.CODEX_STUB_LOG) appendFileSync(process.env.CODEX_STUB_LOG, JSON.stringify({ args, cwd: process.cwd(), keys: { OPENAI_API_KEY: 'OPENAI_API_KEY' in process.env, COURSE_MEDIA_OPENAI_KEY: 'COURSE_MEDIA_OPENAI_KEY' in process.env } }) + '\n');
 
 const PNG_1PX = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
 

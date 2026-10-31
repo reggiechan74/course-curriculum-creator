@@ -1,10 +1,12 @@
-import { appendFileSync, mkdtempSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, mkdtempSync, utimesSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { expect, test } from 'vitest';
 import { BudgetExceededError, ValidationError } from '../src/errors.js';
 import type { Manifest } from '../src/manifest/io.js';
-import { checkBudget, type LedgerEntry, ledgerTotals, readLedger, recordSpend } from '../src/media/ledger.js';
+import {
+  checkBudget, type LedgerEntry, ledgerTotals, readLedger, recordSpend, releaseSpend, reserveSpend, settleSpend,
+} from '../src/media/ledger.js';
 
 const m = { media: { budgetUsd: 1.0, maxPlanImages: 2, approvalRequired: true } } as Manifest;
 const dir = () => mkdtempSync(join(tmpdir(), 'led '));
@@ -68,4 +70,48 @@ test('cap comparison rounds the sum once', () => {
   // 0.004 + 0.004 rounds to 0.01 once; separately rounded cents would give 0
   const tiny = { media: { budgetUsd: 0.0, maxPlanImages: 2, approvalRequired: true } } as Manifest;
   expect(() => checkBudget(tiny, { spentUsd: 0.004, quotaUsed: 0 }, { usd: 0.004, quota: 0 })).toThrow(BudgetExceededError);
+});
+
+const base = { assetId: 'A1', provider: 'openai', estimateUsd: 0.5, quotaUnits: 0 };
+test('a reservation counts as spent until it is released', async () => {
+  const d = dir();
+  const id = await reserveSpend(d, m, base);
+  expect(ledgerTotals(d)).toEqual({ spentUsd: 0.5, quotaUsed: 0 });
+  await expect(reserveSpend(d, m, { ...base, estimateUsd: 0.6 })).rejects.toThrow('Budget exceeded: cap $1.00, spent $0.50, request $0.60');
+  releaseSpend(d, id);
+  expect(ledgerTotals(d)).toEqual({ spentUsd: 0, quotaUsed: 0 });
+  expect(readLedger(d).map((e) => e.kind)).toEqual(['reserve', 'release']);
+});
+test('a settled reservation counts the settled amount once', async () => {
+  const d = dir();
+  recordSpend(d, entry({ actualUsd: 0.1 }));
+  const id = await reserveSpend(d, m, { ...base, quotaUnits: 1 });
+  settleSpend(d, id, { actualUsd: 0.4, model: 'gpt-image-2' });
+  expect(ledgerTotals(d)).toEqual({ spentUsd: 0.5, quotaUsed: 1 });
+  expect(readLedger(d)[2]).toMatchObject({ kind: 'settle', reservationId: id, assetId: 'A1', actualUsd: 0.4, model: 'gpt-image-2' });
+});
+test('parallel reservations that fit only one: one succeeds', async () => {
+  const d = dir();
+  const r = await Promise.allSettled([reserveSpend(d, m, { ...base, estimateUsd: 0.6 }), reserveSpend(d, m, { ...base, estimateUsd: 0.6 })]);
+  expect(r.filter((x) => x.status === 'fulfilled')).toHaveLength(1);
+  expect(r.filter((x) => x.status === 'rejected').map((x) => (x as PromiseRejectedResult).reason)[0]).toBeInstanceOf(BudgetExceededError);
+});
+test('reserveSpend waits for the ledger lock and removes a stale lock', async () => {
+  const d = dir();
+  mkdirSync(join(d, '.course'), { recursive: true });
+  const lock = join(d, '.course', 'ledger.lock');
+  writeFileSync(lock, '');
+  let done = false;
+  const p = reserveSpend(d, m, base).then(() => { done = true; });
+  await new Promise((r) => setTimeout(r, 150));
+  expect(done).toBe(false);
+  const { unlinkSync } = await import('node:fs');
+  unlinkSync(lock);
+  await p;
+  expect(existsSync(lock)).toBe(false);
+  writeFileSync(lock, '');
+  const old = new Date(Date.now() - 10 * 60_000);
+  utimesSync(lock, old, old);
+  await reserveSpend(d, m, base);
+  expect(ledgerTotals(d).spentUsd).toBe(1);
 });

@@ -7,9 +7,17 @@ const TIMEOUT_MS = 5 * 60_000;
 
 type RunResult = { code: number | null; stderr: string; error?: ExecFileException };
 
+/** The child never sees the OpenAI keys, so a plan-billed run cannot bill the API key. */
+function childEnv(): NodeJS.ProcessEnv {
+  const env = { ...process.env };
+  delete env.OPENAI_API_KEY;
+  delete env.COURSE_MEDIA_OPENAI_KEY;
+  return env;
+}
+
 function run(bin: string, args: string[], opts: { cwd?: string; timeout?: number } = {}): Promise<RunResult> {
   return new Promise((resolve) => {
-    execFile(bin, args, { ...opts, maxBuffer: 64 * 1024 * 1024, windowsHide: true }, (error, _stdout, stderr) => {
+    execFile(bin, args, { ...opts, env: childEnv(), maxBuffer: 64 * 1024 * 1024, windowsHide: true }, (error, _stdout, stderr) => {
       if (!error) return resolve({ code: 0, stderr: String(stderr) });
       const code = typeof error.code === 'number' ? error.code : null;
       resolve({ code, stderr: String(stderr), error });

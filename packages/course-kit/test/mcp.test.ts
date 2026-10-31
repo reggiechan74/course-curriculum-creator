@@ -95,5 +95,19 @@ test('MCP generate_image generates with openai and returns the asset', async () 
   expect(r.isError).toBeFalsy();
   expect(JSON.parse(r.content[0].text)).toMatchObject({ id: ID, provider: 'openai', status: 'generated', costUsd: 0.053 });
   expect((fetchImpl.mock.calls[0][1]?.headers as Record<string, string>).Authorization).toBe('Bearer file-key');
-  expect(readLedger(dir)).toHaveLength(1);
+  expect(readLedger(dir).map((e) => e.kind)).toEqual(['reserve', 'settle']);
+});
+
+test('parallel MCP generate_image calls where the budget fits one: exactly one succeeds', async () => {
+  const dir = course(0.06);
+  savePlan(dir, { schema: 'media-plan/v1', items: ['A-M1-01', 'A-M1-02'].map((id) => ({
+    id, module: 'M1', objectives: ['O1'], function: 'scenario-illustration' as const, kind: 'image' as const,
+    description: 'a broker reads a lease', provider: 'openai', estimateUsd: 0.053, quotaUnits: 0, status: 'approved' as const,
+  })) });
+  const fetchImpl = okFetch();
+  const c = await connect({ env: { OPENAI_API_KEY: 'k' }, fetchImpl });
+  const rs = await Promise.all(['A-M1-01', 'A-M1-02'].map((assetId) => call(c, 'generate_image', { courseDir: dir, assetId })));
+  expect(rs.filter((r) => !r.isError)).toHaveLength(1);
+  expect(rs.find((r) => r.isError)?.content[0].text).toBe('Budget exceeded: cap $0.06, spent $0.05, request $0.05');
+  expect(fetchImpl).toHaveBeenCalledTimes(1);
 });

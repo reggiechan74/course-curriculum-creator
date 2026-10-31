@@ -28375,7 +28375,8 @@ var coreCommands = {
 };
 
 // packages/course-kit/src/media/ledger.ts
-import { appendFileSync, existsSync as existsSync7, mkdirSync as mkdirSync4, readFileSync as readFileSync8 } from "node:fs";
+import { randomUUID } from "node:crypto";
+import { appendFileSync, closeSync, existsSync as existsSync7, mkdirSync as mkdirSync4, openSync, readFileSync as readFileSync8, statSync, unlinkSync } from "node:fs";
 import { join as join7 } from "node:path";
 var LedgerEntrySchema = external_exports.object({
   at: external_exports.string(),
@@ -28384,7 +28385,10 @@ var LedgerEntrySchema = external_exports.object({
   model: external_exports.string().optional(),
   estimateUsd: external_exports.number().nonnegative().finite(),
   actualUsd: external_exports.number().nonnegative().finite(),
-  quotaUnits: external_exports.number().nonnegative().finite()
+  quotaUnits: external_exports.number().nonnegative().finite(),
+  /** Absent = 'record' (a completed spend). reserve/settle/release share a reservationId. */
+  kind: external_exports.enum(["record", "reserve", "settle", "release"]).optional(),
+  reservationId: external_exports.string().optional()
 });
 var DIR = ".course";
 var FILE4 = "cost-ledger.jsonl";
@@ -28411,9 +28415,25 @@ function readLedger(courseDir) {
 function ledgerTotals(courseDir) {
   let micro = 0;
   let quotaUsed = 0;
+  const reservations = /* @__PURE__ */ new Map();
   for (const e of readLedger(courseDir)) {
-    micro += Math.round(e.actualUsd * 1e6);
-    quotaUsed += e.quotaUnits;
+    const kind = e.kind ?? "record";
+    if (kind === "record" || !e.reservationId) {
+      if (kind !== "release") {
+        micro += Math.round(e.actualUsd * 1e6);
+        quotaUsed += e.quotaUnits;
+      }
+    } else if (kind === "reserve") {
+      if (!reservations.has(e.reservationId)) reservations.set(e.reservationId, e);
+    } else {
+      reservations.set(e.reservationId, kind === "settle" ? e : null);
+    }
+  }
+  for (const e of reservations.values()) {
+    if (e) {
+      micro += Math.round(e.actualUsd * 1e6);
+      quotaUsed += e.quotaUnits;
+    }
   }
   return { spentUsd: micro / 1e6, quotaUsed };
 }
@@ -28440,15 +28460,94 @@ function recordSpend(courseDir, e) {
   mkdirSync4(join7(courseDir, DIR), { recursive: true });
   appendFileSync(join7(courseDir, DIR, FILE4), JSON.stringify(r.data) + "\n");
 }
+var LOCK = "ledger.lock";
+var LOCK_STALE_MS = 2 * 6e4;
+var LOCK_WAIT_MS = 3e4;
+var sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+async function withLedgerLock(courseDir, fn) {
+  mkdirSync4(join7(courseDir, DIR), { recursive: true });
+  const lock = join7(courseDir, DIR, LOCK);
+  const deadline = Date.now() + LOCK_WAIT_MS;
+  for (let attempt = 0; ; attempt++) {
+    let fd;
+    try {
+      fd = openSync(lock, "wx");
+    } catch (e) {
+      if (e.code !== "EEXIST") throw e;
+      try {
+        if (Date.now() - statSync(lock).mtimeMs > LOCK_STALE_MS) {
+          unlinkSync(lock);
+          continue;
+        }
+      } catch {
+        continue;
+      }
+      if (Date.now() > deadline) {
+        throw new ValidationError(`cost ledger is locked (${lock}); if no generation is running, delete the lock file`);
+      }
+      await sleep(Math.min(20 + attempt * 10, 200));
+      continue;
+    }
+    try {
+      return fn();
+    } finally {
+      closeSync(fd);
+      try {
+        unlinkSync(lock);
+      } catch {
+      }
+    }
+  }
+}
+async function reserveSpend(courseDir, m3, req) {
+  return withLedgerLock(courseDir, () => {
+    checkBudget(m3, ledgerTotals(courseDir), { usd: req.estimateUsd, quota: req.quotaUnits });
+    const reservationId = randomUUID();
+    recordSpend(courseDir, {
+      at: (/* @__PURE__ */ new Date()).toISOString(),
+      ...req,
+      actualUsd: req.estimateUsd,
+      kind: "reserve",
+      reservationId
+    });
+    return reservationId;
+  });
+}
+function reservation(courseDir, reservationId) {
+  const r = readLedger(courseDir).find((e) => e.kind === "reserve" && e.reservationId === reservationId);
+  if (!r) throw new ValidationError(`unknown ledger reservation ${reservationId}`);
+  return r;
+}
+function settleSpend(courseDir, reservationId, o = {}) {
+  const r = reservation(courseDir, reservationId);
+  recordSpend(courseDir, {
+    ...r,
+    at: (/* @__PURE__ */ new Date()).toISOString(),
+    ...o.model ? { model: o.model } : {},
+    actualUsd: o.actualUsd ?? r.estimateUsd,
+    kind: "settle",
+    reservationId
+  });
+}
+function releaseSpend(courseDir, reservationId) {
+  const r = reservation(courseDir, reservationId);
+  recordSpend(courseDir, { ...r, at: (/* @__PURE__ */ new Date()).toISOString(), actualUsd: 0, quotaUnits: 0, kind: "release", reservationId });
+}
 
 // packages/course-kit/src/providers/codex.ts
 import { execFile } from "node:child_process";
-import { existsSync as existsSync8, mkdirSync as mkdirSync5, statSync } from "node:fs";
+import { existsSync as existsSync8, mkdirSync as mkdirSync5, statSync as statSync2 } from "node:fs";
 import { basename as basename2, dirname } from "node:path";
 var TIMEOUT_MS = 5 * 6e4;
+function childEnv() {
+  const env = { ...process.env };
+  delete env.OPENAI_API_KEY;
+  delete env.COURSE_MEDIA_OPENAI_KEY;
+  return env;
+}
 function run(bin3, args, opts = {}) {
   return new Promise((resolve5) => {
-    execFile(bin3, args, { ...opts, maxBuffer: 64 * 1024 * 1024, windowsHide: true }, (error64, _stdout, stderr) => {
+    execFile(bin3, args, { ...opts, env: childEnv(), maxBuffer: 64 * 1024 * 1024, windowsHide: true }, (error64, _stdout, stderr) => {
       if (!error64) return resolve5({ code: 0, stderr: String(stderr) });
       const code = typeof error64.code === "number" ? error64.code : null;
       resolve5({ code, stderr: String(stderr), error: error64 });
@@ -28463,7 +28562,7 @@ async function probeCodex(codexBin = "codex") {
 }
 function fileStamp(p) {
   if (!existsSync8(p)) return null;
-  const s = statSync(p);
+  const s = statSync2(p);
   return `${s.mtimeMs}:${s.size}`;
 }
 async function generateImageCodex(o) {
@@ -28501,7 +28600,7 @@ import { join as join9 } from "node:path";
 // packages/course-kit/src/providers/openai.ts
 import { existsSync as existsSync9, mkdirSync as mkdirSync6, readFileSync as readFileSync9, writeFileSync as writeFileSync6 } from "node:fs";
 import { dirname as dirname2, join as join8 } from "node:path";
-var URL2 = "https://api.openai.com/v1/images/generations";
+var ENDPOINT = "https://api.openai.com/v1/images/generations";
 var MODEL = "gpt-image-2";
 var API_QUALITY = { draft: "low", standard: "medium", high: "high" };
 var TIMEOUT_MS2 = 5 * 6e4;
@@ -28518,6 +28617,13 @@ function resolveOpenAIKey(env, dataDir2) {
   }
   return null;
 }
+var PRE_SEND_CODES = /* @__PURE__ */ new Set(["ECONNREFUSED", "ENOTFOUND", "EAI_AGAIN", "EHOSTUNREACH", "ENETUNREACH"]);
+function possiblyBilled(e) {
+  return e instanceof Error && e.possiblyBilled === true;
+}
+function billed(e) {
+  return Object.assign(e, { possiblyBilled: true });
+}
 function redact(text3, key2) {
   return key2 ? text3.split(key2).join("[redacted]") : text3;
 }
@@ -28531,16 +28637,23 @@ async function generateImageOpenAI(o) {
   const doFetch = o.fetchImpl ?? fetch;
   let res;
   try {
-    res = await doFetch(URL2, {
+    res = await doFetch(ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${o.apiKey}` },
       body: JSON.stringify({ model: MODEL, prompt: o.prompt, size: "1024x1024", quality: API_QUALITY[o.quality], n: 1 }),
       signal: AbortSignal.timeout(TIMEOUT_MS2)
     });
   } catch (e) {
-    throw new ProviderUnavailableError(redact(`OpenAI request failed: ${e instanceof Error ? e.message : String(e)}`, o.apiKey));
+    const err = new ProviderUnavailableError(redact(`OpenAI request failed: ${e instanceof Error ? e.message : String(e)}`, o.apiKey));
+    const code = e?.cause?.code;
+    throw typeof code === "string" && PRE_SEND_CODES.has(code) ? err : billed(err);
   }
-  const text3 = await res.text().catch(() => "");
+  let text3 = "";
+  try {
+    text3 = await res.text();
+  } catch (e) {
+    if (res.ok) throw billed(new ProviderUnavailableError(redact(`OpenAI response could not be read: ${e instanceof Error ? e.message : String(e)}`, o.apiKey)));
+  }
   let body = {};
   try {
     body = JSON.parse(text3);
@@ -28552,9 +28665,13 @@ async function generateImageOpenAI(o) {
     throw new ProviderUnavailableError(`OpenAI image API unavailable (${res.status}): ${msg}`);
   }
   const b64 = body.data?.[0]?.b64_json;
-  if (!b64) throw new ProviderUnavailableError("OpenAI response had no image data (data[0].b64_json)");
-  mkdirSync6(dirname2(o.outPath), { recursive: true });
-  writeFileSync6(o.outPath, Buffer.from(b64, "base64"));
+  if (!b64) throw billed(new ProviderUnavailableError("OpenAI response had no image data (data[0].b64_json); the request may have been billed"));
+  try {
+    mkdirSync6(dirname2(o.outPath), { recursive: true });
+    writeFileSync6(o.outPath, Buffer.from(b64, "base64"));
+  } catch (e) {
+    throw billed(new ProviderUnavailableError(`cannot write ${o.outPath}: ${e instanceof Error ? e.message : String(e)}`));
+  }
   return { usd, model: MODEL };
 }
 
@@ -28595,26 +28712,30 @@ async function generateAssetImage(courseDir, assetId, provider, o) {
   writeFileSync7(join9(courseDir, source3), prompt);
   const pricing = provider === "openai" ? loadPricing(o.dataDir) : void 0;
   const estimate2 = pricing ? { usd: openaiPrice(pricing, o.quality), quota: 0 } : { usd: 0, quota: 1 };
-  checkBudget(manifest, ledgerTotals(courseDir), estimate2);
+  const reservationId = await reserveSpend(courseDir, manifest, {
+    assetId,
+    provider,
+    ...pricing ? { model: "gpt-image-2" } : {},
+    estimateUsd: estimate2.usd,
+    quotaUnits: estimate2.quota
+  });
   const file2 = `05-media/out/${assetId}.png`;
   const outPath = join9(courseDir, file2);
   let model;
-  if (provider === "openai") {
-    const apiKey = resolveOpenAIKey(o.env ?? process.env, o.dataDir);
-    if (!apiKey) throw new ProviderUnavailableError("OpenAI API key not configured: set COURSE_MEDIA_OPENAI_KEY or OPENAI_API_KEY, or write <data-dir>/openai.key");
-    model = (await generateImageOpenAI({ prompt, outPath, quality: o.quality, apiKey, fetchImpl: o.fetchImpl, pricing })).model;
-  } else {
-    await generateImageCodex({ prompt, outPath, codexBin: o.codexBin });
+  try {
+    if (provider === "openai") {
+      const apiKey = resolveOpenAIKey(o.env ?? process.env, o.dataDir);
+      if (!apiKey) throw new ProviderUnavailableError("OpenAI API key not configured: set COURSE_MEDIA_OPENAI_KEY or OPENAI_API_KEY, or write <data-dir>/openai.key");
+      model = (await generateImageOpenAI({ prompt, outPath, quality: o.quality, apiKey, fetchImpl: o.fetchImpl, pricing })).model;
+    } else {
+      await generateImageCodex({ prompt, outPath, codexBin: o.codexBin });
+    }
+  } catch (e) {
+    if (possiblyBilled(e)) settleSpend(courseDir, reservationId);
+    else releaseSpend(courseDir, reservationId);
+    throw e;
   }
-  recordSpend(courseDir, {
-    at: (/* @__PURE__ */ new Date()).toISOString(),
-    assetId,
-    provider,
-    ...model ? { model } : {},
-    estimateUsd: estimate2.usd,
-    actualUsd: estimate2.usd,
-    quotaUnits: estimate2.quota
-  });
+  settleSpend(courseDir, reservationId, { actualUsd: estimate2.usd, ...model ? { model } : {} });
   const asset = {
     id: assetId,
     kind: "image",
@@ -50894,13 +51015,13 @@ Timer.prototype = timer.prototype = {
     }
     this._call = callback;
     this._time = time5;
-    sleep();
+    sleep2();
   },
   stop: function() {
     if (this._call) {
       this._call = null;
       this._time = Infinity;
-      sleep();
+      sleep2();
     }
   }
 };
@@ -50946,9 +51067,9 @@ function nap() {
     }
   }
   taskTail = t04;
-  sleep(time5);
+  sleep2(time5);
 }
-function sleep(time5) {
+function sleep2(time5) {
   if (frame) return;
   if (timeout) timeout = clearTimeout(timeout);
   var delay = time5 - clockNow;
@@ -63850,7 +63971,7 @@ var DETAIL = "detail";
 var KEY = "key";
 var TOOLTIP = "tooltip";
 var HREF = "href";
-var URL3 = "url";
+var URL2 = "url";
 var DESCRIPTION = "description";
 var POSITION_CHANNEL_INDEX = {
   x: 1,
@@ -64238,7 +64359,7 @@ function getSupportedMark(channel) {
       return { text: "always" };
     case ANGLE:
       return { point: "always", square: "always", text: "always" };
-    case URL3:
+    case URL2:
       return { image: "always" };
     case THETA:
       return { text: "always", arc: "always" };
@@ -64279,7 +64400,7 @@ function rangeType(channel) {
     case TEXT$1:
     case TOOLTIP:
     case HREF:
-    case URL3:
+    case URL2:
     case DESCRIPTION:
       return "discrete";
     // Color can be either continuous or discrete, depending on scale type.
@@ -66869,7 +66990,7 @@ function channelCompatibility(fieldDef, channel) {
     case KEY:
     case TOOLTIP:
     case HREF:
-    case URL3:
+    case URL2:
     case ANGLE:
     case THETA:
     case RADIUS:
@@ -67583,7 +67704,7 @@ function pathGroupingFields(mark, encoding) {
       case Y3:
       case HREF:
       case DESCRIPTION:
-      case URL3:
+      case URL2:
       case X23:
       case Y23:
       case XOFFSET:
