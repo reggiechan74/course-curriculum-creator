@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 const PLUGIN_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../../plugins/course-curriculum-creator');
 
 // Paths (relative to the plugin root) that the rules below check. Later tasks append their folders here.
-const LINTED = ['skills/course-conventions', 'skills/course-kit', 'workflow/0-analysis', 'workflow/1-desired-results', 'workflow/2-assessment-evidence', 'workflow/3-learning-plan', 'workflow/4-materials', 'workflow/5-quality-and-review', 'workflow/6-delivery', 'workflow/7-templates'];
+const LINTED = ['agents', 'skills/course-conventions', 'skills/course-kit', 'workflow/0-analysis', 'workflow/1-desired-results', 'workflow/2-assessment-evidence', 'workflow/3-learning-plan', 'workflow/4-materials', 'workflow/5-quality-and-review', 'workflow/6-delivery', 'workflow/7-templates'];
 
 const CONVENTIONS = 'skills/course-conventions/SKILL.md';
 
