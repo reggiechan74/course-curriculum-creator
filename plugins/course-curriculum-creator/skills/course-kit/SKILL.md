@@ -6,6 +6,8 @@ user-invocable: false
 
 # course-kit
 
+Workflow rules for using these commands are in the `course-conventions` skill.
+
 A bundled Node CLI that does the deterministic work (hashes, IDs, manifest) so prose never has to.
 
 ## Call form
@@ -20,11 +22,15 @@ Always quote paths; course folders may contain spaces. Output is JSON on stdout.
 
 - `hash <file>`: print the 8-hex-character MD5 hash of a file.
 - `stale <file> --course "<dir>"`: compare `sourceHashes` in the file's frontmatter with current source files; reports `fresh` or `stale` with the changed files.
-- `hash-write <file> --course "<dir>"`: recompute and write `sourceHashes` into the file's frontmatter.
+- `hash-write <file> --course "<dir>" [--sources '{"key":"path"}']`: write `sourceFiles` (from `--sources`), then `sourceHashes`, into the file's frontmatter. A missing source or output file is exit 2.
 - `manifest init --course "<dir>" --json '<options>' [--force]`: create `course.yaml`. Refuses to overwrite without `--force`.
 - `manifest validate --course "<dir>"`: validate `course.yaml`; exit 2 on errors.
 - `manifest sync --course "<dir>" [--write]`: parse the objectives and outline markdown, assign stable IDs, update `course.yaml`; `--write` also writes `<!-- id: ... -->` comments into the objectives file and outline, and module ID comments (`## Module 1:` becomes `M1`) into `02-design/lesson-plans.md`, `04-materials/student-handout.md` and `04-materials/instructor-guide.md` when they exist. Safe to run repeatedly.
-- `migrate-course --course "<dir>" [--dry-run] [--answers '<json>']`: migrate a v2 course folder: writes `course.yaml`, registers `.png`/`.jpg`/`.svg` files in `04-materials/` in the media registry as `imported`, and inserts ID comments. Prints `{manifest, actions, questions, imported}`; `--dry-run` writes nothing. Answers are keyed by question id (`shape`, `alt:<asset id>`). Never moves or deletes files; a second run reports no actions.
+- `manifest summary --course "<dir>"`: print `{id,title,shape,delivery,sessions,liveMinutes,asyncMinutes,unscheduledModules,objectives,modules,rules}`; the time budget for the course.
+- `progress --course "<dir>" [--write]`: print the workflow stages (`present`, `missing`, `stale` or `skipped`) and the `next` stage; `--write` saves them in `course.yaml`.
+- `progress skip|unskip <stage> --course "<dir>"`: leave out an optional stage, or put it back.
+- `audit --course "<dir>"`: check the course (manifest, objective coverage, stale outputs, media links, alt text, long descriptions, UDL representation); prints `{ok, issues, counts}`; exit 2 only if `course.yaml` is bad.
+- `migrate-course --course "<dir>" [--dry-run] [--answers '<json>']`: migrate a v2 course folder: writes `course.yaml`, registers `.png`/`.jpg`/`.svg` files in `04-materials/` in the media registry as `imported`, and inserts ID comments. Prints `{manifest, actions, changes, questions, imported}`; `changes` lists each file as `create` or `modify` with `added` and `removed` line counts. `--dry-run` writes nothing. Answers are keyed by question id: `shape`, `delivery`, `sessionMinutes`, `objectives:<asset id>`, `alt:<id>`. Never moves or deletes files; a second run reports no actions.
 
 Media plan and registry (also in this bundle; the course-studio plugin uses them most):
 
