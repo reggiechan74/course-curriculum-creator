@@ -37,7 +37,7 @@ Settings: see `course-conventions` (uses `instructor_name`, `organization`). Use
 
 ## Command Behavior
 
-0. Load the `course-curriculum-creator:course-conventions` skill first, then follow its §course.yaml is necessary.
+0. Load the `course-curriculum-creator:course-conventions` skill first, then follow its §course.yaml is necessary. Ask the user questions as in `course-conventions` §Questions.
 1. Load `course-curriculum-creator:backward-design-methodology` skill for assessment alignment
 2. Read learning objectives and TNA (if exists) for evaluation context
 3. Determine which levels to generate (default: all four)

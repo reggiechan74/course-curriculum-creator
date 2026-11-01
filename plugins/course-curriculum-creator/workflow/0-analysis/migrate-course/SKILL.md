@@ -11,7 +11,7 @@ allowed-tools:
 
 # Migrate Course Command
 
-Load the `course-curriculum-creator:course-conventions` skill first; it explains the v3 folder layout, IDs and stages that this command creates.
+Load the `course-curriculum-creator:course-conventions` skill first; it explains the v3 folder layout, IDs and stages that this command creates. Ask the user questions as in `course-conventions` §Questions.
 
 Bring an existing v2 course folder (positioning, objectives, outline, materials) up to v3. The command creates `course.yaml`, registers existing images in `05-media/registry.json` as `imported`, and adds `<!-- id: ... -->` comments to the planning and design files. It never moves or deletes a file, and it is safe to run again.
 

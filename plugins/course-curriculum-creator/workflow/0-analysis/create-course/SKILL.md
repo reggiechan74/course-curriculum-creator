@@ -198,9 +198,9 @@ When generating `course-positioning.md`, add to YAML frontmatter:
 deliveryMode: "[in-person|virtual|hybrid]"
 ```
 
-And add to the "## Workshop Format" section:
+And add to the "## Course Format" section:
 ```markdown
-- **Delivery:** [In-person intensive workshop | Virtual workshop via [Platform] | Hybrid (in-room + remote participants)]
+- **Delivery:** [In-person intensive course | Virtual course via [Platform] | Hybrid (in-room + remote participants)]
 ```
 
 ## Directory Naming
@@ -268,7 +268,7 @@ lastUpdated: YYYY-MM-DD
 
 ## Course Positioning Statement
 
-**For** [target audience] **who** [have this problem/need], **this workshop** [provides this solution] **that** [delivers these unique benefits].
+**For** [target audience] **who** [have this problem/need], **this course** [provides this solution] **that** [delivers these unique benefits].
 
 [To be refined after learning objectives are defined]
 
@@ -276,12 +276,12 @@ lastUpdated: YYYY-MM-DD
 
 [Will be populated from learning-objectives.md]
 
-## Workshop Format
+## Course Format
 
 - **Shape:** [workshop | cohort | self-paced]
 - **Time:** [Workshop: 1-day, 2-day. Cohort: N sessions of M minutes. Self-paced: N learner hours]
 - **Format:** [lab-heavy, lecture-heavy, or balanced, based on requirements, or TBD]
-- **Delivery:** [In-person intensive workshop | Virtual workshop via [Platform] | Hybrid (in-room + remote participants)]
+- **Delivery:** [In-person intensive course | Virtual course via [Platform] | Hybrid (in-room + remote participants)]
 
 ## Next Steps
 

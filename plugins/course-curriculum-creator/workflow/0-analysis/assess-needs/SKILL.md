@@ -30,7 +30,7 @@ A proper TNA ensures that when training IS the right answer, it targets the actu
 
 When user invokes `/course-curriculum-creator:assess-needs [--title 'Assessment Title'] [--skip-alternatives]`:
 
-Load the `course-curriculum-creator:course-conventions` skill first.
+Load the `course-curriculum-creator:course-conventions` skill first. Ask the user questions as in `course-conventions` §Questions.
 
 Course check: when working inside a course folder, follow `course-conventions` §course.yaml is necessary. In standalone mode (no course folder yet) skip this check.
 

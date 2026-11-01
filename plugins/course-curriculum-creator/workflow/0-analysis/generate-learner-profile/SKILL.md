@@ -35,7 +35,7 @@ A learner profile ensures that differentiation tiers, example domains, scaffoldi
 
 When user invokes `/course-curriculum-creator:generate-learner-profile [--from-tna]`:
 
-Load the `course-curriculum-creator:course-conventions` skill first.
+Load the `course-curriculum-creator:course-conventions` skill first. Ask the user questions as in `course-conventions` §Questions.
 
 Course check: when working inside a course folder, follow `course-conventions` §course.yaml is necessary. In standalone mode (no course folder yet) skip this check.
 

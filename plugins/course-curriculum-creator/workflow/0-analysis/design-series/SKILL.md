@@ -24,7 +24,7 @@ Decompose a broad topic into a progressive course series with distinct scope, Bl
 
 When user invokes `/course-curriculum-creator:design-series "Topic" --levels N`:
 
-Load the `course-curriculum-creator:course-conventions` skill first. This command does not need an existing `course.yaml`: it plans courses that do not exist yet.
+Load the `course-curriculum-creator:course-conventions` skill first. This command does not need an existing `course.yaml`: it plans courses that do not exist yet. Ask the user questions as in `course-conventions` §Questions.
 
 1. **Determine mode:**
    - If `--from-existing` paths provided: use **Retrofit Mode** (see below)

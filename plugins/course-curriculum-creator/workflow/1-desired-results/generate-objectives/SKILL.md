@@ -88,7 +88,7 @@ In the generated `Cognitive Level Distribution` section, add a series compliance
 
 ## Command Behavior
 
-0. **Conventions and course check**: Load the `course-curriculum-creator:course-conventions` skill first. Follow its §course.yaml is necessary, then run `KIT manifest summary --course "<dir>"` and use its `shape`, `liveMinutes`, `asyncMinutes` and `rules` (§Shape and time budget).
+0. **Conventions and course check**: Load the `course-curriculum-creator:course-conventions` skill first. Follow its §course.yaml is necessary, then run `KIT manifest summary --course "<dir>"` and use its `shape`, `liveMinutes`, `asyncMinutes` and `rules` (§Shape and time budget). Ask the user questions as in `course-conventions` §Questions.
 1. **Load required skills**: Load `course-curriculum-creator:blooms-taxonomy` and `course-curriculum-creator:backward-design-methodology` skills
 2. **Read course positioning**: Parse `01-planning/course-positioning.md` for context
 3. **Gather requirements** (if not specified):
@@ -144,23 +144,21 @@ Settings: see `course-conventions` (uses `default_audience_level`). It guides th
 
 ### Quantity by Total Time
 
-Total time = `liveMinutes` + `asyncMinutes.total` from `manifest summary`. Plan about one objective for each 60-90 minutes of total time, with at least 3 and at most 10 objectives. Use the cognitive level mix below as guidance: lean toward the shorter-course mix when total time is short and toward the longer-course mix when it is long.
+Total time = `liveMinutes` + `asyncMinutes.total` from `manifest summary`. Plan about one objective for each 60-90 minutes of total time, with at least 3 and at most 10 objectives. The count from this rule always overrides any totals in the examples below. The mixes below are shares of the total, not absolute counts: scale them to the count you computed (round so the counts add up to the total, and keep Remember at 0-1). Lean toward the shorter-course mix when total time is short and toward the longer-course mix when it is long.
 
-**Shorter-course mix (workshop example: 1-day, 5-7 objectives):**
-- Total objectives: 5-7
-- Remember: 0-1 (minimize or pre-work)
-- Understand: 1-2
-- Apply: 3-4 (primary focus)
+**Shorter-course mix (workshop example: 1-day):**
+- Remember: minimal, 0-1 (minimize or pre-work)
+- Understand: about 20-30% of the total
+- Apply: about 50-60% (primary focus)
 - Analyze: 0-1 (optional)
 - Evaluate/Create: 0
 
-**Longer-course mix (workshop example: 2-day, 8-12 objectives; cap at 10 under the rule above):**
-- Total objectives: 8-12
-- Remember: 0-1 (minimize or pre-work)
-- Understand: 1-2
-- Apply: 4-5
-- Analyze: 2-3
-- Evaluate: 1-2
+**Longer-course mix (workshop example: 2-day):**
+- Remember: minimal, 0-1 (minimize or pre-work)
+- Understand: about 10-20% of the total
+- Apply: about 35-45%
+- Analyze: about 20-25%
+- Evaluate: about 10-15%
 - Create: 1 (capstone)
 
 ### Objective Quality Standards
@@ -169,7 +167,7 @@ Each objective must:
 - Use measurable action verb from Bloom's taxonomy
 - Specify what students will do (observable behavior)
 - Include context or conditions
-- Be achievable within workshop timeframe
+- Be achievable within the course's time budget
 - Align with course positioning and audience needs
 
 **Format:**
@@ -216,7 +214,7 @@ sourceHashes:
 
 ## Overview
 
-By the end of this workshop, participants will be able to demonstrate the following competencies:
+By the end of this course, participants will be able to demonstrate the following competencies:
 
 ## Learning Objectives
 

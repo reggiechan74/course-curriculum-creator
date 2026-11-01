@@ -27,7 +27,7 @@ Staleness: follow `course-conventions` §Staleness. Output: `03-assessment/rubri
 
 ## Command Behavior
 
-0. **Conventions and course check**: Load the `course-curriculum-creator:course-conventions` skill first. Follow its §course.yaml is necessary, then run `KIT manifest summary --course "<dir>"` and apply every line in `rules` (§Shape and time budget).
+0. **Conventions and course check**: Load the `course-curriculum-creator:course-conventions` skill first. Follow its §course.yaml is necessary, then run `KIT manifest summary --course "<dir>"` and apply every line in `rules` (§Shape and time budget). Ask the user questions as in `course-conventions` §Questions.
 1. **Load required skill**: Load `course-curriculum-creator:backward-design-methodology` skill for assessment design guidance
 2. **Read learning objectives**: Parse objectives to understand what needs assessment
 3. **Determine rubric specifications**:
@@ -265,6 +265,8 @@ In addition to summative rubrics above, use these formative assessments througho
 - Circulate during practice activities
 - Note common struggles for debrief
 - Provide corrective feedback immediately
+
+For `self-paced` courses there is no live observer: replace instructor observation with self-check against a model answer and automatic feedback on checkable items.
 
 ## Using These Rubrics
 
