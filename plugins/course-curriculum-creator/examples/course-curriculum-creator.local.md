@@ -4,7 +4,8 @@
 
 organization: "Client Co."
 instructor_bio: "Facilitator bio tailored to this client"
-default_duration: "1-day"           # 1-day | 2-day
+default_shape: "workshop"           # workshop | cohort | self-paced
+default_duration: "1-day"           # workshop shape only: 1-day | 2-day
 default_audience_level: "beginner"  # beginner | intermediate | professional | expert
 rubric_scale: "1-4"                 # 1-4 | 1-5 | letter-grades | pass-fail
 rubric_type: "performance"          # analytical | performance | holistic
@@ -31,7 +32,8 @@ Use this file only when one project needs different values.
 | `instructor_bio` | Credentials for descriptions and instructor guides |
 | `organization` | Organization name in document headers |
 | `courses_directory` | Where new course projects are created |
-| `default_duration` | `1-day` or `2-day` |
+| `default_shape` | `workshop`, `cohort`, `self-paced` |
+| `default_duration` | `1-day` or `2-day`; applies to the workshop shape only (cohort and self-paced use `--sessions` and `--session-minutes`) |
 | `default_audience_level` | `beginner`, `intermediate`, `professional`, `expert` |
 | `rubric_scale` | `1-4`, `1-5`, `letter-grades`, `pass-fail` |
 | `rubric_type` | `analytical`, `performance`, `holistic` |

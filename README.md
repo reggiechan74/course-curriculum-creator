@@ -1,12 +1,12 @@
 # Course Curriculum Creator
 
 <!-- badges-start -->
-![Version](https://img.shields.io/badge/version-2.1.0-blue)
+![Version](https://img.shields.io/badge/version-3.0.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Claude Code Plugin](https://img.shields.io/badge/Claude%20Code-plugin-blueviolet)
 <!-- badges-end -->
 
-A Claude Code plugin for rapidly creating professional, pedagogically-sound curricula for 1-2 day intensive workshops and training programs.
+A Claude Code plugin for rapidly creating professional, pedagogically-sound curricula for workshops, cohort courses and self-paced courses.
 
 ## Overview
 
@@ -259,7 +259,7 @@ You can also edit them in `/config`.
 | `instructor_bio` | (empty) | Course description, instructor sections |
 | `organization` | (empty) | Document headers |
 | `courses_directory` | `~/courses` | `create-course`, `design-series` |
-| `default_duration` | `2-day` | `create-course`, `design-series`, `generate-objectives` |
+| `default_duration` (workshop shape only) | `2-day` | `create-course`, `design-series`, `generate-objectives` |
 | `default_audience_level` | `professional` | `create-course`, `design-series`, `generate-objectives` |
 | `rubric_scale` | `1-5` | `generate-rubrics` |
 | `rubric_type` | `analytical` | `generate-rubrics` |
@@ -279,6 +279,34 @@ default_duration: "1-day"
 ```
 
 Values in this file take precedence over your plugin settings. See `examples/course-curriculum-creator.local.md`.
+
+## v3 Upgrade
+
+v3.0.0 is a breaking release. Every core workflow skill now reads `course.yaml` (the course manifest) and stops if it is missing.
+
+**Upgrading a v2 course:** run `/course-curriculum-creator:migrate-course <folder>` once per course. It does not change your content files. It writes:
+
+- `course.yaml` with the delivery shape, audience level, session plan (from session counts), objectives, modules and stage progress
+- stable IDs (`<!-- id: M1 -->`) under module and objective headings, and Integration Objective headings
+- `05-media/registry.json` entries for existing images, with their objective links and alt text (it asks for any alt text it cannot find)
+- refreshed source hashes, and a `changes` summary of what it did
+
+Run it with `--dry-run` first to see the plan and questions. These skills do not need an existing `course.yaml`: `create-course`, `migrate-course`, `design-series`, `list-templates`, `create-from-template`. `assess-needs` and `generate-learner-profile` need it only when run inside a course folder.
+
+**Shapes.** `create-course` asks for the shape first: `workshop` (1-2 days), `cohort` (live sessions over weeks, with `--sessions` and `--session-minutes`) or `self-paced`. The outline, lesson plans, pre-work, spaced practice and workshop prep follow the shape. Cohort outlines use `## Session N` and `## Week N` headings.
+
+**`course-conventions`.** A background knowledge skill that all workflow skills load. It holds the settings, the `course.yaml` rule, the shape and time budget, ID and heading formats, staleness checks, progress, question style and the WCAG 2.2 AA accessibility target, so they are no longer repeated in each skill.
+
+**Toolkit commands** (the bundled `course-kit` CLI, Node 20+):
+
+- `manifest summary`: shape, objectives, modules and time budget at a glance
+- `progress [--write]`, `progress skip|unskip <stage>`: which stages are done, stale or skipped
+- `audit`: checks objective coverage, alignment and time budget; errors cap the review rating
+- `hash-write --sources`: refreshes source hashes after an edit
+
+`curriculum-architect` can now resume a course from its progress, offers the optional stages, and stops after one stage or four. `quality-reviewer` and `review-curriculum` run `manifest validate` and `audit` first.
+
+See [CHANGELOG.md](CHANGELOG.md) for the full list.
 
 ## Course Directory Structure
 
@@ -372,6 +400,11 @@ See `skills/` subdirectories for worked examples:
 - `skills/backward-design-methodology/examples/example-backward-design-1day.md` - Full backward design walkthrough
 
 ## What's New
+
+### v3.0.0 - Multi-shape courses (breaking)
+- Breaking: core workflow skills need `course.yaml`. Run `/course-curriculum-creator:migrate-course <folder>` on each v2 course. See [v3 Upgrade](#v3-upgrade)
+- New: `course-conventions` skill, cohort and self-paced shapes, toolkit commands `manifest summary`, `progress`, `audit`, `hash-write --sources`, golden sample courses
+- Changed: resumable `curriculum-architect`; `quality-reviewer` and `review-curriculum` run `audit`; accessibility target is WCAG 2.2 AA
 
 ### v2.1.0 - Course Manifest
 - New: `course.yaml` manifest, written by `create-course` and kept in sync by `generate-objectives` and `generate-outline` (`manifest sync --write`)

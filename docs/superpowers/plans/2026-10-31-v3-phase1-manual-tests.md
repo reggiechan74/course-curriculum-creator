@@ -80,3 +80,34 @@ Result: **NEEDS USER**. Needs system packages and spends the user's model quota.
 ## Release gate
 
 Items 1, 4 and 6 pass. Items 2, 3, 5 and the evals are open and need the user before release.
+
+# Phase 2 manual tests (core 3.0.0)
+
+## P2-1. Plugin evals
+
+Prerequisite: `sudo apt install bubblewrap socat`. Then:
+
+```
+claude plugin eval plugins/course-curriculum-creator --scaffold --allow-tools Write Edit Bash
+```
+
+Expect all cases to pass: workshop pipeline, cohort and self-paced create and outline, CRE-201 migration, architect resume, no-manifest behaviour.
+
+Result: **NEEDS USER**. Needs system packages and spends the user's model quota. For non-interactive runs add `--trust-plugin`.
+
+## P2-2. create-course for cohort and self-paced
+
+1. In Claude Code with core 3.0.0 enabled, run `/course-curriculum-creator:create-course` and choose `cohort` (for example `--sessions 4 --session-minutes 90`). Repeat in another folder with `self-paced`.
+2. In each folder run `KIT manifest validate --course <folder>`. Expect no errors.
+3. Run `/course-curriculum-creator:generate-outline`. For cohort expect `## Session N` / `## Week N` headings with IDs; for self-paced expect the matching headings and no live-session time budget errors.
+
+Result: **NEEDS USER**. Requires an interactive Claude Code session.
+
+## P2-3. Migrate the real CRE-201 repository folder
+
+1. Copy the real CRE-201 folder (not the test fixture): `cp -r <real CRE-201 folder> /tmp/p2c`.
+2. `/course-curriculum-creator:migrate-course /tmp/p2c --dry-run`; read the plan and questions.
+3. Run it for real and answer the alt-text questions. Then `KIT manifest validate --course /tmp/p2c` and `KIT audit --course /tmp/p2c`. Expect no validation errors and a `changes` summary; a second run changes nothing.
+4. Run `/course-curriculum-creator:review-curriculum` on the copy and check that it reports the audit result.
+
+Result: **NEEDS USER**. Needs the real course folder.

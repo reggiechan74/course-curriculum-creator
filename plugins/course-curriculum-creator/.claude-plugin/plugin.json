@@ -1,8 +1,8 @@
 {
   "name": "course-curriculum-creator",
   "displayName": "Course Curriculum Creator",
-  "version": "2.1.0",
-  "description": "Create professional course curricula for 1-2 day workshops using backward design methodology and Bloom's taxonomy",
+  "version": "3.0.0",
+  "description": "Design blended courses (workshop, cohort, self-paced) using backward design and Bloom's taxonomy",
   "author": {
     "name": "Reggie Chan"
   },
@@ -16,6 +16,8 @@
     "backward-design",
     "blooms-taxonomy",
     "workshop",
+    "cohort",
+    "self-paced",
     "training"
   ],
   "icon": "./assets/icon.png",
@@ -57,7 +59,7 @@
     "default_duration": {
       "type": "string",
       "title": "Default workshop duration",
-      "description": "Duration used when a command isn't given --duration",
+      "description": "Workshop length used when create-course is not given --duration (workshop shape only)",
       "options": [
         "1-day",
         "2-day"
