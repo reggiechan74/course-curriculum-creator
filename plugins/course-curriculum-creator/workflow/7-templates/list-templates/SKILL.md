@@ -17,6 +17,8 @@ Display available course templates from the template directory.
 
 When user invokes `/course-curriculum-creator:list-templates`:
 
+0. **Conventions**: Load the `course-curriculum-creator:course-conventions` skill first. This skill needs no existing `course.yaml`: it works on the template directory, not on a course.
+
 1. **Determine template directory:**
    - Use the `template_directory` plugin setting (see Settings below)
    - Default: `~/.claude/course-templates/`
@@ -24,6 +26,7 @@ When user invokes `/course-curriculum-creator:list-templates`:
 2. **Scan for templates:**
    - List subdirectories in the template directory
    - Read `template-metadata.json` from each subdirectory
+   - Read the shape from the template's `course.yaml` (`shape`; the session count and minutes come from `timeBudget.live.sessions`). If there is no `course.yaml`, use `shape` from the metadata. If neither exists, show the shape as "unknown (v2 template)".
    - If metadata file is missing, note as "unregistered template"
 
 3. **Display template list:**
@@ -34,12 +37,18 @@ When user invokes `/course-curriculum-creator:list-templates`:
 Available Course Templates:
 
 1. proptech-fundamentals
-   Duration: 2-day | Modules: 8 | Level: professional
-   "Two-day PropTech workshop for real estate professionals"
+   Shape: workshop | Time: 2 sessions, 840 min | Modules: 8 | Level: professional
+   "PropTech workshop for real estate professionals"
 
-2. ai-basics-workshop
-   Duration: 1-day | Modules: 5 | Level: beginner
+2. underwriting-lab
+   Shape: cohort | Time: 4 sessions, 360 min | Modules: 4 | Level: professional
+   "Cohort course on underwriting for real estate analysts"
+
+3. ai-basics
+   Shape: self-paced | Time: about 4 hours | Modules: 6 | Level: beginner
    "Introduction to AI concepts for non-technical professionals"
+
+Time: workshop and cohort show the sessions and their total minutes. Self-paced shows the estimated learner hours (`estimatedHours` in the template's positioning file), or the module minutes if that is missing.
 
 [No templates found: Template directory is empty. Save a course as template using /course-curriculum-creator:save-as-template]
 ```
@@ -50,8 +59,8 @@ Available Course Templates:
 Available Course Templates:
 
 1. proptech-fundamentals
-   Duration: 2-day | Modules: 8 | Level: professional
-   "Two-day PropTech workshop for real estate professionals"
+   Shape: workshop | Time: 2 sessions, 840 min | Modules: 8 | Level: professional
+   "PropTech workshop for real estate professionals"
 
    Cognitive Distribution:
      Understand: 2 | Apply: 4 | Analyze: 2 | Evaluate: 1 | Create: 1
@@ -68,10 +77,9 @@ Available Course Templates:
 [Repeat for each template]
 ```
 
-## Settings Integration
+## Settings
 
-Plugin settings (configured with `/plugin configure`). If the project has a `.claude/course-curriculum-creator.local.md` file, values in its YAML frontmatter override these. A value still shown as a literal `${user_config.…}` placeholder has not been set, so use its default:
-- `template_directory` = `${user_config.template_directory}` (default `~/.claude/course-templates`): Where to look for templates
+Settings: see `course-conventions` (uses `template_directory`). It is the directory where templates are found.
 
 If a value is empty and not overridden, use default template directory.
 
@@ -91,7 +99,7 @@ If a value is empty and not overridden, use default template directory.
 **Standard:**
 ```
 User: /course-curriculum-creator:list-templates
-[Shows template names, duration, module count, level, description]
+[Shows template names, shape, time, module count, level, description]
 ```
 
 **Verbose:**
@@ -101,5 +109,7 @@ User: /course-curriculum-creator:list-templates --verbose
 ```
 
 ---
+
+No progress step: this skill works on no course, so `course-conventions` §Progress does not apply.
 
 List available course templates to help instructors find and reuse proven curriculum structures.

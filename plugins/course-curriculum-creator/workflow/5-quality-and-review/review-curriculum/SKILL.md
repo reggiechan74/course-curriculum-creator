@@ -19,10 +19,14 @@ Validate an existing curriculum for quality, backward design alignment, and peda
 
 When user invokes `/course-curriculum-creator:review-curriculum [course-code-or-path]`:
 
+0. **Conventions and course check**: Load the `course-curriculum-creator:course-conventions` skill first. Follow its §course.yaml is necessary, then run `KIT manifest summary --course "<dir>"` and apply every line in `rules` (§Shape and time budget).
+
 1. **Locate the curriculum to review:**
    - If a course code is provided (e.g., `021-2-201`), search for a matching directory
    - If a path is provided, use that directory directly
    - If no argument is given, look for curriculum files in the current working directory
+
+   Then run `KIT audit --course "<dir>"` (see the `course-kit` skill). Keep the result `{ok, issues, counts}`: each issue has `level` (error, warning or info), `check`, `path` and `message`. The checks are manifest, objective-coverage, stale, media-links, media-alt, media-long-description and udl-representation.
 
 2. **Load pedagogical reference skills:**
    - Load the `course-curriculum-creator:backward-design-methodology` skill for UbD framework guidance
@@ -66,13 +70,13 @@ When user invokes `/course-curriculum-creator:review-curriculum [course-code-or-
    **Overall Coherence:**
    - Vertical alignment: positioning -> outcomes -> assessments -> activities
    - Terminology consistency across all documents
-   - Timing analysis (total time vs. workshop duration)
+   - Timing analysis (total time vs. the time budget from `manifest summary`: `liveMinutes` for the live sessions and `asyncMinutes.total` for the work outside them)
    - Gap analysis (orphaned elements, untested outcomes, unprepared assessments)
 
    **Timing Reconciliation:**
    - Compare objective time allocations, outline module durations, and lesson plan activity totals
    - Flag discrepancies > 10% between any two sources
-   - Verify total instruction time fits within workshop duration (with 10-15% buffer)
+   - Verify total instruction time fits within the time budget from `manifest summary` (with 10-15% buffer). Self-paced: compare the module minutes with the learner hours and `asyncMinutes`.
 
    **Series Alignment (if course is linked to a series):**
 
@@ -108,6 +112,7 @@ When user invokes `/course-curriculum-creator:review-curriculum [course-code-or-
 5. **Generate validation report:**
 
    Create a report with:
+   - **Automated checks** section: every audit issue, grouped by `check`, each with its level, path and message (state "no issues" for a check with none). Show the `counts`. Audit errors must be fixed before the review says the course is ready: list each one as a CRITICAL action item, and the recommendation cannot be "ready to deliver" while any audit error remains.
    - Executive summary with overall quality rating (EXCELLENT / GOOD / NEEDS REVISION / SIGNIFICANT ISSUES)
    - Stage-by-stage findings with PASS/FAIL status
    - Objective-assessment coverage matrix
@@ -120,11 +125,16 @@ When user invokes `/course-curriculum-creator:review-curriculum [course-code-or-
    - Present a concise summary to the user with:
      - Overall quality rating
      - Critical issues (if any)
-     - Recommendation (ready to deliver / needs revision / needs redesign)
+     - The audit `counts` and every audit error
+   - Recommendation (ready to deliver / needs revision / needs redesign). "Ready to deliver" only when the audit has no errors.
      - Path to full report
    - Offer to help implement recommended changes
 
+7. **Report progress**: follow `course-conventions` §Progress
+
 ## Quality Rating Criteria
+
+Any audit error caps the rating at NEEDS REVISION until it is fixed.
 
 - **EXCELLENT**: All stages PASS, no critical issues, exemplary alignment
 - **GOOD**: All stages PASS, minor issues, solid backward design implementation

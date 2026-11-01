@@ -4,6 +4,7 @@ description: Generate a stakeholder-friendly review package for SME validation a
 disable-model-invocation: true
 argument-hint: "[--audience sme|executive|all] [--include-rubrics]"
 allowed-tools:
+  - AskUserQuestion
   - Bash
   - Read
   - Write
@@ -25,21 +26,22 @@ In organizational L&D, courses go through: designer → SME review → stakehold
 - Should have `02-design/course-outline.md`
 - Should have `03-assessment/rubrics.md`
 
-## Settings Integration
+## Settings
 
-Plugin settings (configured with `/plugin configure`). If the project has a `.claude/course-curriculum-creator.local.md` file, values in its YAML frontmatter override these. A value still shown as a literal `${user_config.…}` placeholder has not been set, so use its default:
-- `instructor_name` = `${user_config.instructor_name}` (default: not set): Use as curriculum designer
-- `organization` = `${user_config.organization}` (default: not set): Use in document header
+Settings: see `course-conventions` (uses `instructor_name`, `organization`). Use `instructor_name` as the curriculum designer and `organization` in the document header.
 
 If a value is empty and not overridden, use sensible defaults or prompt user.
 
 ## Command Behavior
 
-1. Read all available curriculum files
-2. Determine audience (`--audience` flag or prompt)
-3. Generate review package tailored to audience
-4. Include specific review questions per section
-5. Write to `04-materials/review-package.md`
+0. **Conventions and course check**: Load the `course-curriculum-creator:course-conventions` skill first. Follow its §course.yaml is necessary, then run `KIT manifest summary --course "<dir>"` and apply every line in `rules` (§Shape and time budget). Ask the user questions as in `course-conventions` §Questions.
+1. Read `course.yaml` and all available curriculum files
+2. Run `KIT audit --course "<dir>"` and keep the result `{ok, issues, counts}`
+3. Determine audience (`--audience` flag or ask)
+4. Generate review package tailored to audience
+5. Include specific review questions per section
+6. Write to `04-materials/review-package.md`
+7. **Report progress**: follow `course-conventions` §Progress
 
 ## Audience Options
 
@@ -99,11 +101,11 @@ reviewDeadline: [Suggest: 2 weeks from generation date]
 [From learning-objectives.md — what participants will be able to do]
 
 **Format:**
-[Duration, delivery mode, schedule overview]
+[Shape, delivery mode, time budget and schedule overview, from course.yaml and `manifest summary`]
 
 **Resource Requirements:**
 - Instructor time: [Development + delivery hours estimate]
-- Participant time: [Workshop hours + pre/post-work]
+- Participant time: [Live hours (`liveMinutes`) + async hours (`asyncMinutes.total`) from `manifest summary`; self-paced: estimated learner hours]
 - Materials: [What needs to be produced/purchased]
 - Venue/technology: [Physical space or platform requirements]
 
@@ -203,7 +205,17 @@ For each module, list the key claims, frameworks, or examples used:
 
 ---
 
-## Part 6: Sign-Off
+## Part 6: Course Manifest and Automated Checks
+
+**Course manifest (`course.yaml`):** shape, delivery, sessions and minutes, async minutes, objective count, module count.
+
+**Automated checks (`audit`):** [error, warning and info counts, then every issue grouped by check with level, path and message. State "no issues" when there are none.]
+
+> Audit errors are open items that block approval. List each one in the action items below as CRITICAL.
+
+---
+
+## Part 7: Sign-Off
 
 ### SME Sign-Off
 
@@ -247,6 +259,7 @@ For each module, list the key claims, frameworks, or examples used:
 - [ ] Every learning objective has a reviewer feedback section
 - [ ] Executive summary covers business need, audience, outcomes, resources
 - [ ] Module structure review includes complete schedule
+- [ ] The manifest and audit part lists every audit issue
 - [ ] Sign-off section has space for all reviewer types
 - [ ] Review timeline is realistic (not same-day turnaround)
 

@@ -21,16 +21,17 @@ Save current course structure as a reusable template for creating variants.
 
 ## Command Behavior
 
+0. **Conventions and course check**: Load the `course-curriculum-creator:course-conventions` skill first. This skill runs on an existing course, so follow its §course.yaml is necessary, then run `KIT manifest summary --course "<dir>"` and apply every line in `rules` (§Shape and time budget). Ask the user questions as in `course-conventions` §Questions.
 1. Validate course completeness
-2. Prompt for template name (if not provided)
-3. Copy course structure to template directory
+2. Ask for the template name (if not provided)
+3. Copy course structure to template directory, including `course.yaml` (see "Template course.yaml")
 4. Create template metadata
 5. Confirm template saved
+6. **Report progress**: follow `course-conventions` §Progress. Nothing in the course changed, so run `KIT progress --course "<dir>"` without `--write` and report `next`.
 
-## Settings Integration
+## Settings
 
-Plugin settings (configured with `/plugin configure`). If the project has a `.claude/course-curriculum-creator.local.md` file, values in its YAML frontmatter override these. A value still shown as a literal `${user_config.…}` placeholder has not been set, so use its default:
-- `template_directory` = `${user_config.template_directory}` (default `~/.claude/course-templates`): Where to store saved templates
+Settings: see `course-conventions` (uses `template_directory`, `instructor_name`, `organization`). `template_directory` is where saved templates are stored; the other two fill the metadata and the placeholders below.
 
 If a value is empty and not overridden, use sensible defaults or prompt user.
 
@@ -43,11 +44,23 @@ If a value is empty and not overridden, use sensible defaults or prompt user.
 ~/.claude/course-templates/
 └── template-name/
     ├── template-metadata.json
+    ├── course.yaml
     ├── 01-planning/
     ├── 02-design/
     ├── 03-assessment/
     └── 04-materials/
 ```
+
+## Template course.yaml
+
+The template keeps the shape, delivery, sessions, audience, time budget and media budget of the course, so a new course made from it has the same structure. Copy `course.yaml` into the template directory, then edit the copy (edit the YAML only; do not hand-write other fields):
+
+- `id`: set to `""`
+- `title`: set to `""`
+- `created`: set to `""`
+- `targets`: set to `{}`
+
+Leave every other field as it is. The copy is not a valid course until `create-from-template` fills these fields through `manifest init`.
 
 ## Template Metadata
 
@@ -57,7 +70,9 @@ If a value is empty and not overridden, use sensible defaults or prompt user.
   "originalCourse": "CourseName-YYYY-MM-DD",
   "createdDate": "YYYY-MM-DD",
   "createdBy": "[instructor from settings]",
-  "duration": "1-day or 2-day",
+  "shape": "workshop | cohort | self-paced",
+  "sessionCount": 2,
+  "liveMinutes": 840,
   "audienceLevel": "professional",
   "cognitiveDistribution": {
     "understand": 2,
@@ -76,6 +91,7 @@ If a value is empty and not overridden, use sensible defaults or prompt user.
 
 **Include:**
 - Complete directory structure
+- `course.yaml` with `id`, `title`, `created` and `targets` cleared
 - All curriculum files with content
 - Assessment rubrics
 - Lesson plans structure
@@ -144,6 +160,7 @@ When saving, also generate `template-manifest.md` alongside `template-metadata.j
 
 ## Files Parameterized
 
+- `course.yaml` - cleared `id`, `title`, `created`, `targets` (no placeholders)
 - `01-planning/course-positioning.md` - [N] replacements
 - `01-planning/learning-objectives.md` - [N] replacements
 - [list all files with replacement counts]
@@ -164,6 +181,7 @@ When creating a course from this template:
 Location: ~/.claude/course-templates/template-name/
 
 This template includes:
+- Shape: [shape] ([sessions and minutes, or estimated hours])
 - [N] learning objectives ([distribution])
 - [N] modules
 - Assessment rubrics
@@ -174,7 +192,7 @@ Create course from this template:
   /course-curriculum-creator:create-from-template [template-name] --variant [YourVariant]
 
 List all templates:
-  ls ~/.claude/course-templates/
+  /course-curriculum-creator:list-templates
 ```
 
 ---

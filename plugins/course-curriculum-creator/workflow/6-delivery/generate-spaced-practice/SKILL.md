@@ -1,9 +1,10 @@
 ---
 name: generate-spaced-practice
-description: Generate a post-workshop spaced retrieval practice sequence to combat the forgetting curve with scheduled questions at expanding intervals
+description: Generate a post-course spaced retrieval practice sequence to combat the forgetting curve with scheduled questions at expanding intervals
 disable-model-invocation: true
 argument-hint: "[--format email|flashcards|lms|all] [--intervals custom]"
 allowed-tools:
+  - AskUserQuestion
   - Bash
   - Read
   - Write
@@ -13,7 +14,7 @@ allowed-tools:
 
 # Generate Spaced Practice Command
 
-Generate a post-workshop spaced retrieval practice sequence to combat the forgetting curve with scheduled questions at expanding intervals.
+Generate a spaced retrieval practice sequence, scheduled after the live sessions (or after each module in a self-paced course), to combat the forgetting curve with scheduled questions at expanding intervals.
 
 ## Prerequisites
 
@@ -21,18 +22,15 @@ Generate a post-workshop spaced retrieval practice sequence to combat the forget
 - **Recommended:** `02-design/lesson-plans.md` — identify core content taught per module
 - **Optional:** `03-assessment/rubrics.md` — calibrate question difficulty to match assessment expectations
 
-## Staleness Check
+## Staleness
 
-Before generating, check source file hashes against any existing `04-materials/spaced-practice.md`:
-
-1. Compute MD5 hash (first 8 characters) of each source file
-2. Compare against `sourceHashes` in existing spaced practice frontmatter
-3. If hashes differ, warn user: "Source files have changed since spaced practice was last generated. Regenerating will update questions to match current content."
-4. If no existing file, proceed normally
+Staleness: follow `course-conventions` §Staleness. Output: `04-materials/spaced-practice.md`. Sources: `learning-objectives` = `01-planning/learning-objectives.md`, `lesson-plans` = `02-design/lesson-plans.md`, `rubrics` = `03-assessment/rubrics.md`.
 
 ## Command Behavior
 
 When user invokes `/course-curriculum-creator:generate-spaced-practice [--format email|flashcards|lms|all] [--intervals custom]`:
+
+0. **Conventions and course check**: Load the `course-curriculum-creator:course-conventions` skill first. Follow its §course.yaml is necessary, then run `KIT manifest summary --course "<dir>"` and apply every line in `rules` (§Shape and time budget). Ask the user questions as in `course-conventions` §Questions.
 
 1. **Load `course-curriculum-creator:blooms-taxonomy` skill** for cognitive level matching
 
@@ -57,7 +55,10 @@ When user invokes `/course-curriculum-creator:generate-spaced-practice [--format
 
 ### Schedule
 
-6. **Schedule questions at expanding intervals** (default): Day 1, Day 3, Day 7, Day 14, Day 30
+6. **Schedule questions at expanding intervals** (default): Day 1, Day 3, Day 7, Day 14, Day 30, counted from the start point for the shape (read `shape` from `manifest summary`):
+   - **workshop**: Day 1 is the day after the last live session.
+   - **cohort**: Day 1 is the day after the last live session. In addition, put spaced retrieval items into the session openers: the opener of session k (k > 1) gets 2-3 items on the content of earlier sessions, tagged "Session k opener" in the question bank. Do not repeat an item in the opener and in the post-course sequence on the same day.
+   - **self-paced**: there is no last live session. The schedule starts after each module: Day 1 is the day after the learner finishes that module. Items from earlier modules also appear in the practice for later modules (interleaving).
    - Each practice session: 3-5 questions, max 5 minutes to complete
    - Questions cycle through modules so each module is revisited multiple times
    - Later sessions mix questions from different modules (interleaving for deeper retention)
@@ -66,7 +67,9 @@ When user invokes `/course-curriculum-creator:generate-spaced-practice [--format
 
 8. **Write output:** `04-materials/spaced-practice.md`
 
-9. **Run staleness check** on source files
+9. **Record staleness**: follow `course-conventions` §Staleness (`hash-write`)
+
+10. **Report progress**: follow `course-conventions` §Progress
 
 ## Format Options
 
@@ -77,7 +80,7 @@ When user invokes `/course-curriculum-creator:generate-spaced-practice [--format
 
 ## Custom Intervals
 
-`--intervals custom` prompts user for custom schedule. Default is Day 1, 3, 7, 14, 30.
+`--intervals custom` asks the user for a custom schedule (see `course-conventions` §Questions). Default is Day 1, 3, 7, 14, 30.
 
 ## Output Format
 
@@ -106,9 +109,9 @@ sourceHashes:
 
 ## [Course Title]
 
-**Purpose:** Combat the forgetting curve through scheduled retrieval practice at expanding intervals. Research shows spaced retrieval can double long-term retention compared to single post-workshop assessment.
+**Purpose:** Combat the forgetting curve through scheduled retrieval practice at expanding intervals. Research shows spaced retrieval can double long-term retention compared to a single post-course assessment.
 
-**Schedule:** 5 practice sessions over 30 days (Day 1, 3, 7, 14, 30)
+**Schedule:** 5 practice sessions over 30 days (Day 1, 3, 7, 14, 30), starting [the day after the last live session | the day after each module (self-paced)]
 **Time per session:** 3-5 minutes
 **Total questions:** [N] across all sessions
 
@@ -132,6 +135,10 @@ sourceHashes:
 ---
 
 ## Practice Sessions
+
+### Session Openers (cohort only)
+
+**Session [k] opener** (3 minutes): [2-3 items on earlier sessions, with answers]
 
 ### Day 1 — Immediate Retrieval
 
@@ -219,6 +226,8 @@ Here's your Day [N] practice for [Course Title]. Takes about [N] minutes.
 - No questions test content not covered in lesson plans
 - Question Bloom's level matches module objective level (no recall questions for Analyze objectives)
 - Each practice session is completable in under 5 minutes
+- Cohort: every session after the first has opener items
+- Self-paced: each module has its own schedule start
 - All modules are represented across the 30-day schedule (no module forgotten)
 - Answer explanations are present for every question
 
@@ -247,4 +256,4 @@ Generate questions that test genuine retrieval — not recognition. Questions sh
 
 ---
 
-Generate a spaced retrieval practice sequence that helps learners retain workshop content long-term through scientifically-backed expanding interval schedules.
+Generate a spaced retrieval practice sequence that helps learners retain course content long-term through scientifically-backed expanding interval schedules.

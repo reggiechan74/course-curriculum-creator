@@ -1,6 +1,6 @@
 ---
 name: process-workshop-feedback
-description: Process workshop feedback and generate improvement report
+description: Process course feedback (workshop, cohort or self-paced) and generate an improvement report
 disable-model-invocation: true
 argument-hint: "[feedback-file-or-notes] [--pilot]"
 allowed-tools:
@@ -12,7 +12,7 @@ allowed-tools:
 
 # Process Workshop Feedback Command
 
-Analyze post-workshop feedback and generate an actionable improvement report.
+Analyze post-delivery feedback and generate an actionable improvement report. It works for every course shape: read "session" as a live session (workshop, cohort) or, for a self-paced course, as the learner's pass through the modules. Read "instructor" as the facilitator, or, for self-paced, the course author and support contact. Skip questions that need a live room (for example, energy dips) when the course is self-paced.
 
 ## Prerequisites
 
@@ -23,9 +23,11 @@ Analyze post-workshop feedback and generate an actionable improvement report.
 
 When user invokes `/course-curriculum-creator:process-workshop-feedback [feedback-source]`:
 
+0. **Conventions and course check**: Load the `course-curriculum-creator:course-conventions` skill first. Follow its §course.yaml is necessary, then run `KIT manifest summary --course "<dir>"` and apply every line in `rules` (§Shape and time budget). Ask the user questions as in `course-conventions` §Questions.
+
 1. **Gather feedback data:**
    - If a file path is provided, read the feedback file
-   - If no argument, prompt user: "How would you like to provide feedback? (1) Paste evaluation notes, (2) Provide path to feedback file, (3) Summarize key observations verbally"
+   - If no argument, ask the user: "How would you like to provide feedback? (1) Paste evaluation notes, (2) Provide path to feedback file, (3) Summarize key observations verbally"
    - Accept multiple feedback sources if provided
 
 2. **Read curriculum context:**
@@ -36,6 +38,8 @@ When user invokes `/course-curriculum-creator:process-workshop-feedback [feedbac
 3. **Analyze feedback** across dimensions (see analysis framework below)
 
 4. **Generate debrief report:** `04-materials/workshop-debrief-report.md`
+
+5. **Report progress**: follow `course-conventions` §Progress
 
 ## Feedback Analysis Framework
 
@@ -63,7 +67,7 @@ When user invokes `/course-curriculum-creator:process-workshop-feedback [feedbac
 - Was the learning environment supportive?
 
 ### Dimension 5: Overall Impact
-- Would participants recommend the workshop?
+- Would participants recommend the course?
 - What was the most valuable takeaway?
 - What would participants change?
 - Net Promoter Score (if available)
@@ -81,7 +85,7 @@ In addition to the standard 5 dimensions above, pilot mode adds:
 - Which modules ran over? By how much?
 - Which modules had excess time?
 - Were breaks adequate?
-- Was the overall workshop duration appropriate?
+- Was the overall time (live minutes, or for self-paced the learner's actual hours against `estimatedHours`) appropriate?
 
 ### Dimension 7: Activity Effectiveness (Pilot Only)
 - For each practice activity: Did students achieve the intended outcome?
@@ -106,17 +110,18 @@ In addition to the standard 5 dimensions above, pilot mode adds:
 
 ```markdown
 ---
-title: Workshop Debrief Report - [Course Title]
-workshopDate: [date of workshop, if known]
+title: Course Debrief Report - [Course Title]
+deliveryDate: [date of the delivery, if known]
 reportDate: YYYY-MM-DD
 feedbackSources: [list of sources]
 respondentCount: [N, if known]
 ---
 
-# Workshop Debrief Report
+# Course Debrief Report
 
 ## Course: [Course Title]
-**Workshop Date:** [date]
+**Shape:** [shape from course.yaml]
+**Delivery Date:** [date]
 **Report Generated:** [current date]
 **Feedback Sources:** [description of feedback data]
 
@@ -353,4 +358,4 @@ Based on pilot findings:
 
 ---
 
-Transform raw workshop feedback into structured, actionable improvement plans that drive continuous curriculum quality improvement.
+Transform raw course feedback into structured, actionable improvement plans that drive continuous curriculum quality improvement.

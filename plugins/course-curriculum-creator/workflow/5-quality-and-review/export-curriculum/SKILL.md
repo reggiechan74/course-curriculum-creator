@@ -23,21 +23,27 @@ Combine curriculum files into a single document suitable for sharing, printing, 
 
 When user invokes `/course-curriculum-creator:export-curriculum --format [format]`:
 
-1. **Discover curriculum files:**
+0. **Conventions and course check**: Load the `course-curriculum-creator:course-conventions` skill first. Follow its §course.yaml is necessary, then run `KIT manifest summary --course "<dir>"` and apply every line in `rules` (§Shape and time budget).
+
+1. **Run the audit:** `KIT audit --course "<dir>"`. Keep the result `{ok, issues, counts}` for the export. Copy `course.yaml` to `export/course.yaml` (create `export/` if needed) so the export carries the course description with it. Do not edit the copy.
+
+2. **Discover curriculum files:**
    - Glob for all `.md` files in the course directory
    - Verify core files exist (positioning, objectives, outline, lesson plans, rubrics)
    - Note any missing files
 
-2. **Combine based on format** (see format options below)
+3. **Combine based on format** (see format options below)
 
-3. **Write output file:**
+4. **Write output file:**
    - Full: `[course-dir]/export/[CourseName]-full-curriculum.md`
    - Summary: `[course-dir]/export/[CourseName]-summary.md`
    - Syllabus: `[course-dir]/export/[CourseName]-syllabus.md`
 
-4. **Suggest PDF conversion:**
+5. **Suggest PDF conversion:**
    "Export saved to [path]. To convert to PDF, you can use pandoc:
    `pandoc [output-file] -o [output-file].pdf --pdf-engine=xelatex`"
+
+6. **Report progress**: follow `course-conventions` §Progress
 
 ## Export Formats
 
@@ -51,6 +57,7 @@ Intended audience: Instructional designers, curriculum reviewers, stakeholders
 
 **Version:** [version] | **Date:** [date] | **Status:** [status]
 **Instructor:** [name] | **Organization:** [org]
+**Shape:** [shape from course.yaml] | **Delivery:** [delivery]
 
 ---
 
@@ -63,6 +70,7 @@ Intended audience: Instructional designers, curriculum reviewers, stakeholders
 5. Detailed Lesson Plans
 6. Assessment Rubrics
 7. Supporting Materials
+8. Course Manifest and Automated Checks
 
 ---
 
@@ -119,6 +127,14 @@ Intended audience: Instructional designers, curriculum reviewers, stakeholders
 ## 7. Supporting Materials
 
 [List of available materials from 04-materials/]
+
+---
+
+<!-- page break -->
+
+## 8. Course Manifest and Automated Checks
+
+[The contents of course.yaml in a fenced yaml block, then the audit result: the counts and every issue grouped by check, with level, path and message]
 ```
 
 ### --format summary (Stakeholder Overview)
@@ -129,7 +145,7 @@ Intended audience: Managers, sponsors, decision-makers who need high-level under
 ```markdown
 # [Course Title] - Curriculum Summary
 
-**Duration:** [duration] | **Audience:** [audience] | **Level:** [level]
+**Shape:** [shape] | **Time:** [live minutes and async minutes from `manifest summary`; self-paced: estimated learner hours] | **Audience:** [audience] | **Level:** [level]
 
 ## Course Purpose
 
@@ -137,19 +153,17 @@ Intended audience: Managers, sponsors, decision-makers who need high-level under
 
 ## Learning Outcomes
 
-By the end of this workshop, participants will be able to:
+By the end of this course, learners will be able to:
 [Numbered list of objectives - statement only, no metadata]
 
-## Workshop Structure
+## Course Structure
 
 [Module list with titles and durations only - from course-outline.md]
 
-### Day 1
-| Time | Session | Duration |
-|------|---------|----------|
-[Schedule table]
+[One schedule table for each live session in `manifest summary` (heading = the session label), with these columns. Self-paced: one table of modules with estimated minutes and no clock times.]
 
-### Day 2 (if applicable)
+| Time | Module | Duration |
+|------|--------|----------|
 [Schedule table]
 
 ## Assessment Approach
@@ -160,6 +174,10 @@ By the end of this workshop, participants will be able to:
 
 [Instructor name and brief bio]
 
+## Quality Status
+
+[Audit result: error, warning and info counts, and any error in one line each]
+
 ## Next Steps
 
 [Registration, logistics information placeholder]
@@ -167,7 +185,7 @@ By the end of this workshop, participants will be able to:
 
 ### --format syllabus (Student-Facing)
 
-Intended audience: Students/participants who will attend the workshop
+Intended audience: Learners who will take the course
 
 **Structure:**
 ```markdown
@@ -181,15 +199,9 @@ Intended audience: Students/participants who will attend the workshop
 
 [Objectives reworded as student benefits - from course-description.md]
 
-## Workshop Schedule
+## Schedule
 
-[Simplified schedule from course-outline.md - module titles and times only]
-
-### Day 1
-[Time blocks with module names]
-
-### Day 2 (if applicable)
-[Time blocks with module names]
+[Simplified schedule from course-outline.md - module titles and times only. One section for each live session in `manifest summary`, headed by its label, with time blocks and module names. Self-paced: the module list with estimated minutes, no clock times.]
 
 ## What to Bring / Prerequisites
 
@@ -221,15 +233,12 @@ Intended audience: Students/participants who will attend the workshop
 **Export directory doesn't exist:**
 - Create `export/` subdirectory in the course directory
 
-## Settings Integration
+## Settings
 
-Plugin settings (configured with `/plugin configure`). If the project has a `.claude/course-curriculum-creator.local.md` file, values in its YAML frontmatter override these. A value still shown as a literal `${user_config.…}` placeholder has not been set, so use its default:
-- `instructor_name` = `${user_config.instructor_name}` (default: not set): For instructor sections
-- `instructor_bio` = `${user_config.instructor_bio}` (default: not set): For instructor sections
-- `organization` = `${user_config.organization}` (default: not set): For header information
+Settings: see `course-conventions` (uses `instructor_name`, `instructor_bio`, `organization`). Use them for the instructor sections and the header information.
 
 If a value is empty and not overridden, use values from course-positioning.md frontmatter.
 
 ---
 
-Export curriculum documents for sharing with stakeholders, students, and reviewers in appropriate formats.
+Export curriculum documents for sharing with stakeholders, learners, and reviewers in appropriate formats.

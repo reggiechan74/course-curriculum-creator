@@ -1,9 +1,10 @@
 ---
 name: generate-workshop-prep
-description: Generate a dated preparation checklist for workshop delivery
+description: Generate a dated preparation checklist for live-session delivery (workshop or cohort)
 disable-model-invocation: true
 argument-hint: "[--date YYYY-MM-DD]"
 allowed-tools:
+  - AskUserQuestion
   - Bash
   - Read
   - Write
@@ -11,21 +12,29 @@ allowed-tools:
 
 # Generate Workshop Prep Command
 
-Generate a comprehensive, time-phased preparation checklist for delivering the workshop.
+Generate a comprehensive, time-phased preparation checklist for delivering the live sessions. This skill is for the workshop and cohort shapes only: a self-paced course has no live session to prepare.
 
 ## Prerequisites
 
 - Must be in a course project directory
 - Should have lesson plans (`02-design/lesson-plans.md`) and artifacts (`04-materials/`)
-- Workshop date should be known (provided as argument or prompted)
+- The date of the live session should be known (provided as argument or asked)
 
 ## Command Behavior
 
 When user invokes `/course-curriculum-creator:generate-workshop-prep [--date YYYY-MM-DD]`:
 
-1. **Get workshop date:**
-   - Use `--date` argument if provided
-   - Otherwise prompt: "When is the workshop scheduled? (YYYY-MM-DD)"
+0. **Conventions and course check**: Load the `course-curriculum-creator:course-conventions` skill first. Follow its §course.yaml is necessary, then run `KIT manifest summary --course "<dir>"` and apply every line in `rules` (§Shape and time budget). Ask the user questions as in `course-conventions` §Questions.
+
+   **Shape gate:** read `shape` from `manifest summary`.
+   - **self-paced**: stop. Say: "This course is self-paced, so there is no live session to prepare. No checklist was written." Offer `/course-curriculum-creator:generate-spaced-practice` or `/course-curriculum-creator:generate-pre-work` instead. Write nothing.
+   - **workshop**: one checklist for the whole workshop (all sessions in `manifest summary`).
+   - **cohort**: one checklist for each session in `manifest summary` (S1, S2, ...), all in the same output file.
+
+1. **Get the session date(s):**
+   - Use `--date` argument if provided (workshop: the first day; cohort: the date of Session 1)
+   - Otherwise ask: "When is the first live session scheduled? (YYYY-MM-DD)"
+   - Cohort: ask for the date of each further session, or the gap between sessions (for example weekly). If the user does not know, use placeholder dates "T-2 weeks" and so on for that session.
 
 2. **Read curriculum files:**
    - `02-design/lesson-plans.md` for materials and activity requirements
@@ -33,11 +42,15 @@ When user invokes `/course-curriculum-creator:generate-workshop-prep [--date YYY
    - `04-materials/` directory for available materials
    - `01-planning/course-positioning.md` for audience and logistics context
 
-3. **Generate dated checklist** with specific dates calculated from workshop date
+3. **Generate dated checklist** with specific dates calculated from the session date. Workshop: one checklist. Cohort: one full checklist for each session, each with its own dates, its own module materials (the modules of that session) and its own items for the previous session's retrieval opener and the between-session assignment.
 
 4. **Write output:** `04-materials/workshop-prep-checklist.md`
 
+5. **Report progress**: follow `course-conventions` §Progress
+
 ## Output Format
+
+The template below is the workshop checklist (one for the whole workshop). For a cohort, repeat it for each session under a heading `# Session k Preparation Checklist`, replacing "Workshop" with "Session k" and "Day of Workshop" with "Day of Session k". Use the same file.
 
 ```markdown
 ---
@@ -50,8 +63,8 @@ status: active
 # Workshop Preparation Checklist
 
 ## Course: [Course Title]
-**Workshop Date:** [date]
-**Duration:** [1-day or 2-day]
+**Workshop Date:** [date] (cohort: **Session Date:** [date of session k])
+**Duration:** [live minutes and sessions from `manifest summary`, for example "2 sessions, 840 minutes"]
 **Expected Participants:** [from positioning or TBD]
 
 ---
@@ -160,10 +173,9 @@ status: active
 - [ ] Update course version if significant changes needed
 ```
 
-## Settings Integration
+## Settings
 
-Plugin settings (configured with `/plugin configure`). If the project has a `.claude/course-curriculum-creator.local.md` file, values in its YAML frontmatter override these. A value still shown as a literal `${user_config.…}` placeholder has not been set, so use its default:
-- `instructor_name` = `${user_config.instructor_name}` (default: not set): For checklist personalization
+Settings: see `course-conventions` (uses `instructor_name`). Use it to personalize the checklist.
 
 If a value is empty and not overridden, use generic references.
 
@@ -172,8 +184,8 @@ If a value is empty and not overridden, use generic references.
 **Missing lesson plans:**
 - Warn: "Lesson plans not found. Checklist will use generic material references. Generate lesson plans first with `/course-curriculum-creator:generate-lesson-plans` for a complete checklist."
 
-**No workshop date provided:**
-- Prompt user for date
+**No session date provided:**
+- Ask the user for the date
 - If user declines, use placeholder dates: "T-2 weeks", "T-1 week", etc. without specific dates
 
 ---
