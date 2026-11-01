@@ -56,7 +56,7 @@ describe('skills lint', () => {
 
   test('no fixed 1-2 day duration', () => {
     const banned = [/1-2[ -]day/i, /1-day or 2-day/i, /1-day vs 2-day/i];
-    for (const f of allFiles().filter((x) => (isSkill(x) || x.includes('/agents/')) && isChecked(x))) {
+    for (const f of allFiles().filter((x) => (isSkill(x) || x.startsWith('agents/')) && isChecked(x))) {
       for (const re of banned) expect(read(f), `${f} ${re}`).not.toMatch(re);
     }
   });
