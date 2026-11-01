@@ -21,21 +21,13 @@ Create assessment rubrics aligned to learning objectives following backward desi
 - Must be run within course project directory
 - Requires `01-planning/learning-objectives.md` to exist
 
-## Staleness Check
+## Staleness
 
-Before generating, check if source files have changed since this file was last generated:
-
-1. If the output file `03-assessment/rubrics.md` already exists, read its YAML frontmatter `sourceHashes`
-2. Compute current hash of each source file: `md5sum 01-planning/learning-objectives.md | cut -c1-8`
-3. Compare hashes:
-   - If hashes match: sources are unchanged, proceed normally
-   - If hashes differ: warn the user: "⚠ Source file learning-objectives.md has changed since this file was last generated. Regenerating will incorporate these changes."
-   - If output file doesn't exist: skip check, proceed with generation
-
-When generating, always compute and write current source hashes to the output file's frontmatter.
+Staleness: follow `course-conventions` §Staleness. Output: `03-assessment/rubrics.md`. Sources: `learning-objectives` = `01-planning/learning-objectives.md`.
 
 ## Command Behavior
 
+0. **Conventions and course check**: Load the `course-curriculum-creator:course-conventions` skill first. Follow its §course.yaml is necessary, then run `KIT manifest summary --course "<dir>"` and apply every line in `rules` (§Shape and time budget).
 1. **Load required skill**: Load `course-curriculum-creator:backward-design-methodology` skill for assessment design guidance
 2. **Read learning objectives**: Parse objectives to understand what needs assessment
 3. **Determine rubric specifications**:
@@ -45,6 +37,7 @@ When generating, always compute and write current source hashes to the output fi
 4. **Generate rubrics**: Create detailed evaluation criteria for each objective
 5. **Write to file**: Save to `03-assessment/rubrics.md`
 6. **Validate alignment**: Confirm rubrics measure objectives appropriately
+7. **Report progress**: follow `course-conventions` §Progress
 
 ## Skill Loading
 
@@ -70,19 +63,19 @@ Reference `${CLAUDE_PLUGIN_ROOT}/skills/backward-design-methodology/references/a
 - Specific criteria priorities
 - Any custom requirements
 
-## Settings Integration
+## Settings
 
-Plugin settings (configured with `/plugin configure`). If the project has a `.claude/course-curriculum-creator.local.md` file, values in its YAML frontmatter override these. A value still shown as a literal `${user_config.…}` placeholder has not been set, so use its default:
-- `rubric_scale` = `${user_config.rubric_scale}` (default `1-5`): Default scoring scale (e.g., 1-4 or 1-5) when not specified via arguments
-- `rubric_type` = `${user_config.rubric_type}` (default `analytical`): Default rubric type (analytical, performance, or holistic) when not specified via arguments
+Settings: see `course-conventions` (uses `rubric_scale`, `rubric_type`). Use them as the default scoring scale (e.g., 1-4 or 1-5) and rubric type (analytical, performance, or holistic) when not specified via arguments. If a value is not set, use sensible defaults or prompt the user.
 
-If a value is empty and not overridden, use sensible defaults or prompt user.
+## Shape Rule
+
+For the `self-paced` shape there is no live assessor. Follow the self-paced rule from `rules` in `manifest summary`: write auto-checkable criteria (answers a learner or a tool can check against a key) or self-assessment criteria with model answers that the learner compares against. Do not write criteria that need an instructor to observe.
 
 ## Rubric Types
 
-### Analytical Rubrics (Recommended for Workshops)
+### Analytical Rubrics (Recommended for Live Courses)
 
-**When to use:** Most workshop assessments
+**When to use:** Most live-course assessments
 **Structure:** Multiple criteria evaluated separately
 **Benefits:** Specific feedback, clear expectations
 
@@ -239,8 +232,8 @@ This course uses analytical rubrics (1-5 scale) to provide specific, actionable 
 
 | Objective | Assessment Timing | Assessment Type | Time Allocated | Rubric |
 |-----------|-------------------|-----------------|----------------|--------|
-| 1 | [Module X, Day X] | [Type] | [Minutes] | Rubric 1 |
-| 2 | [Module X, Day X] | [Type] | [Minutes] | Rubric 2 |
+| 1 | [Module X, Session X] | [Type] | [Minutes] | Rubric 1 |
+| 2 | [Module X, Session X] | [Type] | [Minutes] | Rubric 2 |
 | ... | | | | |
 
 ## Alignment Matrix
@@ -275,7 +268,7 @@ In addition to summative rubrics above, use these formative assessments througho
 
 ## Using These Rubrics
 
-### During Workshop
+### During the Course
 
 1. **Share rubrics with students** at activity start (set expectations)
 2. **Use for peer review** where appropriate (builds assessment literacy)
@@ -283,7 +276,7 @@ In addition to summative rubrics above, use these formative assessments througho
 4. **Provide formative feedback** referencing rubric levels
 5. **Use for self-assessment** (students rate themselves before submission)
 
-### Post-Workshop
+### After the Course
 
 1. **Evaluate student work** using rubrics within 3-5 business days
 2. **Provide scores and comments** for each criterion
@@ -292,7 +285,7 @@ In addition to summative rubrics above, use these formative assessments througho
 
 ### Rubric Refinement
 
-After workshop delivery:
+After course delivery:
 - Note any ambiguous descriptors that need clarification
 - Adjust performance level expectations if too easy/hard
 - Add criteria if important dimensions were missed
@@ -311,7 +304,7 @@ After workshop delivery:
 - Criteria are specific and observable (not subjective)
 - Descriptors differentiate performance levels clearly
 - Rubrics align with objective cognitive levels (Apply rubrics assess application, not recall)
-- Total assessment time fits within workshop schedule
+- Total assessment time fits within course schedule
 ```
 
 ## Post-Generation Actions
@@ -332,7 +325,7 @@ After workshop delivery:
 - [ ] Descriptors are specific and observable
 - [ ] Performance levels clearly differentiated
 - [ ] Assessment methods align with objectives
-- [ ] Total assessment time fits in workshop schedule
+- [ ] Total assessment time fits in course schedule
 - [ ] All rubrics use consistent scale
 
 ## Error Handling

@@ -30,6 +30,10 @@ A proper TNA ensures that when training IS the right answer, it targets the actu
 
 When user invokes `/course-curriculum-creator:assess-needs [--title 'Assessment Title'] [--skip-alternatives]`:
 
+Load the `course-curriculum-creator:course-conventions` skill first.
+
+Course check: when working inside a course folder, follow `course-conventions` §course.yaml is necessary. In standalone mode (no course folder yet) skip this check.
+
 ### Step 1: Gather Context
 
 Use AskUserQuestion to collect the following (prompt for each missing piece):
@@ -100,13 +104,9 @@ Guide the user to define at least one metric beyond Level 1 (satisfaction survey
 - **Timeline**: When should results be measurable? (e.g., 30/60/90 days post-training)
 - **Baseline Data**: What is the current measurement? (needed to calculate improvement)
 
-## Settings Integration
+## Settings
 
-Plugin settings (configured with `/plugin configure`). If the project has a `.claude/course-curriculum-creator.local.md` file, values in its YAML frontmatter override these. A value still shown as a literal `${user_config.…}` placeholder has not been set, so use its default:
-- `instructor_name` = `${user_config.instructor_name}` (default: not set): Use as analyst name in the output document
-- `organization` = `${user_config.organization}` (default: not set): Use as organization in the output document
-
-If a value is empty and not overridden, ask the user for analyst name and organization during Step 1.
+Settings: see `course-conventions` (uses `instructor_name`, `organization`). Use `instructor_name` as analyst name and `organization` as organization in the output document. If a value is not set, ask the user for analyst name and organization during Step 1.
 
 ## Output Location
 
@@ -242,6 +242,10 @@ After generating the TNA document:
    - **Training Appropriate**: "Next: Run `/course-curriculum-creator:create-course` to initialize the course project, then `/course-curriculum-creator:generate-objectives` to define learning outcomes aligned with this assessment."
    - **Training Partial**: "Next: Document the non-training interventions with the stakeholder. For the training component, run `/course-curriculum-creator:create-course` to proceed with course design."
    - **Training Not Appropriate**: "Next: Share this assessment with the stakeholder to discuss alternative interventions. If they still want training, the TNA document captures the rationale and risks."
+
+## Progress
+
+When the TNA is saved inside a course folder (`01-planning/training-needs-analysis.md`), follow `course-conventions` §Progress: run `progress --write` and tell the user the next stage. In standalone mode there is no course to update.
 
 ## Validation Checks
 

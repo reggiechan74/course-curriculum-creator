@@ -35,6 +35,10 @@ A learner profile ensures that differentiation tiers, example domains, scaffoldi
 
 When user invokes `/course-curriculum-creator:generate-learner-profile [--from-tna]`:
 
+Load the `course-curriculum-creator:course-conventions` skill first.
+
+Course check: when working inside a course folder, follow `course-conventions` §course.yaml is necessary. In standalone mode (no course folder yet) skip this check.
+
 ### Step 1: Load Existing Context
 
 1. **Read `01-planning/course-positioning.md`** (if exists) for audience context — extract course title, target audience description, and any stated prerequisites. Use this to pre-populate questions where possible.
@@ -59,7 +63,7 @@ Ask: "What can participants already do related to this topic? List 3-5 skills or
 
 Then ask: "What can participants NOT yet do? List 3-5 skills or concepts that represent gaps. For each, indicate whether it's a critical prerequisite, moderate gap, or minor gap."
 
-Map responses to prerequisites — what must be true before Day 1 versus what the course will teach.
+Map responses to prerequisites — what must be true before the first session (or before starting, for a self-paced course) versus what the course will teach.
 
 #### Dimension 2: Motivational Drivers
 
@@ -89,7 +93,7 @@ Ask: "What constraints should we design around? Consider:
 
 Whether the workplace will support applying new skills after the course.
 
-Ask: "After the workshop, what support will participants have?
+Ask: "After the course, what support will participants have?
 (a) Manager actively reinforcing — follows up, provides practice opportunities
 (b) Manager aware but hands-off — knows about the training but won't actively support
 (c) No manager involvement — manager may not know about the training
@@ -128,18 +132,13 @@ Generate differentiation guidance:
 
 Write the learner profile to `01-planning/learner-profile.md`.
 
-Compute sourceHashes by running:
-```bash
-md5sum 01-planning/course-positioning.md 2>/dev/null | cut -c1-8
-```
+Staleness: follow `course-conventions` §Staleness. Output: `01-planning/learner-profile.md`. Sources: `course-positioning` = `01-planning/course-positioning.md`.
 
-## Settings Integration
+After writing, follow `course-conventions` §Progress (inside a course folder only).
 
-Plugin settings (configured with `/plugin configure`). If the project has a `.claude/course-curriculum-creator.local.md` file, values in its YAML frontmatter override these. A value still shown as a literal `${user_config.…}` placeholder has not been set, so use its default:
-- `instructor_name` = `${user_config.instructor_name}` (default: not set): Use as analyst name in the output document
-- `organization` = `${user_config.organization}` (default: not set): Use as organization in the output document
+## Settings
 
-If a value is empty and not overridden, omit these fields from frontmatter rather than prompting (they are optional for this document).
+Settings: see `course-conventions` (uses `instructor_name`, `organization`). Use them as analyst name and organization in the output document. If a value is not set, omit these fields from frontmatter rather than prompting (they are optional for this document).
 
 ## Output Format
 
@@ -179,7 +178,7 @@ sourceHashes:
 | [Skill 1] | [Critical/Moderate/Minor] | [Prerequisite? Pre-work? Module focus?] |
 
 ### Prerequisite Mapping
-[Map prior knowledge to course prerequisites — what must be true before Day 1]
+[Map prior knowledge to course prerequisites — what must be true before the first session or start]
 
 ---
 
@@ -214,7 +213,7 @@ sourceHashes:
 | Competing priorities | [Description] | [High/Medium/Low] |
 | Organizational culture | [Supports learning?] | [High/Medium/Low] |
 
-**Transfer risk summary:** [Overall assessment of how likely participants are to apply learning post-workshop]
+**Transfer risk summary:** [Overall assessment of how likely participants are to apply learning post-course]
 
 ---
 
@@ -287,7 +286,7 @@ TZ='America/New_York' date '+%Y-%m-%d'
 - All dates in YYYY-MM-DD format
 - Version starts at 0.1.0 (semantic versioning)
 - Status starts as "draft"
-- sourceHashes use first 8 characters of md5sum
+- sourceHashes are written by `hash-write` (see Staleness above)
 
 **DO NOT:**
 - Skip interactive questioning and fabricate learner data

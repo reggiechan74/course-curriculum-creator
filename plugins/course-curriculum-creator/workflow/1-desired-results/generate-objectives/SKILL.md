@@ -18,20 +18,11 @@ Create measurable, Bloom's-aligned learning objectives for the course based on b
 
 ## Prerequisites
 
-Must be run within a course project directory (created via `/course-curriculum-creator:create-course`).
+Must be run within a course project directory with a `course.yaml` (created via `/course-curriculum-creator:create-course` or `/course-curriculum-creator:migrate-course`).
 
-## Staleness Check
+## Staleness
 
-Before generating, check if source files have changed since this file was last generated:
-
-1. If the output file `01-planning/learning-objectives.md` already exists, read its YAML frontmatter `sourceHashes`
-2. Compute current hash of each source file: `md5sum 01-planning/course-positioning.md | cut -c1-8`
-3. Compare hashes:
-   - If hashes match: sources are unchanged, proceed normally
-   - If hashes differ: warn the user: "⚠ Source file course-positioning.md has changed since this file was last generated. Regenerating will incorporate these changes."
-   - If output file doesn't exist: skip check, proceed with generation
-
-When generating, always compute and write current source hashes to the output file's frontmatter.
+Staleness: follow `course-conventions` §Staleness. Output: `01-planning/learning-objectives.md`. Sources: `course-positioning` = `01-planning/course-positioning.md`.
 
 ## Series Enforcement
 
@@ -97,16 +88,18 @@ In the generated `Cognitive Level Distribution` section, add a series compliance
 
 ## Command Behavior
 
+0. **Conventions and course check**: Load the `course-curriculum-creator:course-conventions` skill first. Follow its §course.yaml is necessary, then run `KIT manifest summary --course "<dir>"` and use its `shape`, `liveMinutes`, `asyncMinutes` and `rules` (§Shape and time budget).
 1. **Load required skills**: Load `course-curriculum-creator:blooms-taxonomy` and `course-curriculum-creator:backward-design-methodology` skills
 2. **Read course positioning**: Parse `01-planning/course-positioning.md` for context
 3. **Gather requirements** (if not specified):
-   - Number of objectives (default from duration: 5-7 for 1-day, 8-12 for 2-day)
+   - Number of objectives (default from total time: see "Quantity by Total Time")
    - Cognitive level distribution preference
    - Target audience considerations
 4. **Generate learning objectives**: Create SMART objectives with appropriate action verbs
 5. **Write to file**: Save to `01-planning/learning-objectives.md`
 6. **Update positioning**: Suggest updating course-positioning.md with outcomes summary
 7. **Sync the manifest**: Run `manifest sync --write` and show each issue to the user (see "Manifest Sync" below)
+8. **Report progress**: follow `course-conventions` §Progress
 
 ## Manifest Sync
 
@@ -129,7 +122,7 @@ Load backward-design-methodology skill for outcomes-first approach
 ## Input Gathering
 
 **Read from course-positioning.md:**
-- Duration (1-day or 2-day)
+- Shape and total time (from `manifest summary`, not from the positioning file)
 - Target audience
 - Prerequisites
 - Course topic/focus
@@ -140,22 +133,20 @@ Load backward-design-methodology skill for outcomes-first approach
 - Any constraints or requirements
 
 **Use settings defaults:**
-- `default_duration` for objective count
+- total time from `manifest summary` for objective count
 - `default_audience_level` for cognitive complexity
 
-## Settings Integration
+## Settings
 
-Plugin settings (configured with `/plugin configure`). If the project has a `.claude/course-curriculum-creator.local.md` file, values in its YAML frontmatter override these. A value still shown as a literal `${user_config.…}` placeholder has not been set, so use its default:
-- `default_duration` = `${user_config.default_duration}` (default `2-day`): Determines objective count range (5-7 for 1-day, 8-12 for 2-day)
-- `default_audience_level` = `${user_config.default_audience_level}` (default `professional`): Guides cognitive complexity distribution (e.g., beginner skews toward Apply, advanced includes more Evaluate/Create)
-
-If a value is empty and not overridden, use sensible defaults or prompt user.
+Settings: see `course-conventions` (uses `default_audience_level`). It guides the cognitive complexity distribution (e.g., beginner skews toward Apply, advanced includes more Evaluate/Create). If it is not set, use sensible defaults or prompt the user.
 
 ## Objective Generation Logic
 
-### Quantity by Duration
+### Quantity by Total Time
 
-**1-day workshop:**
+Total time = `liveMinutes` + `asyncMinutes.total` from `manifest summary`. Plan about one objective for each 60-90 minutes of total time, with at least 3 and at most 10 objectives. Use the cognitive level mix below as guidance: lean toward the shorter-course mix when total time is short and toward the longer-course mix when it is long.
+
+**Shorter-course mix (workshop example: 1-day, 5-7 objectives):**
 - Total objectives: 5-7
 - Remember: 0-1 (minimize or pre-work)
 - Understand: 1-2
@@ -163,7 +154,7 @@ If a value is empty and not overridden, use sensible defaults or prompt user.
 - Analyze: 0-1 (optional)
 - Evaluate/Create: 0
 
-**2-day workshop:**
+**Longer-course mix (workshop example: 2-day, 8-12 objectives; cap at 10 under the rule above):**
 - Total objectives: 8-12
 - Remember: 0-1 (minimize or pre-work)
 - Understand: 1-2
@@ -219,7 +210,8 @@ sourceHashes:
 
 ## Course: [Course Title]
 
-**Duration:** [1-day or 2-day]
+**Shape:** [workshop | cohort | self-paced]
+**Time:** [Live minutes and async minutes from `manifest summary`]
 **Target Audience:** [From course-positioning.md]
 
 ## Overview
@@ -273,8 +265,7 @@ By the end of this workshop, participants will be able to demonstrate the follow
 
 [Describe how objectives build on each other]
 
-**Day 1 Focus (if 2-day):** [Cognitive levels and themes]
-**Day 2 Focus (if 2-day):** [Cognitive levels and themes]
+**Focus by session (workshop and cohort, one line for each session) or by stage (self-paced):** [Cognitive levels and themes]
 
 ## Alignment with Course Positioning
 
@@ -309,8 +300,9 @@ After generating learning-objectives.md:
 
 Before finalizing, validate:
 - [ ] All objectives use Bloom's taxonomy action verbs
-- [ ] Cognitive levels appropriate for workshop duration
-- [ ] Total time allocation realistic (5-6 hours for 1-day, 11-12 hours for 2-day)
+- [ ] Cognitive levels appropriate for the total time and shape
+- [ ] Total time allocation realistic against `liveMinutes` + `asyncMinutes.total` (workshop example: 5-6 hours for 1-day, 11-12 hours for 2-day)
+- [ ] Objective count within 3-10 and about one for each 60-90 minutes
 - [ ] Objectives progress logically from simple to complex
 - [ ] Each objective is SMART (measurable, achievable, specific)
 - [ ] Objectives align with course positioning audience/needs
@@ -318,9 +310,8 @@ Before finalizing, validate:
 
 ## Error Handling
 
-**Not in course directory:**
-- Check for `01-planning/course-positioning.md`
-- If missing: "Error: Not in a course project directory. Run `/course-curriculum-creator:create-course` first or navigate to course directory."
+**Not in course directory or `course.yaml` missing:**
+- Follow `course-conventions` §course.yaml is necessary
 
 **Missing course-positioning.md:**
 - "Error: course-positioning.md not found. Cannot generate objectives without course context."

@@ -24,6 +24,8 @@ Decompose a broad topic into a progressive course series with distinct scope, Bl
 
 When user invokes `/course-curriculum-creator:design-series "Topic" --levels N`:
 
+Load the `course-curriculum-creator:course-conventions` skill first. This command does not need an existing `course.yaml`: it plans courses that do not exist yet.
+
 1. **Determine mode:**
    - If `--from-existing` paths provided: use **Retrofit Mode** (see below)
    - Otherwise: use **Design from Scratch Mode**
@@ -91,7 +93,7 @@ For each level (starting from 101):
 5. **Define handoff outcomes:** 3-5 key outcomes students must achieve. These become the next level's prerequisites.
    - Handoff outcomes should be written as Bloom's-aligned objectives at the TOP of this level's primary band
    - Example for 101: "Apply [framework] to analyze [simple case]" (Apply level -- top of 101's primary band)
-6. **Suggest duration:** 1-day or 2-day based on scope breadth
+6. **Suggest shape and time:** each course in a series has its own shape (`workshop`, `cohort` or `self-paced`; default `default_shape`) and its own time budget. Suggest the shape that fits the level, then the time: a workshop duration (workshop example: 1-day = one 420-minute session, 2-day = two), a number of sessions and minutes for each (cohort), or total learner hours (self-paced), based on scope breadth
 
 ### Step 3: Validate Series Coherence
 
@@ -100,7 +102,7 @@ Before writing, check:
 - [ ] Topic areas don't overlap between levels (or overlap is explicitly intentional as reinforcement)
 - [ ] Bloom's progression makes sense across the full series
 - [ ] Total scope covers the domain comprehensively (no major gaps)
-- [ ] Each level is achievable in the suggested duration
+- [ ] Each level is achievable in its suggested time budget
 
 ### Step 4: Present Plan for User Approval
 
@@ -110,7 +112,7 @@ For each level, display:
 - Scope (1-2 sentences)
 - Primary Bloom's band and stretch zone
 - Handoff outcomes (bulleted list)
-- Suggested duration
+- Suggested shape and time
 
 Ask: "Does this series structure look right? Any levels to adjust?"
 
@@ -125,7 +127,7 @@ When invoked as `/course-curriculum-creator:design-series "Topic" --from-existin
 ### Step 1: Read Existing Courses
 
 For each provided course directory:
-1. Read `01-planning/course-positioning.md` for scope, audience, duration
+1. Read `01-planning/course-positioning.md` for scope, audience, shape and time (if the course has a `course.yaml`, run `KIT manifest summary --course "<dir>"` for its shape and time budget)
 2. Read `01-planning/learning-objectives.md` for objectives and Bloom's levels
 3. If available, read `02-design/course-outline.md` for module structure
 
@@ -178,7 +180,7 @@ bloomsModel: center-of-gravity
 
 **Topic:** [Full topic description]
 **Levels:** [N] courses (101 through [highest])
-**Total Duration:** [Sum of all level durations]
+**Total Time:** [Sum of all level time budgets]
 **Audience Progression:** [101 audience] → [highest level audience]
 
 ---
@@ -194,7 +196,9 @@ bloomsModel: center-of-gravity
 - **Stretch zone:** Analyze (scaffolded, guided)
 - **Assumed floor:** None (entry level)
 
-**Suggested Duration:** [1-day or 2-day]
+**Suggested Shape:** [workshop | cohort | self-paced]
+
+**Suggested Time:** [Workshop: duration (e.g. 1-day, 2-day). Cohort: N sessions of M minutes. Self-paced: total learner hours]
 
 **Topic Areas:**
 - [Topic 1]
@@ -219,7 +223,9 @@ bloomsModel: center-of-gravity
 - **Stretch zone:** Evaluate (scaffolded)
 - **Assumed floor:** 101 handoff outcomes (not re-taught)
 
-**Suggested Duration:** [1-day or 2-day]
+**Suggested Shape:** [workshop | cohort | self-paced]
+
+**Suggested Time:** [Workshop: duration (e.g. 1-day, 2-day). Cohort: N sessions of M minutes. Self-paced: total learner hours]
 
 **Prerequisites** (from 101 handoff outcomes):
 1. [101 Outcome 1]
@@ -268,6 +274,7 @@ bloomsModel: center-of-gravity
    - `/course-curriculum-creator:create-course "[Topic] 101" --series [name] --level 101`
    - `/course-curriculum-creator:create-course "[Topic] 201" --series [name] --level 201`
    - [etc.]
+   - Pass each level's recorded shape (`--shape`) and time to `create-course`
 2. When generating objectives for each course, the series plan will enforce Bloom's band constraints
 3. Run `/course-curriculum-creator:review-curriculum` on each course to validate series alignment
 
@@ -395,14 +402,9 @@ When generating the series plan, add after the `## Series Coherence Summary` sec
 [Repeat for each transition]
 ```
 
-## Settings Integration
+## Settings
 
-Plugin settings (configured with `/plugin configure`). If the project has a `.claude/course-curriculum-creator.local.md` file, values in its YAML frontmatter override these. A value still shown as a literal `${user_config.…}` placeholder has not been set, so use its default:
-- `courses_directory` = `${user_config.courses_directory}` (default `~/courses`): Default location for writing series plan (if not in a courses directory)
-- `default_duration` = `${user_config.default_duration}` (default `2-day`): Suggest as default duration for each level
-- `default_audience_level` = `${user_config.default_audience_level}` (default `professional`): Inform where the 101 starts
-
-If a value is empty and not overridden, use sensible defaults or prompt user.
+Settings: see `course-conventions` (uses `courses_directory`, `default_duration`, `default_shape`, `default_audience_level`). Use `courses_directory` for the series plan location (if not in a courses directory), `default_shape` as the suggested shape for each level, `default_duration` as the suggested duration for workshop levels only, and `default_audience_level` to inform where the 101 starts. If a value is not set, use sensible defaults or prompt the user.
 
 ## Error Handling
 

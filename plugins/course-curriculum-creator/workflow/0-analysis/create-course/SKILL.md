@@ -2,7 +2,7 @@
 name: create-course
 description: Initialize a new course curriculum project with directory structure and foundational files
 disable-model-invocation: true
-argument-hint: "[Course Title] [--shape workshop|cohort|self-paced] [--duration 1-day|2-day] [--mode in-person|virtual|hybrid] [--location path] [--series name --level N]"
+argument-hint: "[Course Title] [--shape workshop|cohort|self-paced] [--duration 1-day|2-day] [--sessions N] [--session-minutes N] [--mode in-person|virtual|hybrid] [--location path] [--series name --level N]"
 allowed-tools:
   - AskUserQuestion
   - Bash
@@ -19,9 +19,11 @@ Initialize a new course curriculum project following the plugin's standardized s
 
 When user invokes `/course-curriculum-creator:create-course [CourseName]`:
 
+Load the `course-curriculum-creator:course-conventions` skill first. This command does not need an existing `course.yaml`: it creates one.
+
 1. **Gather required information** (if not provided as arguments):
    - Course title
-   - Duration (1-day or 2-day)
+   - Shape (workshop, cohort or self-paced) and its time (see Argument Handling)
    - Target audience
    - Output location
    - Prerequisites (optional)
@@ -62,8 +64,10 @@ When user invokes `/course-curriculum-creator:create-course [CourseName]`:
 **Interactive mode (no args or partial args):**
 Use AskUserQuestion to gather missing information:
 - Course title (if not provided)
-- Course shape: workshop, cohort, or self-paced (ask this first)
-- Duration: 1-day or 2-day workshop
+- Course shape: workshop, cohort, or self-paced (ask this first; the recommended option is `default_shape`)
+- Workshop: duration from `--duration`, else `default_duration` (1-day, 2-day)
+- Cohort: number of sessions (`--sessions`, default 6), minutes for each session (`--session-minutes`, default 90) and minutes of work between sessions (default 60)
+- Self-paced: total learner hours (default 4)
 - Target audience description
 - Delivery mode: in-person (default), virtual, or hybrid
 - Output location (default from settings or prompt user)
@@ -71,25 +75,16 @@ Use AskUserQuestion to gather missing information:
 
 **Args-based mode (all required args provided):**
 ```bash
-/course-curriculum-creator:create-course "PropTech Fundamentals" --duration 2-day --mode virtual --location ~/courses
+/course-curriculum-creator:create-course "PropTech Fundamentals" --shape workshop --duration 2-day --mode virtual --location ~/courses
 ```
 
-Parse arguments and create immediately without prompts.
+Parse arguments and create immediately without prompts. Follow `course-conventions` §Questions: ask only for values the arguments and settings do not give.
 
 **Support both modes** - check what's provided, prompt for what's missing.
 
-## Settings Integration
+## Settings
 
-Plugin settings (configured with `/plugin configure`). If the project has a `.claude/course-curriculum-creator.local.md` file, values in its YAML frontmatter override these. A value still shown as a literal `${user_config.…}` placeholder has not been set, so use its default:
-- `instructor_name` = `${user_config.instructor_name}` (default: not set): Use in course-positioning.md
-- `instructor_bio` = `${user_config.instructor_bio}` (default: not set): Use in course-positioning.md
-- `organization` = `${user_config.organization}` (default: not set): Use in course-positioning.md
-- `courses_directory` = `${user_config.courses_directory}` (default `~/courses`): Default output location if not specified
-- `default_duration` = `${user_config.default_duration}` (default `2-day`): Default if not specified
-- `default_audience_level` = `${user_config.default_audience_level}` (default `professional`): Suggest in prompts
-- `default_shape` = `${user_config.default_shape}` (default `workshop`): Course shape used when the user gives no shape
-
-If a value is empty and not overridden, use sensible defaults or prompt user.
+Settings: see `course-conventions` (uses `instructor_name`, `instructor_bio`, `organization`, `courses_directory`, `default_duration`, `default_audience_level`, `default_shape`). Use the instructor and organization values in `course-positioning.md`, `courses_directory` as the default output location, `default_duration` as the default for the workshop shape only, `default_audience_level` as a suggestion in prompts, and `default_shape` as the shape when the user gives none. If a value is not set, use sensible defaults or prompt the user.
 
 ## Course Manifest
 
@@ -99,15 +94,17 @@ After the folders and initial files exist, create `course.yaml` with the course-
 node "${CLAUDE_PLUGIN_ROOT}/skills/course-kit/scripts/course-kit.mjs" manifest init --course "<course-dir>" --json '<options>'
 ```
 
-`<options>` is a JSON object: `{"title", "shape", "delivery", "sessions": [{"id","label","minutes"}], "audienceLevel", "audienceSummary", "budgetUsd": 20, "maxPlanImages": 40}`.
+`<options>` is a JSON object: `{"title", "shape", "delivery", "sessions": [{"id","label","minutes"}], "audienceLevel", "audienceSummary", "budgetUsd": 20, "maxPlanImages": 40, "async": {"preWorkMinutes", "betweenSessionMinutes", "postWorkMinutes"}}`.
 
 - **shape**: ask the user for the shape first (workshop, cohort, self-paced). If they give none, use `default_shape`.
 - **delivery**: the `--mode` value (`in-person`, `virtual`, `hybrid`); default `in-person`.
 - **sessions** (ids `S1`, `S2`, ...):
-  - workshop with `--duration 1-day`: one session of 420 minutes.
-  - workshop with `--duration 2-day`: two sessions of 420 minutes each.
-  - cohort: ask for the number of sessions and the minutes in each session.
-  - self-paced: write no live sessions (`"sessions": []`).
+  - workshop: duration from `--duration`, else `default_duration`. 1-day = one session of 420 minutes, label `Day 1`. 2-day = two sessions of 420 minutes each, labels `Day 1` and `Day 2`.
+  - cohort: ask for the number of sessions (default 6) and the minutes in each session (default 90). Labels are `Session 1`, `Session 2`, and so on. Ask for the minutes of work between sessions (default 60).
+  - self-paced: write no live sessions (`"sessions": []`). Ask for the total learner hours (default 4) and write it to the positioning frontmatter as `estimatedHours`.
+- **async**:
+  - workshop and cohort: `{"preWorkMinutes": 60, "betweenSessionMinutes": <cohort answer, else 0>, "postWorkMinutes": 90}`.
+  - self-paced: `{"preWorkMinutes": 30, "betweenSessionMinutes": 0, "postWorkMinutes": 0}`. The module minutes carry the rest of the time.
 - **audienceLevel** / **audienceSummary**: from the gathered audience information and `default_audience_level`.
 
 Exit code 2 means the options failed validation; show the error, fix the options and retry. Never use `--force` unless the user asks. Afterwards run `manifest validate --course "<course-dir>"` and report any problem.
@@ -132,7 +129,7 @@ From the series plan, read the section for the specified level:
 - Target audience → use as audience description
 - Prerequisites (from prior level's handoff outcomes) → use as prerequisites
 - Scope statement → use as value proposition context
-- Suggested duration → use as default duration (can be overridden by `--duration`)
+- Suggested shape and time → use as the default shape and time (can be overridden by `--shape`, `--duration`, `--sessions` and `--session-minutes`)
 
 ### Step 3: Pre-populate Course Positioning
 
@@ -235,7 +232,9 @@ version: 0.1.0
 status: draft
 instructor: [From settings or user input]
 organization: [From settings or user input]
-duration: [1-day or 2-day]
+shape: [workshop | cohort | self-paced]
+duration: [workshop only: 1-day, 2-day]
+estimatedHours: [self-paced only: total learner hours]
 audience: [Target audience description]
 keywords: [generated from course title]
 lastUpdated: YYYY-MM-DD
@@ -279,7 +278,8 @@ lastUpdated: YYYY-MM-DD
 
 ## Workshop Format
 
-- **Duration:** [1-day or 2-day]
+- **Shape:** [workshop | cohort | self-paced]
+- **Time:** [Workshop: 1-day, 2-day. Cohort: N sessions of M minutes. Self-paced: N learner hours]
 - **Format:** [lab-heavy, lecture-heavy, or balanced, based on requirements, or TBD]
 - **Delivery:** [In-person intensive workshop | Virtual workshop via [Platform] | Hybrid (in-room + remote participants)]
 
@@ -343,7 +343,7 @@ lastUpdated: YYYY-MM-DD
 
 - **Instructor:** [Instructor name]
 - **Organization:** [Organization]
-- **Duration:** [1-day or 2-day]
+- **Shape and time:** [workshop 1-day, 2-day | cohort N x M minutes | self-paced N hours]
 - **Target Audience:** [Audience]
 
 ## Version History
@@ -523,6 +523,10 @@ Or use autonomous generation:
   The curriculum-architect agent will generate all components.
 ```
 
+## Progress
+
+After `course.yaml` is written and validated, follow `course-conventions` §Progress: run `progress --write` and tell the user the next stage and its skill name.
+
 ## Error Handling
 
 **Directory already exists:**
@@ -568,7 +572,7 @@ TZ='America/New_York' date '+%Y-%m-%d'
 **Interactive:**
 ```
 User: /course-curriculum-creator:create-course PropTech Fundamentals
-[Plugin prompts for duration, location, audience]
+[Plugin prompts for shape, time, location, audience]
 [Plugin creates structure with provided details]
 ```
 

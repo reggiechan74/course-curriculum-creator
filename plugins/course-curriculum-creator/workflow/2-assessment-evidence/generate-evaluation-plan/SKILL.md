@@ -27,31 +27,23 @@ L&D managers are increasingly accountable for demonstrating ROI. Reaction survey
 - Should have `04-materials/transfer-plan.md` (for L3 integration)
 - Recommended: `01-planning/training-needs-analysis.md` (for L4 baseline metrics)
 
-## Staleness Check
+## Staleness
 
-Before generating, check if source files have changed since this file was last generated:
+Staleness: follow `course-conventions` §Staleness. Output: `03-assessment/evaluation-plan.md`. Sources: `learning-objectives` = `01-planning/learning-objectives.md`.
 
-1. If the output file `03-assessment/evaluation-plan.md` already exists, read its YAML frontmatter `sourceHashes`
-2. Compute current hash of source files and compare
-3. Warn if changed
+## Settings
 
-When generating, always compute and write current source hashes to the output file's frontmatter.
-
-## Settings Integration
-
-Plugin settings (configured with `/plugin configure`). If the project has a `.claude/course-curriculum-creator.local.md` file, values in its YAML frontmatter override these. A value still shown as a literal `${user_config.…}` placeholder has not been set, so use its default:
-- `instructor_name` = `${user_config.instructor_name}` (default: not set): Use as evaluator
-- `organization` = `${user_config.organization}` (default: not set): Use in plan header
-
-If a value is empty and not overridden, use sensible defaults or prompt user.
+Settings: see `course-conventions` (uses `instructor_name`, `organization`). Use `instructor_name` as evaluator and `organization` in the plan header. If a value is not set, use sensible defaults or prompt the user.
 
 ## Command Behavior
 
+0. Load the `course-curriculum-creator:course-conventions` skill first, then follow its §course.yaml is necessary.
 1. Load `course-curriculum-creator:backward-design-methodology` skill for assessment alignment
 2. Read learning objectives and TNA (if exists) for evaluation context
 3. Determine which levels to generate (default: all four)
 4. For each level, create specific instruments and timelines
 5. Write to `03-assessment/evaluation-plan.md`
+6. Follow `course-conventions` §Progress
 
 ## Level Selection
 
@@ -59,7 +51,7 @@ If a value is empty and not overridden, use sensible defaults or prompt user.
 Generate evaluation instruments for all four Kirkpatrick levels.
 
 ### --levels 1,2
-Generate only Level 1 and Level 2 (common for low-stakes workshops).
+Generate only Level 1 and Level 2 (common for low-stakes courses).
 
 ### --levels 1,2,3,4
 Same as `all`.
@@ -102,8 +94,8 @@ sourceHashes:
 
 | Level | What It Measures | When | Instrument |
 |---|---|---|---|
-| 1 - Reaction | Satisfaction, perceived relevance | End of workshop | Survey |
-| 2 - Learning | Knowledge/skill acquisition | Pre + post workshop | Assessment |
+| 1 - Reaction | Satisfaction, perceived relevance | End of course | Survey |
+| 2 - Learning | Knowledge/skill acquisition | Pre + post course | Assessment |
 | 3 - Behavior | On-the-job application | 30-60 days post | Observation/survey |
 | 4 - Results | Business impact | 60-90 days post | Metrics analysis |
 
@@ -113,30 +105,30 @@ sourceHashes:
 
 **Question:** Did participants find the training valuable, engaging, and relevant?
 
-**When:** Immediately after workshop (last 10 minutes)
+**When:** Immediately after course (last 10 minutes)
 
-**Instrument: End-of-Workshop Survey**
+**Instrument: End-of-Course Survey**
 
 Rate each item 1-5 (1=Strongly Disagree, 5=Strongly Agree):
 
 | Item | 1 | 2 | 3 | 4 | 5 |
 |---|---|---|---|---|---|
-| The workshop content was relevant to my work | | | | | |
+| The course content was relevant to my work | | | | | |
 | The pace was appropriate for the material | | | | | |
 | The activities helped me understand the concepts | | | | | |
 | I feel confident applying what I learned | | | | | |
 | The instructor was effective and engaging | | | | | |
-| I would recommend this workshop to a colleague | | | | | |
+| I would recommend this course to a colleague | | | | | |
 
 **Open-ended questions:**
-1. What was the most valuable part of the workshop?
-2. What would you change about the workshop?
+1. What was the most valuable part of the course?
+2. What would you change about the course?
 3. What additional topics would you like to explore?
 
 **Success Threshold:** Average rating >= 4.0, NPS >= 40
 
 **Data Collection:** [Paper forms / digital survey / LMS]
-**Analysis Timeline:** Within 1 week of workshop
+**Analysis Timeline:** Within 1 week of course
 
 ---
 
@@ -144,7 +136,7 @@ Rate each item 1-5 (1=Strongly Disagree, 5=Strongly Agree):
 
 **Question:** Did participants acquire the intended knowledge and skills?
 
-**When:** Pre-workshop (baseline) + end of workshop (post)
+**When:** Pre-course (baseline) + end of course (post)
 
 **Instrument: Pre/Post Knowledge & Skills Assessment**
 
@@ -181,7 +173,7 @@ Compare pre/post confidence alongside pre/post performance.
 
 **Question:** Are participants applying what they learned on the job?
 
-**When:** 30 days and 60 days post-workshop
+**When:** 30 days and 60 days post-course
 
 **Instrument A: Participant Self-Report Survey (Day 30)**
 
@@ -193,13 +185,13 @@ For each Apply+ objective:
 | [Objective 2] | Yes/No/Partially | ... | ... | ... |
 
 **Additional questions:**
-1. Describe a specific situation where you applied a workshop skill. What happened?
+1. Describe a specific situation where you applied a course skill. What happened?
 2. What has prevented you from applying other skills? (Select all: Time, Competing priorities, Lack of confidence, Process doesn't allow it, Forgot how, Not relevant to my role, Other)
 3. What additional support would help you apply what you learned?
 
 **Instrument B: Manager Observation Checklist (Day 60)**
 
-For managers of workshop participants:
+For managers of course participants:
 
 | Behavior | Not Observed | Sometimes | Consistently | N/A |
 |---|---|---|---|---|
@@ -207,9 +199,9 @@ For managers of workshop participants:
 | [Observable behavior from Objective 2] | | | | |
 
 **Manager questions:**
-1. Have you noticed changes in your employee's work approach since the workshop?
-2. Has the employee discussed applying workshop concepts?
-3. Would you recommend this workshop for other team members?
+1. Have you noticed changes in your employee's work approach since the course?
+2. Has the employee discussed applying course concepts?
+3. Would you recommend this course for other team members?
 
 **Success Threshold:**
 - Application rate: >= 70% report applying at least one skill within 30 days
@@ -225,7 +217,7 @@ L3 measurement should align with the follow-up touchpoints in `04-materials/tran
 
 **Question:** Did the training impact business outcomes?
 
-**When:** 60-90 days post-workshop
+**When:** 60-90 days post-course
 
 **Step 1: Identify Business Metrics**
 
@@ -269,7 +261,7 @@ For each metric:
 ### ROI Calculation (if --roi flag used)
 
 **Benefits:** [Monetary value of improvements]
-**Costs:** [Workshop development + delivery + participant time + materials]
+**Costs:** [Course development + delivery + participant time + materials]
 **ROI:** (Benefits - Costs) / Costs × 100 = [X]%
 
 **Conservative estimate:** [Lower bound using most conservative attribution]
@@ -287,12 +279,12 @@ For each metric:
 
 | Task | Owner | Timeline | Notes |
 |---|---|---|---|
-| Design L1 survey | Instructor/L&D | Before workshop | Finalize during curriculum design |
-| Design L2 pre/post assessment | Instructor/L&D | Before workshop | Align with objectives and rubrics |
-| Administer L1 survey | Instructor | Last 10 min of workshop | Paper or digital |
-| Administer L2 post-assessment | Instructor | Final module of workshop | Built into lesson plan |
-| Send L3 participant survey | L&D team | Day 30 post-workshop | Automated email |
-| Send L3 manager checklist | L&D team | Day 60 post-workshop | Email to managers |
+| Design L1 survey | Instructor/L&D | Before course | Finalize during curriculum design |
+| Design L2 pre/post assessment | Instructor/L&D | Before course | Align with objectives and rubrics |
+| Administer L1 survey | Instructor | Last 10 min of course | Paper or digital |
+| Administer L2 post-assessment | Instructor | Final module of course | Built into lesson plan |
+| Send L3 participant survey | L&D team | Day 30 post-course | Automated email |
+| Send L3 manager checklist | L&D team | Day 60 post-course | Email to managers |
 | Collect L4 business data | L&D team + stakeholders | Day 60-90 | Pull from business systems |
 | Compile evaluation report | L&D team | Day 90 | Full Kirkpatrick report |
 | Present to stakeholders | L&D lead | Day 100 | Focus on L3/L4 results |
