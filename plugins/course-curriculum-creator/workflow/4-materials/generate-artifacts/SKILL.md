@@ -48,6 +48,7 @@ Output: `04-materials/student-handout.md`
 - Answer keys
 - Time management guidance
 - Troubleshooting common issues
+Self-paced: write no facilitator or live-session sections (the guide covers course support, learner-support and review notes only).
 Output: `04-materials/instructor-guide.md`
 
 ### --type slides
@@ -320,7 +321,7 @@ version: 0.1.0
 courseVersion: [match]
 lastUpdated: YYYY-MM-DD
 dueDate: [2 business days before the course starts]
-estimatedTime: [30-60 minutes]
+estimatedTime: [asyncMinutes.preWork] minutes
 ---
 
 # Pre-Course Preparation
@@ -329,7 +330,7 @@ estimatedTime: [30-60 minutes]
 
 **Course Start Date:** [Date]
 **Please complete by:** [Due date — 2 business days before]
-**Estimated time:** [30-60 minutes]
+**Estimated time:** [asyncMinutes.preWork] minutes
 
 ---
 

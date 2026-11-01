@@ -44,9 +44,11 @@ Read `shape` from `manifest summary`. Never assume a duration.
 
 - **workshop**: one `## Day N: Title` section for each session in `manifest summary`.
 - **cohort**: one `## Session N: Title` section for each session in `manifest summary`. Each session opens with a retrieval segment on the previous session (the first session opens with a prior-knowledge activation instead) and ends with a "Between sessions" segment: the assignment and discussion prompts, sized inside `asyncMinutes.betweenSessions`.
-- **self-paced**: a `## Modules` section with `### Module N: Title (est. NN min)` headings. Write no session headings and no clock times. Every module ends with a practice-and-feedback segment. Module minutes together equal the learner time (`estimatedHours` in `01-planning/course-positioning.md` × 60) minus `asyncMinutes.total`.
+- **self-paced**: a `## Modules` section with `### Module N: Title (est. NN min)` headings. Write no session headings and no clock times. Every module ends with a practice-and-feedback segment. Module minutes together are about equal (within 10%) to the learner time (`estimatedHours` in `01-planning/course-positioning.md` × 60) minus `asyncMinutes.total`.
 
 Module minutes in one session must not be more than the session minutes.
+
+Cohort retrieval and "Between sessions" segments are activities inside the session. Do NOT write them as `### Module` headings: the parser counts every `### Module` heading as a module.
 
 ## Module Structure Logic
 
@@ -65,7 +67,7 @@ Module minutes in one session must not be more than the session minutes.
 **Total available:** `sessions[].minutes` from `manifest summary` for each session (self-paced: the module minutes above). Workshop example: a 420-minute day leaves about 360 minutes of module time after breaks and lunch.
 
 **Account for (workshop and cohort):**
-- Breaks: 15 min every 90-120 min
+- Breaks: 15 min every 90-120 min (not for self-paced)
 - Lunch: 60 min (if a full-day session)
 - Transitions: 5 min between modules
 - Buffer: 10-15% for overruns
@@ -233,7 +235,7 @@ After generating the outline, validate each module against UDL minimums:
   - Flag half-days without choice opportunities
 - **Activity variety**: Do activity types rotate across the day? (individual → pair → group → individual)
   - Flag sequences of 3+ same-format activities
-- **Breaks**: Are breaks scheduled every 45-60 minutes during instruction?
+- **Breaks** (workshop and cohort; not for self-paced): Are breaks scheduled every 45-60 minutes during instruction?
   - Flag gaps longer than 60 minutes without breaks
 
 If any check fails, add a note to the outline: "⚠ UDL Note: [specific recommendation]"

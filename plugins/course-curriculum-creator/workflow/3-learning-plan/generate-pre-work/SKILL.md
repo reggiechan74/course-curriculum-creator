@@ -46,7 +46,7 @@ Staleness: follow `course-conventions` §Staleness. Output: `04-materials/pre-wo
 
 ## Micro-Learning Unit Design Rules
 
-- **Total completion time** = `asyncMinutes.preWork` from `manifest summary` (do not exceed it). Use as many units as fit, about 10-15 minutes each; if `preWork` is 0, tell the user there is no pre-work time and stop. Workshop example: a 30-minute budget gives at most 3 units
+- **Total completion time** = `asyncMinutes.preWork` from `manifest summary` (do not exceed it). Use as many units as fit, about 10-15 minutes each. If `preWork` is 0, write no units and no emails and tell the user there is no pre-work time; still do step 8 for a cohort with `betweenSessions` > 0. Workshop example: a 30-minute budget gives at most 3 units
 - Each unit: **10-15 minutes**, single concept focus, one self-check question at end
 - Two paths per unit:
   - **Fast track:** Already familiar — read 2-sentence summary, take self-check quiz, done (2-3 min)
@@ -64,12 +64,12 @@ Staleness: follow `course-conventions` §Staleness. Output: `04-materials/pre-wo
 
 ## Email Templates
 
-### T-7 Days: Welcome & Pre-Work Instructions
+### T-7 Days: Welcome & Pre-Work Instructions (not for self-paced: no start date to count from)
 
 - **Subject:** Prepare for [Course Title] — [Date]
 - Body includes: welcome message, pre-work link, estimated completion time, contact for questions
 
-### T-2 Days: Reminder
+### T-2 Days: Reminder (not for self-paced)
 
 - **Subject:** Reminder: Complete pre-work for [Course Title] — [Date]
 - Body includes: reminder, direct link to self-assessment, support contact
@@ -105,7 +105,7 @@ sourceHashes:
 
 ## [Course Title]
 
-**Purpose:** Prepare participants with foundational knowledge before the course, freeing the first session for hands-on application.
+**Purpose:** Prepare participants with foundational knowledge before the course, freeing the first session for hands-on application (self-paced: freeing the module practice; there is no first session).
 
 **Total Time:** [N] minutes (full path) | [M] minutes (fast track)
 
@@ -139,7 +139,7 @@ If you answered correctly, skip to Unit 2. If not, complete the Full Path below.
 
 ---
 
-[Repeat for each unit, up to 3 maximum]
+[Repeat for each unit, up to the units that fit `asyncMinutes.preWork`]
 
 ---
 
