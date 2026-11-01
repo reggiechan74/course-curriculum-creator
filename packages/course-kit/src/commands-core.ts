@@ -3,6 +3,7 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 import { type CommandTable, requireFlag, requirePositional, runCli } from './cli/args.js';
+import { auditCourse } from './audit.js';
 import { UsageError, ValidationError } from './errors.js';
 import { checkStale, hashFile, setSources, writeHashes } from './hash.js';
 import { type StageName, StageNameSchema } from './manifest/schema.js';
@@ -92,6 +93,7 @@ export const coreCommands: CommandTable = {
     if (issues.some((i) => i.level === 'error')) throw new ValidationError(JSON.stringify({ issues }));
     return { issues };
   },
+  audit: (a) => auditCourse(requireFlag(a, 'course')),
   'registry list': (a) => ({ assets: loadRegistry(requireFlag(a, 'course')).assets }),
   'registry add': (a) => {
     const course = requireFlag(a, 'course');
