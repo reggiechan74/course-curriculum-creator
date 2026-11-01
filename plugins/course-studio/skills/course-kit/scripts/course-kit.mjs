@@ -28833,6 +28833,9 @@ function migrateV2(courseDir, o) {
         }
         delivery = answers.delivery;
       }
+      if (answers.sessionMinutes !== void 0 && (!/^\d+$/.test(answers.sessionMinutes.trim()) || Number(answers.sessionMinutes) <= 0)) {
+        throw new ValidationError('answer "sessionMinutes" must be a positive integer');
+      }
       let sessions = shape2 === "self-paced" ? [] : synced.timeBudget.live?.sessions ?? [];
       const count2 = parsed.days ?? parsed.sessions;
       if (shape2 !== "self-paced" && sessions.length === 0 && count2 !== void 0 && count2 > 0) {
@@ -28842,9 +28845,6 @@ function migrateV2(courseDir, o) {
         if (answers.sessionMinutes === void 0) {
           questions.push({ id: "sessionMinutes", text: "How many minutes is each live session?", default: fallback2 });
         } else {
-          if (!/^\d+$/.test(answers.sessionMinutes.trim()) || Number(answers.sessionMinutes) <= 0) {
-            throw new ValidationError('answer "sessionMinutes" must be a positive integer');
-          }
           minutes = Number(answers.sessionMinutes);
         }
         sessions = Array.from({ length: count2 }, (_, i) => ({ id: `S${i + 1}`, label: `${fromDays ? "Day" : "Session"} ${i + 1}`, minutes }));
@@ -28937,24 +28937,23 @@ function migrateV2(courseDir, o) {
     actions.push(...registryActions);
     const idChanges = ID_COMMENT_FILES.filter((rel) => existsSync6(join7(scratch, rel)) && existsSync6(join7(dir, rel)) && readFileSync8(join7(scratch, rel), "utf8") !== readFileSync8(join7(dir, rel), "utf8"));
     for (const rel of idChanges) actions.push(`insert ID comments in ${rel}`);
+    const apply2 = (root) => keepFresh(root, () => {
+      if (manifestChanged) writeFileSync6(join7(root, "course.yaml"), next);
+      if (registryActions.length) saveRegistry(root, registry2);
+      for (const rel of idChanges) writeFileSync6(join7(root, rel), readFileSync8(join7(scratch, rel), "utf8"));
+    });
+    const sim = join7(scratch, "sim");
+    cpSync(dir, sim, { recursive: true, filter: (src) => !/(^|[\\/])node_modules$/.test(src) });
+    apply2(sim);
     const changes = [];
-    const oldText = (rel) => existsSync6(join7(dir, rel)) ? readFileSync8(join7(dir, rel), "utf8") : "";
-    const addChange = (file2, text3) => {
-      changes.push({ file: file2, change: existsSync6(join7(dir, file2)) ? "modify" : "create", ...lineDiff(oldText(file2), text3) });
-    };
-    if (manifestChanged) addChange("course.yaml", next);
-    if (registryActions.length) {
-      saveRegistry(probe, registry2);
-      addChange("05-media/registry.json", readFileSync8(join7(probe, "05-media/registry.json"), "utf8"));
+    for (const file2 of listFiles(sim)) {
+      const newBuf = readFileSync8(join7(sim, file2));
+      const exists = existsSync6(join7(dir, file2));
+      const oldBuf = exists ? readFileSync8(join7(dir, file2)) : void 0;
+      if (oldBuf && oldBuf.equals(newBuf)) continue;
+      changes.push({ file: file2, change: exists ? "modify" : "create", ...lineDiff(oldBuf?.toString("utf8") ?? "", newBuf.toString("utf8")) });
     }
-    for (const rel of idChanges) addChange(rel, readFileSync8(join7(scratch, rel), "utf8"));
-    if (!o.dryRun) {
-      keepFresh(dir, () => {
-        if (manifestChanged) writeFileSync6(join7(dir, "course.yaml"), next);
-        if (registryActions.length) saveRegistry(dir, registry2);
-        for (const rel of idChanges) writeFileSync6(join7(dir, rel), readFileSync8(join7(scratch, rel), "utf8"));
-      });
-    }
+    if (!o.dryRun) apply2(dir);
     return { manifest: target2, actions, questions, imported, changes };
   } finally {
     rmSync(scratch, { recursive: true, force: true });

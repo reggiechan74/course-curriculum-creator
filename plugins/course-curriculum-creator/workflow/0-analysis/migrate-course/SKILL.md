@@ -65,6 +65,6 @@ Show the issues it reports.
 
 ### Step 6: Tell the user
 
-State that the old files did not move and none were deleted; only `course.yaml`, `05-media/registry.json` and ID comments were added. Pointers to files outside the course (for example a series framework) are recorded as `external` sources.
+State that the old files did not move and none were deleted; only `course.yaml`, `05-media/registry.json` and ID comments were added, and the `sourceHashes` of any output that was up to date are refreshed so the new ID comments do not make it look stale (the `changes` table lists every such file). Pointers to files outside the course (for example a series framework) are recorded as `external` sources.
 
 Core v3 workflow skills need `course.yaml`, so a v2 folder must be migrated with this command before any other workflow skill runs on it.

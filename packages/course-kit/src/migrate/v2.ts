@@ -158,6 +158,9 @@ export function migrateV2(courseDir: string, o: { dryRun: boolean; answers?: Rec
         }
         delivery = answers.delivery as Manifest['delivery'];
       }
+      if (answers.sessionMinutes !== undefined && (!/^\d+$/.test(answers.sessionMinutes.trim()) || Number(answers.sessionMinutes) <= 0)) {
+        throw new ValidationError('answer "sessionMinutes" must be a positive integer');
+      }
       let sessions = shape === 'self-paced' ? [] : synced.timeBudget.live?.sessions ?? [];
       const count = parsed.days ?? parsed.sessions;
       if (shape !== 'self-paced' && sessions.length === 0 && count !== undefined && count > 0) {
@@ -167,9 +170,6 @@ export function migrateV2(courseDir: string, o: { dryRun: boolean; answers?: Rec
         if (answers.sessionMinutes === undefined) {
           questions.push({ id: 'sessionMinutes', text: 'How many minutes is each live session?', default: fallback });
         } else {
-          if (!/^\d+$/.test(answers.sessionMinutes.trim()) || Number(answers.sessionMinutes) <= 0) {
-            throw new ValidationError('answer "sessionMinutes" must be a positive integer');
-          }
           minutes = Number(answers.sessionMinutes);
         }
         sessions = Array.from({ length: count }, (_, i) => ({ id: `S${i + 1}`, label: `${fromDays ? 'Day' : 'Session'} ${i + 1}`, minutes }));
@@ -258,25 +258,26 @@ export function migrateV2(courseDir: string, o: { dryRun: boolean; answers?: Rec
       && readFileSync(join(scratch, rel), 'utf8') !== readFileSync(join(dir, rel), 'utf8'));
     for (const rel of idChanges) actions.push(`insert ID comments in ${rel}`);
 
+    // Apply the writes to a full copy first, so `changes` also lists the outputs whose source hashes
+    // keepFresh refreshes. A dry run and a real run therefore report the same files.
+    const apply = (root: string) => keepFresh(root, () => {
+      if (manifestChanged) writeFileSync(join(root, 'course.yaml'), next);
+      if (registryActions.length) saveRegistry(root, registry);
+      for (const rel of idChanges) writeFileSync(join(root, rel), readFileSync(join(scratch, rel), 'utf8'));
+    });
+    const sim = join(scratch, 'sim');
+    cpSync(dir, sim, { recursive: true, filter: (src) => !/(^|[\\/])node_modules$/.test(src) });
+    apply(sim);
     const changes: MigrationChange[] = [];
-    const oldText = (rel: string) => (existsSync(join(dir, rel)) ? readFileSync(join(dir, rel), 'utf8') : '');
-    const addChange = (file: string, text: string) => {
-      changes.push({ file, change: existsSync(join(dir, file)) ? 'modify' : 'create', ...lineDiff(oldText(file), text) });
-    };
-    if (manifestChanged) addChange('course.yaml', next);
-    if (registryActions.length) {
-      saveRegistry(probe, registry);
-      addChange('05-media/registry.json', readFileSync(join(probe, '05-media/registry.json'), 'utf8'));
+    for (const file of listFiles(sim)) {
+      const newBuf = readFileSync(join(sim, file));
+      const exists = existsSync(join(dir, file));
+      const oldBuf = exists ? readFileSync(join(dir, file)) : undefined;
+      if (oldBuf && oldBuf.equals(newBuf)) continue;
+      changes.push({ file, change: exists ? 'modify' : 'create', ...lineDiff(oldBuf?.toString('utf8') ?? '', newBuf.toString('utf8')) });
     }
-    for (const rel of idChanges) addChange(rel, readFileSync(join(scratch, rel), 'utf8'));
 
-    if (!o.dryRun) {
-      keepFresh(dir, () => {
-        if (manifestChanged) writeFileSync(join(dir, 'course.yaml'), next);
-        if (registryActions.length) saveRegistry(dir, registry);
-        for (const rel of idChanges) writeFileSync(join(dir, rel), readFileSync(join(scratch, rel), 'utf8'));
-      });
-    }
+    if (!o.dryRun) apply(dir);
     return { manifest: target, actions, questions, imported, changes };
   } finally {
     rmSync(scratch, { recursive: true, force: true });

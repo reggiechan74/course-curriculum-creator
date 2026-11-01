@@ -176,6 +176,35 @@ test('dry run changes equal the real run changes, and the second real run has no
   expect(migrateV2(dir, { dryRun: false, answers }).changes).toEqual([]);
 });
 
+test('changes include fresh outputs whose hashes are refreshed, and equal the real run', () => {
+  writeHashes(join(dir, '02-design/course-outline.md'), dir);
+  const answers = { 'alt:IMG-bmc': 'a', 'alt:IMG-vpd': 'b' };
+  const before = readFileSync(join(dir, '02-design/course-outline.md'), 'utf8');
+  const dry = migrateV2(dir, { dryRun: true, answers });
+  const entry = dry.changes.find((c) => c.file === '02-design/course-outline.md')!;
+  expect(entry).toMatchObject({ change: 'modify' });
+  expect(entry.added).toBeGreaterThan(0);
+  expect(readFileSync(join(dir, '02-design/course-outline.md'), 'utf8')).toBe(before);
+  const real = migrateV2(dir, { dryRun: false, answers });
+  expect(real.changes).toEqual(dry.changes);
+  expect(real.changes.map((c) => c.file)).toEqual([...real.changes.map((c) => c.file)].sort());
+  expect(migrateV2(dir, { dryRun: false, answers }).changes).toEqual([]);
+});
+
+test('a 3-day course with no outline sessions gets Day labels and asks 420', () => {
+  rmSync(join(dir, '02-design/course-outline.md'));
+  setPositioning('duration: "4-day (two weekends)"', 'duration: "3-day"');
+  const r = migrateV2(dir, { dryRun: true });
+  expect(r.manifest.timeBudget.live!.sessions).toEqual([
+    { id: 'S1', label: 'Day 1', minutes: 420 }, { id: 'S2', label: 'Day 2', minutes: 420 }, { id: 'S3', label: 'Day 3', minutes: 420 },
+  ]);
+  expect(r.questions.find((q) => q.id === 'sessionMinutes')).toMatchObject({ default: '420' });
+});
+
+test('sessionMinutes is validated even when no sessions are generated', () => {
+  expect(() => migrateV2(dir, { dryRun: true, answers: { sessionMinutes: 'abc' } })).toThrow(/positive integer/);
+});
+
 test('stages come from progress', () => {
   // The fixture's outline carries old source hashes, so progress reports it stale until they are rewritten.
   expect(migrateV2(dir, { dryRun: true }).manifest.stages).toMatchObject({ lessonPlans: 'missing', outline: 'stale' });
