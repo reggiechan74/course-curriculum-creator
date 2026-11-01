@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 const PLUGIN_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../../plugins/course-curriculum-creator');
 
 // Paths (relative to the plugin root) that the rules below check. Later tasks append their folders here.
-const LINTED = ['agents', 'skills/course-conventions', 'skills/course-kit', 'workflow/0-analysis', 'workflow/1-desired-results', 'workflow/2-assessment-evidence', 'workflow/3-learning-plan', 'workflow/4-materials', 'workflow/5-quality-and-review', 'workflow/6-delivery', 'workflow/7-templates'];
+const LINTED = ['agents', 'skills/course-conventions', 'skills/blooms-taxonomy', 'skills/backward-design-methodology', 'skills/universal-design-for-learning', 'skills/virtual-facilitation', 'skills/course-kit', 'workflow/0-analysis', 'workflow/1-desired-results', 'workflow/2-assessment-evidence', 'workflow/3-learning-plan', 'workflow/4-materials', 'workflow/5-quality-and-review', 'workflow/6-delivery', 'workflow/7-templates'];
 
 const CONVENTIONS = 'skills/course-conventions/SKILL.md';
 
@@ -58,6 +58,16 @@ describe('skills lint', () => {
     const banned = [/1-2[ -]day/i, /1-day or 2-day/i, /1-day vs 2-day/i];
     for (const f of allFiles().filter((x) => (isSkill(x) || x.startsWith('agents/')) && isChecked(x))) {
       for (const re of banned) expect(read(f), `${f} ${re}`).not.toMatch(re);
+    }
+  });
+
+  test('accessibility target is WCAG 2.2', () => {
+    for (const f of allFiles()) {
+      for (const line of read(f).split('\n')) {
+        for (const sentence of line.split(/(?<=[.!?])\s+/)) {
+          if (sentence.includes('WCAG 2.1')) expect(sentence, `${f}: ${sentence}`).toContain('2.2');
+        }
+      }
     }
   });
 

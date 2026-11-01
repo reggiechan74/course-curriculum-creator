@@ -1,18 +1,18 @@
 ---
 name: universal-design-for-learning
-description: "Applies Universal Design for Learning (multiple means of engagement, representation, and action/expression) and accessibility standards to workshop curricula, lesson plans, and activities."
+description: "Applies Universal Design for Learning (multiple means of engagement, representation, and action/expression) and accessibility standards to course curricula, lesson plans, and activities."
 when_to_use: "Use when the user asks to \"design accessible curriculum\", \"apply UDL\", \"accommodate diverse learners\", \"create inclusive workshops\", or \"ensure accessibility\", references Universal Design for Learning, or when generating lesson plans, outlines, or activities that need inclusive design."
 ---
 
-# Universal Design for Learning (UDL) for Workshop Design
+# Universal Design for Learning (UDL) for Course Design
 
 ## Overview
 
 Universal Design for Learning (UDL) is a framework for designing learning experiences that are accessible and effective for ALL learners from the start, rather than retrofitting accommodations after the fact. Rooted in neuroscience research, UDL recognizes that learners vary systematically in how they perceive information, what motivates them to engage, and how they best express their understanding.
 
-In workshop contexts, designing for the "average" learner is a myth that loses people at both ends of the spectrum. Participants who process quickly get bored; those who need more time fall behind. Participants who thrive in discussion disengage during solo reading; those who think best in writing shut down during rapid-fire group brainstorming. The insight of UDL is that designing for the margins improves the experience for everyone. Captioned videos help not only deaf participants but also non-native speakers and anyone in a noisy room. Structured handouts help not only participants with processing differences but also everyone trying to follow along in a dense afternoon session.
+In time-limited courses, designing for the "average" learner is a myth that loses people at both ends of the spectrum. Participants who process quickly get bored; those who need more time fall behind. Participants who thrive in discussion disengage during solo reading; those who think best in writing shut down during rapid-fire group brainstorming. The insight of UDL is that designing for the margins improves the experience for everyone. Captioned videos help not only deaf participants but also non-native speakers and anyone in a noisy room. Structured handouts help not only participants with processing differences but also everyone trying to follow along in a dense afternoon session.
 
-For 1-2 day intensive workshops, UDL is especially critical: there is no time for participants to "catch up later." If someone is excluded by a design choice on Day 1 morning, they may never recover. Proactive inclusive design is not optional generosity; it is a prerequisite for effective instruction.
+The course's shape and time budget come from the manifest summary (see `course-conventions` §Shape and time budget). In short, intensive courses (for example one- or two-day workshops), UDL is especially critical: there is no time for participants to "catch up later." If someone is excluded by a design choice in the first hours, they may never recover. Proactive inclusive design is not optional generosity; it is a prerequisite for effective instruction.
 
 ## The Three UDL Principles
 
@@ -46,12 +46,12 @@ Learners differ in what motivates and sustains their effort. A single engagement
 |----------|---------------|-----------|
 | Choice in activities | Offer 2-3 activity options targeting the same objective (e.g., case study analysis OR role-play scenario OR written reflection) | Autonomy and self-regulation; learners invest more when they have agency |
 | Relevance connections | Open each module by explicitly linking content to participants' real-world challenges; ask participants to name their own use cases | Intrinsic motivation; adults engage when they see immediate applicability |
-| Collaborative AND individual work | Alternate between pair/group activities and solo practice within each half-day | Social vs. reflective preferences; introverts and extroverts both need space to thrive |
+| Collaborative AND individual work | Alternate between pair/group activities and solo practice within each session or block of about 3 hours of learner time | Social vs. reflective preferences; introverts and extroverts both need space to thrive |
 | Low-stakes practice before assessment | Provide ungraded practice exercises, think-pair-share, or sandbox time before any evaluated task | Psychological safety; reduces anxiety and allows productive failure |
 | Progress visibility | Use visual progress trackers, module completion checklists, or "what we've covered" recaps | Self-regulation; participants can gauge their own learning and stay oriented |
 | Varied challenge levels | Provide base exercises plus extension challenges ("finished early? try this") and scaffolded hints ("stuck? start here") | Zone of proximal development; prevents boredom for advanced learners and frustration for those who need more support |
 
-**Minimum Standard:** Each half-day should include at least one activity where learners have meaningful choice in how they engage with the content.
+**Minimum Standard:** Each session, or each block of about 3 hours of learner time, should include at least one activity where learners have meaningful choice in how they engage with the content.
 
 **Checklist per Module:**
 - [ ] At least one activity offers learner choice (in topic, format, or approach)
@@ -73,7 +73,7 @@ Learners differ in how they can best demonstrate their understanding. Requiring 
 | Handwriting on paper | Digital input, verbal response, or typed notes | Motor differences, handwriting legibility, and speed vary widely among adults |
 | Live coding or whiteboard work | Pre-built templates to modify, pair programming, or pseudocode on paper | Performance anxiety at a whiteboard is not a measure of technical understanding |
 
-**Minimum Standard:** At least one major assessment per day should offer choice in how participants demonstrate their understanding.
+**Minimum Standard:** At least one major assessment per session or module should offer choice in how participants demonstrate their understanding.
 
 **Checklist per Module:**
 - [ ] At least 2 response formats are accepted for major activities (e.g., written + verbal, diagram + text)
@@ -84,12 +84,14 @@ Learners differ in how they can best demonstrate their understanding. Requiring 
 
 ## Accommodation Planning
 
-### Pre-Workshop Accommodation Process
+**Timing guidance by shape:** Cohort: give a transfer assignment and discussion prompts between sessions, and allow flexible submission windows. Self-paced: there are no live sessions, so build flexibility into the hub (no forced timing), give a time-on-task estimate for every module and activity, and make assessments auto-checkable items or self-assessment with model answers.
 
-Proactive accommodation planning reduces last-minute scrambles and ensures participants feel welcome before the workshop begins.
+### Pre-Course Accommodation Process
+
+Proactive accommodation planning reduces last-minute scrambles and ensures participants feel welcome before the course begins.
 
 **Step 1: Include an accommodation prompt in enrollment.**
-Add a question to the registration form: "Is there anything we can do to support your learning during this workshop? (Examples: large-print materials, captioning, frequent breaks, seating near the front.)" Frame it as a standard question for all registrants, not a special request.
+Add a question to the registration form: "Is there anything we can do to support your learning during this course? (Examples: large-print materials, captioning, frequent breaks, seating near the front.)" Frame it as a standard question for all registrants, not a special request.
 
 **Step 2: Build flexibility into the design from the start.**
 Design materials, activities, and the physical/virtual environment with common accommodations already built in. Digital materials should be screen-reader compatible. Slides should use high-contrast colors and large fonts. Activities should have built-in time buffers. This reduces the number of individual accommodations needed.
@@ -97,7 +99,7 @@ Design materials, activities, and the physical/virtual environment with common a
 **Step 3: Plan for common accommodations without requiring disclosure.**
 Many participants will not disclose needs. Design so that the most common accommodations (readable fonts, breaks, multiple formats, flexible timing) are simply part of the standard experience. No one should need to ask for what should already be there.
 
-### Common Workshop Accommodations
+### Common Accommodations
 
 | Need | Proactive Design (Built In) | Reactive Accommodation (If Requested) |
 |------|----------------------------|---------------------------------------|
@@ -105,7 +107,7 @@ Many participants will not disclose needs. Design so that the most common accomm
 | Hearing impairment | Face the audience when speaking, use visual aids for all key points, provide written instructions for activities | Arrange real-time captioning or sign language interpreter; provide written transcript of verbal content; use visual/vibrating timer signals |
 | Motor/physical | Ensure venue is wheelchair accessible, provide digital alternatives to handwriting, allow flexible seating arrangements | Adjust table height, provide adaptive input devices, allow a support person to accompany participant |
 | Processing speed | Build buffer time into all activities, provide written instructions alongside verbal ones, use "complete what you can" framing | Extend time on exercises, provide materials in advance for pre-reading, reduce required output quantity while maintaining quality expectations |
-| Attention/focus | Schedule breaks every 45-60 minutes, vary activity types frequently, provide structured handouts to anchor attention | Allow movement breaks as needed, provide fidget tools, seat away from high-traffic areas, offer noise-reducing options |
+| Attention/focus | Schedule breaks every 45-60 minutes of live time (self-paced: suggest stopping points at that interval), vary activity types frequently, provide structured handouts to anchor attention | Allow movement breaks as needed, provide fidget tools, seat away from high-traffic areas, offer noise-reducing options |
 | Language barriers | Define jargon and acronyms, use plain language, provide glossary handouts, speak at measured pace | Provide materials in advance for translation preparation, allow dictionary or translation tool use, pair with bilingual participant if available |
 | Anxiety/introversion | Normalize quiet reflection time, offer written alternatives to verbal sharing, use think-pair-share before whole-group discussion | Allow opt-out from public presentation with private alternative, provide questions in advance, allow written submission instead of verbal |
 
@@ -119,7 +121,7 @@ When generating the course outline, apply UDL by checking:
 - **Representation variety**: Does each module use at least 2 different content delivery modes? Flag any module that is lecture-only or text-only.
 - **Activity type rotation**: Do activity types vary across consecutive modules? Avoid three discussion-based modules in a row or three solo exercises back-to-back.
 - **Breaks and transitions**: Are breaks scheduled at least every 45-60 minutes? Is there transition time between modules for cognitive reset?
-- **Engagement scaffolding**: Does the outline progress from low-stakes to higher-stakes activities within each day? Are choice points identified?
+- **Engagement scaffolding**: Does the outline progress from low-stakes to higher-stakes activities within each session? Are choice points identified?
 
 ### During `/course-curriculum-creator:generate-lesson-plans`
 
@@ -148,11 +150,11 @@ When generating assessment rubrics:
 
 When reviewing curriculum for quality, add a UDL validation dimension:
 - **Representation coverage**: Does each module present key concepts in at least 2 modes? Flag modules with only one representation mode.
-- **Engagement choices**: Does each half-day include at least one learner choice point? Flag half-days with zero choice.
-- **Expression flexibility**: Does at least one major assessment per day offer format choice? Flag days where all assessments require the same output format.
+- **Engagement choices**: Does each session or 3-hour block include at least one learner choice point? Flag blocks with zero choice.
+- **Expression flexibility**: Does at least one major assessment per session or module offer format choice? Flag sessions or modules where all assessments require the same output format.
 - **Accommodation readiness**: Are materials available in accessible formats? Are breaks adequate? Is the schedule flexible enough to accommodate common needs without disruption?
 
-## Common UDL Pitfalls in Workshop Design
+## Common UDL Pitfalls in Course Design
 
 | Pitfall | Problem | Fix |
 |---------|---------|-----|
@@ -163,8 +165,8 @@ When reviewing curriculum for quality, add a UDL validation dimension:
 | Color-coded without labels | Excludes approximately 8% of males and 0.5% of females with color vision deficiency | Always pair color with text labels, patterns, or icons; never use color as the sole carrier of meaning |
 | "Everyone present to the group" | Creates anxiety for introverted participants or those with social anxiety; conflates presentation skill with content mastery | Offer alternatives: small-group share, written summary, recorded audio, poster walkthrough, or one-on-one with instructor |
 | Single example domain | Participants outside that domain cannot connect; learning feels irrelevant to their context | Use examples from at least 2-3 different domains or industries; invite participants to generate examples from their own context |
-| No pre-reading or advance materials | Participants who process slowly or benefit from preview have no way to prepare; everyone starts cold | Send core materials (glossary, agenda, key concepts overview) at least 48 hours before the workshop |
-| Identical activity format across all modules | Favors one learning style systematically; participants who don't match that style are disadvantaged all day | Rotate through at least 3-4 different activity formats across the workshop day (discussion, hands-on, written reflection, visual/diagram work) |
+| No pre-reading or advance materials | Participants who process slowly or benefit from preview have no way to prepare; everyone starts cold | Send core materials (glossary, agenda, key concepts overview) at least 48 hours before the first session (self-paced: before the course opens) |
+| Identical activity format across all modules | Favors one learning style systematically; participants who don't match that style are disadvantaged all day | Rotate through at least 3-4 different activity formats across a day of learner time (discussion, hands-on, written reflection, visual/diagram work) |
 | Assuming technology access and proficiency | Participants without devices, stable internet, or tool familiarity are excluded from participation | Always have a non-technology fallback for any digital activity; provide brief tool orientation before technology-dependent exercises |
 
 ## UDL Validation Checklist
@@ -179,11 +181,11 @@ Use this checklist to validate UDL integration across the full curriculum before
 - [ ] A reference handout or digital resource is available for every module so participants are not reliant on memory
 
 ### Engagement (The "Why")
-- [ ] Each half-day includes at least one activity with meaningful learner choice
+- [ ] Each session or 3-hour block includes at least one activity with meaningful learner choice
 - [ ] Every module opens with an explicit connection to real-world application or participant-generated relevance
-- [ ] Activities alternate between collaborative and individual work modes across the day
+- [ ] Activities alternate between collaborative and individual work modes across the session
 - [ ] Low-stakes practice precedes any formally assessed or publicly shared performance
-- [ ] Progress is made visible through recaps, checklists, or visual tracking within each half-day
+- [ ] Progress is made visible through recaps, checklists, or visual tracking within each session or block
 
 ### Action & Expression (The "How")
 - [ ] At least 2 response formats are accepted for major activities in each module
@@ -197,14 +199,14 @@ Use this checklist to validate UDL integration across the full curriculum before
 - [ ] Font sizes meet minimums: 18pt+ for projected slides, 12pt+ for handouts
 - [ ] Color is never the sole carrier of meaning (always paired with labels, patterns, or icons)
 - [ ] Breaks are scheduled at least every 45-60 minutes
-- [ ] Buffer time (10-15% of schedule) is built into the workshop timeline for overruns and flexibility
-- [ ] Core pre-reading materials are sent to participants at least 48 hours before the workshop
+- [ ] Buffer time (10-15% of schedule) is built into the timeline for overruns and flexibility
+- [ ] Core pre-reading materials are sent to participants at least 48 hours before the first session (self-paced: before the course opens)
 
 ## Additional Resources
 
 - **`${CLAUDE_SKILL_DIR}/references/accessibility-specifications.md`** - Concrete accessibility specs for materials, slides, and venues
 - **`${CLAUDE_SKILL_DIR}/references/cultural-adaptation.md`** - Adapting activities and examples for cultural context
-- **`${CLAUDE_SKILL_DIR}/examples/example-udl-1day-workshop.md`** - UDL applied to a complete 1-day workshop
+- **`${CLAUDE_SKILL_DIR}/examples/example-udl-1day-workshop.md`** - Workshop example: UDL applied to a complete 1-day workshop
 
 ---
 

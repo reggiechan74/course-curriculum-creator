@@ -66,7 +66,7 @@ Many workshops aim to change attitudes and values, not just skills — "embrace 
 **Instructional strategies:** Value conflict scenarios, priority-setting exercises, personal philosophy development
 **Assessment:** Quality of integration reasoning, resolution of value conflicts in case studies
 
-**Workshop note:** Organizing-level change typically requires more than a 1-2 day workshop. Include as a stretch goal or post-workshop development objective.
+**Short-course note:** Organizing-level change typically requires more than a workshop-length course (workshop example: 1 or 2 days). Include as a stretch goal or post-course development objective. A cohort has between-session time for it; in a self-paced course, use a reflection activity with model answers.
 
 #### Level 5: Characterizing (Identity)
 **Definition:** Acting consistently with new values as part of one's identity and worldview

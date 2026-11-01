@@ -1,6 +1,6 @@
 # Assessment Design for Intensive Workshops
 
-Comprehensive guidance on designing assessments for 1-2 day workshops following backward design principles.
+Comprehensive guidance on designing assessments for time-limited courses (workshop examples are labelled) following backward design principles.
 
 ## Assessment Types for Different Cognitive Levels
 
@@ -18,7 +18,7 @@ Comprehensive guidance on designing assessments for 1-2 day workshops following 
 - Summarize case studies
 - Classify examples into categories
 
-**Good for Day 1 morning check-ins.**
+**Good for early check-ins.**
 
 ### Apply Level Assessments
 - Use tools/frameworks on new scenarios
@@ -26,7 +26,7 @@ Comprehensive guidance on designing assessments for 1-2 day workshops following 
 - Solve problems using learned methods
 - Follow step-by-step processes
 
-**Core assessment type for 1-day workshops.**
+**Core assessment type for short, intensive courses (for example a 1-day workshop).**
 
 ### Analyze Level Assessments
 - Break down complex situations into components
@@ -34,7 +34,7 @@ Comprehensive guidance on designing assessments for 1-2 day workshops following 
 - Distinguish relevant from irrelevant information
 - Determine underlying structures
 
-**Suitable for Day 1 afternoon or Day 2.**
+**Suitable for the middle of a course.**
 
 ### Evaluate Level Assessments
 - Critique solutions using criteria
@@ -42,7 +42,7 @@ Comprehensive guidance on designing assessments for 1-2 day workshops following 
 - Make decisions based on evidence
 - Assess quality against standards
 
-**Advanced assessment for Day 2 of 2-day workshops.**
+**Advanced assessment for later sessions of longer courses.**
 
 ### Create Level Assessments
 - Design original solutions
@@ -50,7 +50,7 @@ Comprehensive guidance on designing assessments for 1-2 day workshops following 
 - Generate new approaches
 - Synthesize multiple concepts
 
-**Capstone assessment for 2-day workshops only.**
+**Capstone assessment for longer courses (about 12 hours or more of learner time).**
 
 ## Performance Task Design
 
@@ -326,13 +326,15 @@ Ensure assessment method matches outcome cognitive level:
 
 ### Time Constraints
 
-**1-day workshops:**
+Scale by learner time: about 1 summative assessment per 2-3 hours, a formative check every 60-90 minutes, and a capstone of about 10-15% of learner time at most. The numbers below are workshop examples. Cohort: use the gaps between sessions for transfer assignments. Self-paced: make assessments auto-checkable items or self-assessment with model answers, and give a time-on-task estimate for each.
+
+**Workshop example, 1-day:**
 - Maximum 2-3 summative assessments
 - Each assessment: 30-45 minutes
 - Frequent formative checks (every 60-90 minutes)
 - Final capstone: 45-60 minutes
 
-**2-day workshops:**
+**Workshop example, 2-day:**
 - Maximum 4-5 summative assessments
 - Day 1 capstone: 45-60 minutes
 - Day 2 capstone: 60-90 minutes

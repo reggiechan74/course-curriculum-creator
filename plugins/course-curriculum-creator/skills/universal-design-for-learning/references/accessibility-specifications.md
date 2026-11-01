@@ -2,11 +2,26 @@
 
 ## Purpose
 
-Translate UDL principles into actionable WCAG 2.1 AA technical specifications. Use this reference when generating artifacts, handouts, slides, and digital materials.
+Translate UDL principles into actionable WCAG 2.2 AA technical specifications (the target for all course materials). Use this reference when generating artifacts, handouts, slides, and digital materials, including the future learner hub.
+
+## WCAG 2.2 AA Additions
+
+WCAG 2.2 keeps every 2.1 AA criterion and adds six Level A and AA criteria. The meanings below are for course materials: handouts, slides, and the future learner hub.
+
+| Criterion | Meaning for course materials |
+|---|---|
+| 2.4.11 Focus Not Obscured (Minimum) | A focused control must not be fully hidden by sticky headers, cookie banners, or chat widgets; check that keyboard focus stays visible in the hub and in interactive slides. |
+| 2.5.7 Dragging Movements | Anything done by dragging (matching, sorting, sliders) also needs a single-pointer alternative such as tap-to-select or up/down buttons. |
+| 2.5.8 Target Size (Minimum) | Clickable targets (buttons, links in a hub, checkboxes in a digital worksheet) are at least 24 by 24 CSS pixels, or have enough spacing. |
+| 3.2.6 Consistent Help | Put help (facilitator contact, support link, FAQ) in the same place on every handout page or hub screen where it appears. |
+| 3.3.7 Redundant Entry | Do not ask learners to re-enter information they already gave in the same course or form; prefill or let them select it. |
+| 3.3.8 Accessible Authentication (Minimum) | Hub sign-in must not require solving a puzzle or memorizing and retyping a code; allow paste, password managers, or an alternative method. |
+
+**4.1.1 Parsing is obsolete and removed in WCAG 2.2.** Do not report it as a requirement; valid structure still matters for the checks under Structure below.
 
 ## Color & Contrast
 
-### WCAG 2.1 AA Requirements
+### WCAG 2.2 AA Requirements
 - **Normal text** (under 18pt or 14pt bold): minimum 4.5:1 contrast ratio
 - **Large text** (18pt+ or 14pt+ bold): minimum 3:1 contrast ratio
 - **Non-text elements** (icons, chart elements, form borders): minimum 3:1 contrast ratio

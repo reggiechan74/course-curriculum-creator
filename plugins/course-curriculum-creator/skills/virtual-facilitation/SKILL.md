@@ -1,22 +1,22 @@
 ---
 name: virtual-facilitation
-description: "Designs and adapts workshops for virtual and hybrid delivery: timing, activity substitutions, platform tips, hybrid equity, and technology checklists."
+description: "Designs and adapts live sessions (workshop or cohort) for virtual and hybrid delivery: timing, activity substitutions, platform tips, hybrid equity, and technology checklists."
 when_to_use: "Use when the user asks to \"design a virtual workshop\", \"create online training\", \"adapt for remote delivery\", \"plan a hybrid session\", or \"facilitate via Zoom/Teams/Meet\", or when course-positioning.md has deliveryMode set to \"virtual\" or \"hybrid\"."
 ---
 
-# Virtual Facilitation for Workshop Design
+# Virtual Facilitation for Live Online Sessions
 
 ## Overview
 
-Virtual and hybrid workshops require fundamentally different design, not just putting a camera on an in-person session. Attention spans are shorter, engagement requires active design, technology introduces failure points, and facilitators must manage both content and technology simultaneously.
+Virtual and hybrid live sessions require fundamentally different design, not just putting a camera on an in-person session. Attention spans are shorter, engagement requires active design, technology introduces failure points, and facilitators must manage both content and technology simultaneously.
 
-This skill provides practical guidance for designing workshops that work in virtual and hybrid formats, with specific timing constraints, engagement techniques, and technology considerations.
+This skill provides practical guidance for designing live sessions that work in virtual and hybrid formats, with specific timing constraints, engagement techniques, and technology considerations. The number of sessions and the learner hours come from the manifest summary (see `course-conventions` §Shape and time budget); the limits below are per session and per hour of live time.
 
 ## Virtual vs. In-Person: Key Differences
 
 | Dimension | In-Person | Virtual | Hybrid |
 |---|---|---|---|
-| **Max session length** | 6 hours/day | 4 hours/day | 4 hours/day |
+| **Max live time per session** | 6 hours | 4 hours | 4 hours |
 | **Break frequency** | Every 60 min | Every 45 min | Every 45 min |
 | **Attention span per activity** | 20-30 min | 10-15 min | 10-15 min |
 | **Engagement check-ins** | Every 30 min | Every 15-20 min | Every 15-20 min |
@@ -26,7 +26,7 @@ This skill provides practical guidance for designing workshops that work in virt
 | **Buffer time** | 10% | 15% | 20% |
 | **Setup time needed** | 15 min | 30 min (tech check) | 45 min (dual setup) |
 
-## Virtual Workshop Design Principles
+## Virtual Session Design Principles
 
 ### 1. Chunk Everything Smaller
 
@@ -117,9 +117,11 @@ Hybrid is the hardest format because you must serve two audiences simultaneously
 | **Virtual co-facilitator** | Chat monitoring, breakout room management, tech troubleshooting |
 | **Room support** (optional) | In-room logistics, microphone passing, time management |
 
-## Virtual Workshop Schedule Template
+## Virtual Schedule Templates
 
-### 1-Day Virtual (2 sessions x 3.5 hours)
+Plan by session: about 3.5 hours of live time per session at most, with a break about every 45 minutes. The templates below are workshop examples; a cohort uses the same session pattern spread over weeks (open each session with retrieval practice on the previous session, give a transfer assignment and discussion prompts between sessions, and write facilitator notes for each session). A self-paced course has no live sessions, so this skill applies only to any optional live office hours; the learner hub is the primary delivery surface.
+
+### Workshop example: 1-Day Virtual (2 sessions x 3.5 hours)
 
 ```
 Morning Session (9:00 - 12:30)
@@ -150,7 +152,7 @@ Total instruction time: ~5 hours (vs. 6 hours in-person)
 Total elapsed time: 7.5 hours (vs. 7 hours in-person)
 Break time: ~1.5 hours (vs. ~1 hour in-person)
 
-### 2-Day Virtual (4 sessions x 3.5 hours)
+### Workshop example: 2-Day Virtual (4 sessions x 3.5 hours)
 
 Follow the same pattern across 4 half-day sessions over 2 days:
 - Day 1 Morning: Modules 1-3
@@ -158,15 +160,15 @@ Follow the same pattern across 4 half-day sessions over 2 days:
 - Day 2 Morning: Modules 6-8
 - Day 2 Afternoon: Modules 9-10 + Capstone
 
-### Alternative: Multi-Day Virtual (4 x 2-hour sessions)
+### Workshop example: Multi-Day Virtual (4 x 2-hour sessions)
 
-For audiences that can't do full-day virtual:
+For audiences that can't do long virtual sessions:
 - Session 1 (Day 1): Modules 1-2
 - Session 2 (Day 2): Modules 3-4
 - Session 3 (Day 3): Modules 5-6
 - Session 4 (Day 4): Review + Capstone
 
-This spreads a 1-day workshop across 4 days, allowing practice between sessions.
+This spreads the 1-day workshop example across 4 days, allowing practice between sessions.
 
 ## Platform-Specific Tips
 
@@ -190,7 +192,7 @@ This spreads a 1-day workshop across 4 days, allowing practice between sessions.
 
 ## Technology Checklist
 
-### Before Workshop (1 week)
+### Before the First Session (1 week)
 - [ ] Test all technology with a colleague
 - [ ] Create breakout room assignments
 - [ ] Prepare all polls/surveys
@@ -198,14 +200,14 @@ This spreads a 1-day workshop across 4 days, allowing practice between sessions.
 - [ ] Send tech check instructions to participants
 - [ ] Confirm recording permissions
 
-### Before Workshop (30 min)
+### Before Each Session (30 min)
 - [ ] Open platform early
 - [ ] Test screen share, breakout rooms, polls
 - [ ] Verify recording is working
 - [ ] Post welcome message in chat
 - [ ] Open backup communication channel (email, Slack)
 
-### During Workshop
+### During the Session
 - [ ] Monitor chat continuously
 - [ ] Save chat transcript periodically
 - [ ] Screenshot whiteboard/collaborative work
@@ -221,10 +223,10 @@ This spreads a 1-day workshop across 4 days, allowing practice between sessions.
 | Not using chat | Misses participation channel | Ask chat questions every 10-15 min |
 | Single facilitator for hybrid | Remote participants ignored | Assign dedicated virtual co-facilitator |
 | No tech backup plan | Single failure derails the session | Pre-plan alternatives for every tech-dependent activity |
-| Same timing as in-person | Exhaustion, poor retention | Reduce to 4 hrs/day, more breaks |
+| Same timing as in-person | Exhaustion, poor retention | Cap live time at 4 hours per session, more breaks |
 | Skipping tech check | Wasted first 20 minutes troubleshooting | Require tech check day before or 30 min early |
 | No async component | No time for deeper reflection | Add pre-work and between-session assignments |
 
 ## Additional Resources
 
-- **`${CLAUDE_SKILL_DIR}/examples/example-virtual-1day-workshop.md`** - A complete 1-day virtual workshop design
+- **`${CLAUDE_SKILL_DIR}/examples/example-virtual-1day-workshop.md`** - Workshop example: a complete 1-day virtual workshop design

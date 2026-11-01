@@ -1,6 +1,6 @@
 ---
 name: blooms-taxonomy
-description: "Applies Bloom's taxonomy (plus Krathwohl's affective domain) to write measurable, correctly leveled learning objectives and scaffold them across an intensive workshop."
+description: "Applies Bloom's taxonomy (plus Krathwohl's affective domain) to write measurable, correctly leveled learning objectives and scaffold them across the sessions or modules of a course."
 when_to_use: "Use when the user asks to \"write learning objectives\", \"create measurable learning outcomes\", \"select action verbs for objectives\", \"what cognitive levels should I target\", \"how to scaffold learning\", \"write course objectives\", or \"make objectives more specific\", references Bloom's taxonomy, or says \"my objectives aren't measurable\", \"how do I assess what students learned\", or \"progression from basic to advanced skills\"."
 ---
 
@@ -8,9 +8,9 @@ when_to_use: "Use when the user asks to \"write learning objectives\", \"create 
 
 ## Overview
 
-Bloom's Taxonomy is a framework for classifying learning objectives by cognitive complexity. The revised taxonomy (2001) defines six levels from Remember (simplest) to Create (most complex). Use this taxonomy to craft measurable learning objectives with appropriate action verbs, scaffold learning across workshop timelines, and align assessments with cognitive demands.
+Bloom's Taxonomy is a framework for classifying learning objectives by cognitive complexity. The revised taxonomy (2001) defines six levels from Remember (simplest) to Create (most complex). Use this taxonomy to craft measurable learning objectives with appropriate action verbs, scaffold learning across the course timeline, and align assessments with cognitive demands.
 
-For 1-2 day intensive workshops, Bloom's taxonomy ensures:
+The course's shape and time budget come from the manifest summary (see `course-conventions` §Shape and time budget). Bloom's taxonomy ensures:
 - Objectives are measurable and observable (using action verbs)
 - Cognitive complexity progresses logically across modules
 - Assessments match the intended cognitive level
@@ -40,7 +40,7 @@ For 1-2 day intensive workshops, Bloom's taxonomy ensures:
 - Flashcards and glossaries
 
 **Workshop application:**
-Minimize Remember-level objectives in intensive workshops. Adults typically learn terminology through context during higher-level activities. If foundation knowledge is essential, include it as pre-work or quick refreshers (5-10 minutes).
+Minimize Remember-level objectives in time-limited courses. Adults typically learn terminology through context during higher-level activities. If foundation knowledge is essential, include it as pre-work or quick refreshers (5-10 minutes in a live session).
 
 ### Level 2: Understand
 **Definition:** Construct meaning from instructional messages
@@ -64,7 +64,7 @@ Minimize Remember-level objectives in intensive workshops. Adults typically lear
 - Case study summaries
 
 **Workshop application:**
-Appropriate for Day 1 morning modules. Use Understand objectives to build conceptual foundation before application. Combine with Apply objectives for practice.
+Appropriate for the opening modules. Use Understand objectives to build conceptual foundation before application. Combine with Apply objectives for practice.
 
 ### Level 3: Apply
 **Definition:** Carry out or use a procedure in a given situation
@@ -88,7 +88,7 @@ Appropriate for Day 1 morning modules. Use Understand objectives to build concep
 - Structured case study analysis
 
 **Workshop application:**
-Core cognitive level for 1-day workshops. Most participants can achieve Apply-level mastery in compressed timeframes. Focus 60-70% of objectives at this level for hands-on, practical workshops.
+Core cognitive level for short, intensive courses (for example a 1-day workshop). Most participants can achieve Apply-level mastery in compressed timeframes. Focus 60-70% of objectives at this level for hands-on, practical workshops.
 
 ### Level 4: Analyze
 **Definition:** Break material into constituent parts and determine how parts relate
@@ -112,7 +112,7 @@ Core cognitive level for 1-day workshops. Most participants can achieve Apply-le
 - Root cause analysis
 
 **Workshop application:**
-Suitable for Day 1 afternoon or Day 2 morning of 2-day workshops. Requires foundational Understand and Apply skills. Scaffold carefully from Apply to Analyze with transitional activities.
+Suitable for the middle of a longer course (for example the end of workshop day 1 or day 2 morning). Requires foundational Understand and Apply skills. Scaffold carefully from Apply to Analyze with transitional activities.
 
 ### Level 5: Evaluate
 **Definition:** Make judgments based on criteria and standards
@@ -136,7 +136,7 @@ Suitable for Day 1 afternoon or Day 2 morning of 2-day workshops. Requires found
 - Critiques using defined standards
 
 **Workshop application:**
-Advanced cognitive level for 2-day workshops. Requires mastery of Analyze skills. Allocate Day 2 afternoon for Evaluate objectives. Expect 15-20% of objectives at this level maximum.
+Advanced cognitive level for longer courses. Requires mastery of Analyze skills. Allocate the later sessions for Evaluate objectives. Expect 15-20% of objectives at this level maximum.
 
 ### Level 6: Create
 **Definition:** Put elements together to form a coherent or functional whole; reorganize into a new pattern
@@ -160,13 +160,15 @@ Advanced cognitive level for 2-day workshops. Requires mastery of Analyze skills
 - Integration projects
 
 **Workshop application:**
-Most advanced level. Reserve for final capstone activities in 2-day workshops. Requires mastery of all lower levels. Limit to 1-2 Create-level objectives as final synthesis activities.
+Most advanced level. Reserve for final capstone activities in the final session or module. Requires mastery of all lower levels. Limit to 1-2 Create-level objectives as final synthesis activities.
 
 ## Cognitive Level Progression
 
-### Scaffolding Across Workshop Timeline
+### Scaffolding Across the Course Timeline
 
-**1-day workshop progression:**
+Scale these progressions by hours of learner time. The two blocks below are workshop examples.
+
+**Workshop example, 1-day (6 hours):**
 ```
 Morning (Hours 1-3):
 - 1-2 Understand objectives: Build conceptual foundation
@@ -177,7 +179,7 @@ Afternoon (Hours 4-6):
 - 1 Analyze objective (optional): Introductory analysis task
 ```
 
-**2-day workshop progression:**
+**Workshop example, 2-day (12 hours):**
 ```
 Day 1 Morning (Hours 1-3):
 - 1-2 Understand objectives: Core concepts and frameworks
@@ -195,6 +197,10 @@ Day 2 Afternoon (Hours 10-12):
 - 1-2 Evaluate objectives: Multi-criteria decisions
 - 1 Create objective: Final capstone synthesis
 ```
+
+**Cohort:** Spread the same progression across the sessions. Open each session with retrieval practice on the previous session, and give a transfer assignment and discussion prompts between sessions so each level is practiced before the next.
+
+**Self-paced:** There are no live sessions. Use more worked examples at the Understand and Apply levels, fade the scaffolding across modules, end every module with interactive practice and feedback, and give a time-on-task estimate for every module and activity.
 
 ### Prerequisite Dependencies
 
@@ -246,15 +252,15 @@ Ensure learning objectives are SMART:
 - ❌ "Appreciate PropTech value" (not measurable)
 - ✅ "Evaluate PropTech solutions using a defined rubric"
 
-**Achievable:** Realistic for student background and workshop timeframe
-- ❌ "Master PropTech across all sectors" (unrealistic for 2-day workshop)
+**Achievable:** Realistic for student background and the course time budget
+- ❌ "Master PropTech across all sectors" (unrealistic for a short course)
 - ✅ "Analyze PropTech opportunities in three commercial real estate sectors"
 
 **Relevant:** Aligned with student needs and course positioning
 - ❌ "Calculate PropTech company valuations" (irrelevant for operators)
 - ✅ "Assess PropTech vendors for fit with operational requirements"
 
-**Time-bound:** Achievable within workshop constraints
+**Time-bound:** Achievable within the course time budget
 - ❌ "Develop comprehensive PropTech strategy" (requires weeks)
 - ✅ "Create 90-day PropTech implementation roadmap"
 
@@ -335,7 +341,7 @@ For each learning objective:
 
 Progress from lower to higher cognitive levels within a single module:
 
-**Module structure example: PropTech Market Analysis (90 minutes)**
+**Workshop module example: PropTech Market Analysis (90 minutes)**
 
 ```
 1. Understand (15 min): Explain key PropTech market trends
@@ -359,7 +365,7 @@ Progress from lower to higher cognitive levels within a single module:
 
 Build complexity across multiple modules:
 
-**2-day workshop scaffolding example:**
+**Workshop scaffolding example (2-day):**
 
 **Module 1 (Day 1 AM):** Understand PropTech categories
 → **Module 2 (Day 1 AM):** Apply evaluation frameworks to examples
@@ -379,34 +385,36 @@ Provide options for different learning speeds:
 
 Use affective objectives when the real goal is an attitude or motivation shift (for example "I want them to value/adopt..."), or when the training needs analysis found a motivation gap rather than a skill gap. Skip them for purely procedural or compliance training.
 
-Rules for 1-2 day workshops:
-- Target only **Receiving**, **Responding**, or **Valuing**. Organizing and Characterizing take longer than a workshop.
+Rules for short courses (workshop-length or less):
+- Target only **Receiving**, **Responding**, or **Valuing**. Organizing and Characterizing take longer than a short course.
 - Limit to 1-2 affective objectives, each paired with a related cognitive objective.
 - Assess with reflection, observation, commitment statements, or attitude scales, never quizzes.
 
 For level definitions, verbs, example objectives, instructional strategies, and assessment methods, read `${CLAUDE_SKILL_DIR}/references/affective-domain.md`.
 
-## Intensive Workshop Considerations
+## Intensive Course Considerations
 
 ### Objective Quantity Guidelines
 
-**1-day workshop (6 hours instruction):**
+Guideline: roughly 0.7 to 1.2 objectives per hour of learner time, with fewer at the higher levels. The two lists below are workshop examples.
+
+**Workshop example, 1-day (6 hours instruction):**
 - Total objectives: 5-7
 - Remember: 0-1 (minimize or pre-work)
-- Understand: 1-2 (morning foundation)
+- Understand: 1-2 (opening foundation)
 - Apply: 3-4 (core focus)
 - Analyze: 0-1 (optional, if time)
 - Evaluate: 0
 - Create: 0
 
-**2-day workshop (12 hours instruction):**
+**Workshop example, 2-day (12 hours instruction):**
 - Total objectives: 8-12
 - Remember: 0-1 (minimize or pre-work)
-- Understand: 1-2 (Day 1 foundation)
-- Apply: 4-5 (Days 1-2 core)
-- Analyze: 2-3 (Day 1 PM - Day 2 AM)
-- Evaluate: 1-2 (Day 2 core)
-- Create: 1 (Day 2 capstone)
+- Understand: 1-2 (early foundation)
+- Apply: 4-5 (core)
+- Analyze: 2-3 (middle sessions)
+- Evaluate: 1-2 (later sessions)
+- Create: 1 (final capstone)
 
 ### Time Allocation by Level
 
@@ -421,12 +429,14 @@ Approximate time required for students to achieve mastery:
 | Evaluate | 90-120 min | 180-240 min |
 | Create | 120-180 min | 240-360 min |
 
+These are minutes of learner time, so they apply to any shape. For a self-paced course, use them as the starting point for each module's time-on-task estimate.
+
 **Time includes:** Instruction + guided practice + independent practice + assessment + debrief
 
 **Use these estimates to:**
 - Validate objective count against available time
 - Allocate sufficient time per cognitive level
-- Avoid overloading workshop with unrealistic objectives
+- Avoid overloading the course with unrealistic objectives
 
 ### Adult Learner Adaptations
 
@@ -437,7 +447,7 @@ Approximate time required for students to achieve mastery:
 
 **Accelerate through lower levels:**
 - Combine Remember and Understand into compact "refresher" (15-20 min)
-- Focus workshop time on Apply, Analyze, Evaluate levels
+- Focus live or study time on Apply, Analyze, Evaluate levels
 - Provide reference materials for foundation concepts
 
 **Emphasize immediate application:**
@@ -459,7 +469,7 @@ Use this checklist when writing learning objectives:
 - [ ] Avoids multiple cognitive levels in one objective
 
 **Cognitive Level Appropriateness:**
-- [ ] Level matches workshop duration (Apply for 1-day, Evaluate/Create for 2-day)
+- [ ] Level matches the time budget (Apply for about 6 hours; Evaluate/Create need about 12 hours or more)
 - [ ] Prerequisite levels are addressed earlier
 - [ ] Time allocation is sufficient for cognitive level
 - [ ] Level matches target audience capability
@@ -469,7 +479,7 @@ Use this checklist when writing learning objectives:
 - [ ] Rubric criteria evaluate the specified cognitive skill
 - [ ] Assessment provides evidence of objective achievement
 
-**Workshop Integration:**
+**Course Integration:**
 - [ ] Objectives progress logically across timeline
 - [ ] Cognitive complexity scaffolds from simple to complex
 - [ ] Total objective count is realistic for timeframe
@@ -487,8 +497,8 @@ For detailed guidance:
 ### Example Files
 
 Working examples in `${CLAUDE_SKILL_DIR}/examples/`:
-- **`example-objectives-1day.md`** - Complete objective set for 1-day PropTech workshop
-- **`example-objectives-2day.md`** - Complete objective set for 2-day workshop with scaffolding and dependencies
+- **`example-objectives-1day.md`** - Workshop example: complete objective set for a 1-day PropTech workshop
+- **`example-objectives-2day.md`** - Workshop example: complete objective set for a 2-day workshop with scaffolding and dependencies
 
 ### Related Skills
 
@@ -497,4 +507,4 @@ Working examples in `${CLAUDE_SKILL_DIR}/examples/`:
 
 ---
 
-Apply Bloom's taxonomy rigorously to create measurable, appropriately-leveled learning objectives. Use action verbs that match intended cognitive complexity, scaffold objectives across workshop timeline, and validate alignment between objectives and assessments. Focus on Apply and Analyze levels for intensive workshops to maximize practical skill development in compressed timeframes.
+Apply Bloom's taxonomy rigorously to create measurable, appropriately-leveled learning objectives. Use action verbs that match intended cognitive complexity, scaffold objectives across the course timeline, and validate alignment between objectives and assessments. Focus on Apply and Analyze levels for intensive courses to maximize practical skill development in compressed timeframes.
