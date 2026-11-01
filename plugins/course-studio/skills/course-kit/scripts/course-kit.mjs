@@ -7832,8 +7832,8 @@ var require_topojson_client = __commonJS({
 });
 
 // packages/course-kit/src/cli.ts
-import { existsSync as existsSync16, mkdirSync as mkdirSync11, readFileSync as readFileSync17, realpathSync as realpathSync2, writeFileSync as writeFileSync14 } from "node:fs";
-import { join as join19, resolve as resolve6 } from "node:path";
+import { existsSync as existsSync17, mkdirSync as mkdirSync11, readFileSync as readFileSync17, realpathSync as realpathSync2, writeFileSync as writeFileSync14 } from "node:fs";
+import { join as join20, resolve as resolve7 } from "node:path";
 import { fileURLToPath } from "node:url";
 
 // packages/course-kit/src/brand/tokens.ts
@@ -12937,7 +12937,7 @@ var recursive = /* @__PURE__ */ new WeakMap();
 var NONE = 0;
 var ASSUMED = 1;
 var PROVEN = 2;
-function isRecursive(inst, stack2, resolve7) {
+function isRecursive(inst, stack2, resolve8) {
   const cached2 = recursive.get(inst);
   if (cached2 !== void 0)
     return cached2 ? PROVEN : NONE;
@@ -12947,7 +12947,7 @@ function isRecursive(inst, stack2, resolve7) {
   let result = NONE;
   const check2 = (child) => {
     if (result !== PROVEN && child?._zod) {
-      const answer = isRecursive(child, stack2, resolve7);
+      const answer = isRecursive(child, stack2, resolve8);
       if (answer > result)
         result = answer;
     }
@@ -12958,7 +12958,7 @@ function isRecursive(inst, stack2, resolve7) {
       const desc = Object.getOwnPropertyDescriptor(sh, key2);
       if (spread && !desc.enumerable)
         continue;
-      const child = desc.get ? ASSUMED : desc.value?._zod ? isRecursive(desc.value, stack2, resolve7) : NONE;
+      const child = desc.get ? ASSUMED : desc.value?._zod ? isRecursive(desc.value, stack2, resolve8) : NONE;
       if (child > answer)
         answer = child;
     }
@@ -13022,7 +13022,7 @@ function isRecursive(inst, stack2, resolve7) {
       break;
     // `$ZodLazy` caches its inner on the def, so a resolved edge is followed exactly
     case "lazy": {
-      const inner = def2._cachedInner ?? (resolve7 ? inst._zod.innerType : void 0);
+      const inner = def2._cachedInner ?? (resolve8 ? inst._zod.innerType : void 0);
       merge6(inner ? isRecursive(inner, stack2, false) : ASSUMED);
       break;
     }
@@ -27688,8 +27688,8 @@ function checkTokens(t) {
 }
 
 // packages/course-kit/src/commands-core.ts
-import { existsSync as existsSync7, mkdirSync as mkdirSync4 } from "node:fs";
-import { join as join8 } from "node:path";
+import { existsSync as existsSync8, mkdirSync as mkdirSync4 } from "node:fs";
+import { join as join9, resolve as resolve4 } from "node:path";
 
 // packages/course-kit/src/cli/args.ts
 function parseArgs(argv) {
@@ -27877,17 +27877,31 @@ function keepFresh(courseDir, write) {
   refreshOutputs(courseDir, fresh);
   return result;
 }
-
-// packages/course-kit/src/manifest/io.ts
-var import_yaml4 = __toESM(require_dist(), 1);
-import { readFileSync as readFileSync4, writeFileSync as writeFileSync2 } from "node:fs";
-import { join as join2 } from "node:path";
+function setSources(outputPath, sources) {
+  updateFrontmatter(outputPath, { sourceFiles: sources });
+}
 
 // packages/course-kit/src/manifest/schema.ts
 var ShapeSchema = external_exports.enum(["workshop", "cohort", "self-paced"]);
 var DeliverySchema = external_exports.enum(["in-person", "virtual", "hybrid", "async"]);
 var ObjectiveKindSchema = external_exports.enum(["cognitive", "affective", "orientation", "integration"]);
-var StageNameSchema = external_exports.enum(["positioning", "objectives", "rubrics", "outline", "lessonPlans", "materials"]);
+var StageNameSchema = external_exports.enum([
+  "positioning",
+  "needsAnalysis",
+  "learnerProfile",
+  "objectives",
+  "rubrics",
+  "outline",
+  "lessonPlans",
+  "preWork",
+  "materials",
+  "description",
+  "transferPlan",
+  "evaluationPlan",
+  "spacedPractice",
+  "virtualAdaptation"
+]);
+var StageStatusSchema = external_exports.enum(["present", "missing", "stale", "skipped"]);
 var SessionSchema = external_exports.object({ id: external_exports.string(), label: external_exports.string(), minutes: external_exports.number() });
 var ObjectiveSchema = external_exports.object({
   id: external_exports.string(),
@@ -27931,7 +27945,7 @@ var ManifestSchema = external_exports.object({
   style: external_exports.string().optional(),
   media: external_exports.object({ budgetUsd: external_exports.number(), maxPlanImages: external_exports.number(), approvalRequired: external_exports.boolean() }),
   sources: external_exports.array(SourceRefSchema).optional(),
-  stages: external_exports.partialRecord(StageNameSchema, external_exports.enum(["present", "missing"])).optional(),
+  stages: external_exports.partialRecord(StageNameSchema, StageStatusSchema).optional(),
   extra: external_exports.record(external_exports.string(), external_exports.unknown()).optional(),
   targets: external_exports.record(external_exports.string(), external_exports.unknown())
 });
@@ -27952,6 +27966,9 @@ var InitOptionsSchema = external_exports.object({
 });
 
 // packages/course-kit/src/manifest/io.ts
+var import_yaml4 = __toESM(require_dist(), 1);
+import { readFileSync as readFileSync4, writeFileSync as writeFileSync2 } from "node:fs";
+import { join as join2 } from "node:path";
 var FILE = "course.yaml";
 function slug(title2) {
   return title2.normalize("NFKD").replace(/[^\x00-\x7F]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -28093,6 +28110,64 @@ function validateManifest(m3) {
   return out;
 }
 
+// packages/course-kit/src/manifest/progress.ts
+import { existsSync as existsSync2 } from "node:fs";
+import { join as join3 } from "node:path";
+var W = "workflow";
+var STAGES = [
+  { name: "positioning", skill: `${W}/0-analysis/create-course/SKILL.md`, outputs: ["01-planning/course-positioning.md"], required: true },
+  { name: "needsAnalysis", skill: `${W}/0-analysis/assess-needs/SKILL.md`, outputs: ["01-planning/training-needs-analysis.md"], required: false },
+  { name: "learnerProfile", skill: `${W}/0-analysis/generate-learner-profile/SKILL.md`, outputs: ["01-planning/learner-profile.md"], required: true },
+  { name: "objectives", skill: `${W}/1-desired-results/generate-objectives/SKILL.md`, outputs: ["01-planning/learning-objectives.md"], required: true },
+  { name: "rubrics", skill: `${W}/2-assessment-evidence/generate-rubrics/SKILL.md`, outputs: ["03-assessment/rubrics.md"], required: true },
+  { name: "outline", skill: `${W}/3-learning-plan/generate-outline/SKILL.md`, outputs: ["02-design/course-outline.md"], required: true },
+  { name: "lessonPlans", skill: `${W}/3-learning-plan/generate-lesson-plans/SKILL.md`, outputs: ["02-design/lesson-plans.md"], required: true },
+  { name: "preWork", skill: `${W}/3-learning-plan/generate-pre-work/SKILL.md`, outputs: ["04-materials/pre-work.md"], required: true },
+  { name: "materials", skill: `${W}/4-materials/generate-artifacts/SKILL.md`, outputs: ["04-materials/student-handout.md", "04-materials/instructor-guide.md"], required: false },
+  { name: "description", skill: `${W}/4-materials/generate-description/SKILL.md`, outputs: ["01-planning/course-description.md"], required: true },
+  { name: "transferPlan", skill: `${W}/3-learning-plan/generate-transfer-plan/SKILL.md`, outputs: ["04-materials/transfer-plan.md"], required: false },
+  { name: "evaluationPlan", skill: `${W}/2-assessment-evidence/generate-evaluation-plan/SKILL.md`, outputs: ["03-assessment/evaluation-plan.md"], required: false },
+  { name: "spacedPractice", skill: `${W}/6-delivery/generate-spaced-practice/SKILL.md`, outputs: ["04-materials/spaced-practice.md"], required: true },
+  { name: "virtualAdaptation", skill: `${W}/4-materials/adapt-for-virtual/SKILL.md`, outputs: ["02-design/virtual-adaptation.md"], required: true, when: "virtual-or-hybrid" }
+];
+function computeProgress(courseDir, manifest) {
+  const m3 = manifest ?? loadManifest(courseDir);
+  const stages = [];
+  for (const def2 of STAGES) {
+    if (def2.when === "virtual-or-hybrid" && m3.delivery !== "virtual" && m3.delivery !== "hybrid") continue;
+    const existing = def2.outputs.find((o) => existsSync2(join3(courseDir, o)));
+    const output4 = existing ?? def2.outputs[0];
+    let status;
+    let changed = [];
+    if (m3.stages?.[def2.name] === "skipped") status = "skipped";
+    else if (!existing) status = "missing";
+    else {
+      const s = checkStale(join3(courseDir, existing), courseDir);
+      status = s.status === "stale" ? "stale" : "present";
+      changed = s.changed;
+    }
+    stages.push({ name: def2.name, skill: def2.skill, output: output4, status, required: def2.required, changed });
+  }
+  const n = stages.find((s) => s.required && (s.status === "missing" || s.status === "stale"));
+  return { stages, next: n ? { name: n.name, skill: n.skill } : null };
+}
+function writeProgress(courseDir) {
+  const m3 = loadManifest(courseDir);
+  const p = computeProgress(courseDir, m3);
+  m3.stages = Object.fromEntries(p.stages.map((s) => [s.name, s.status]));
+  saveManifest(courseDir, m3);
+  return p;
+}
+function setSkipped(courseDir, stage, skipped) {
+  const m3 = loadManifest(courseDir);
+  const stages = { ...m3.stages };
+  if (skipped) stages[stage] = "skipped";
+  else delete stages[stage];
+  m3.stages = stages;
+  saveManifest(courseDir, m3);
+  return computeProgress(courseDir, m3);
+}
+
 // packages/course-kit/src/manifest/summary.ts
 var SHAPE_RULES = {
   workshop: [
@@ -28143,8 +28218,8 @@ function summarizeManifest(m3) {
 }
 
 // packages/course-kit/src/manifest/sync.ts
-import { existsSync as existsSync2, readFileSync as readFileSync5, writeFileSync as writeFileSync3 } from "node:fs";
-import { basename, join as join3, resolve as resolve2 } from "node:path";
+import { existsSync as existsSync3, readFileSync as readFileSync5, writeFileSync as writeFileSync3 } from "node:fs";
+import { basename, join as join4, resolve as resolve2 } from "node:path";
 var OBJECTIVES_PATH = "01-planning/learning-objectives.md";
 var OUTLINE_PATH = "02-design/course-outline.md";
 var ID_COMMENT = /^<!-- id: [^>]*? -->\r?$/;
@@ -28256,11 +28331,11 @@ function moduleHeadings(markdown, known) {
   return out;
 }
 function readIfExists(path3) {
-  return existsSync2(path3) ? readFileSync5(path3, "utf8") : void 0;
+  return existsSync3(path3) ? readFileSync5(path3, "utf8") : void 0;
 }
 function syncManifest(courseDir, opts) {
-  const objPath = join3(courseDir, OBJECTIVES_PATH);
-  const outPath = join3(courseDir, OUTLINE_PATH);
+  const objPath = join4(courseDir, OBJECTIVES_PATH);
+  const outPath = join4(courseDir, OUTLINE_PATH);
   const objMd = readIfExists(objPath);
   const outMd = readIfExists(outPath);
   if (objMd === void 0 && outMd === void 0) {
@@ -28271,7 +28346,7 @@ function syncManifest(courseDir, opts) {
   const sessions = parsedSessions;
   let manifest;
   const kept = [];
-  const hadManifest = existsSync2(join3(courseDir, "course.yaml"));
+  const hadManifest = existsSync3(join4(courseDir, "course.yaml"));
   if (hadManifest) {
     manifest = loadManifest(courseDir);
     if (sessions.length > 0) manifest.timeBudget = { ...manifest.timeBudget, live: { sessions } };
@@ -28322,7 +28397,7 @@ function syncManifest(courseDir, opts) {
     if (outMd !== void 0) writeFileSync3(outPath, insertIdComments(outMd, modules2));
     const known = new Set(manifest.modules.map((m3) => m3.id));
     for (const rel of MODULE_DOCS) {
-      const f = join3(courseDir, rel);
+      const f = join4(courseDir, rel);
       const md2 = readIfExists(f);
       if (md2 === void 0) continue;
       const next = insertIdComments(md2, moduleHeadings(md2, known));
@@ -28333,13 +28408,13 @@ function syncManifest(courseDir, opts) {
 }
 
 // packages/course-kit/src/migrate/v2.ts
-import { cpSync, existsSync as existsSync4, mkdirSync as mkdirSync2, mkdtempSync, readFileSync as readFileSync7, readdirSync as readdirSync2, rmSync, writeFileSync as writeFileSync5 } from "node:fs";
+import { cpSync, existsSync as existsSync5, mkdirSync as mkdirSync2, mkdtempSync, readFileSync as readFileSync7, readdirSync as readdirSync2, rmSync, writeFileSync as writeFileSync5 } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join as join5, posix as posix2, resolve as resolve3 } from "node:path";
+import { dirname, join as join6, posix as posix2, resolve as resolve3 } from "node:path";
 
 // packages/course-kit/src/media/registry.ts
-import { existsSync as existsSync3, mkdirSync, readFileSync as readFileSync6, statSync, writeFileSync as writeFileSync4 } from "node:fs";
-import { isAbsolute, join as join4, posix } from "node:path";
+import { existsSync as existsSync4, mkdirSync, readFileSync as readFileSync6, statSync, writeFileSync as writeFileSync4 } from "node:fs";
+import { isAbsolute, join as join5, posix } from "node:path";
 
 // packages/course-kit/src/media/schema.ts
 var AssetFunctionSchema = external_exports.enum([
@@ -28411,8 +28486,8 @@ var PricingSchema = external_exports.object({
 // packages/course-kit/src/media/registry.ts
 var FILE2 = ["05-media", "registry.json"];
 function loadRegistry(courseDir) {
-  const f = join4(courseDir, ...FILE2);
-  if (!existsSync3(f)) return { schema: "registry/v1", assets: [] };
+  const f = join5(courseDir, ...FILE2);
+  if (!existsSync4(f)) return { schema: "registry/v1", assets: [] };
   let raw;
   try {
     raw = JSON.parse(readFileSync6(f, "utf8"));
@@ -28426,8 +28501,8 @@ function loadRegistry(courseDir) {
   return r.data;
 }
 function saveRegistry(courseDir, r) {
-  mkdirSync(join4(courseDir, FILE2[0]), { recursive: true });
-  writeFileSync4(join4(courseDir, ...FILE2), JSON.stringify(r, null, 2) + "\n");
+  mkdirSync(join5(courseDir, FILE2[0]), { recursive: true });
+  writeFileSync4(join5(courseDir, ...FILE2), JSON.stringify(r, null, 2) + "\n");
 }
 function addAsset(r, a3) {
   if (a3.status === "approved") {
@@ -28476,8 +28551,8 @@ function setAssetFiles(r, id2, files, courseDir) {
     if (isAbsolute(f) || /^[A-Za-z]:/.test(f) || f.includes("\\") || posix.normalize(f).startsWith("../") || posix.normalize(f) === "..") {
       throw new ValidationError(`file ${JSON.stringify(f)} must be a path relative to the course folder, e.g. 05-media/out/${id2}.png`);
     }
-    const p = join4(courseDir, f);
-    if (!existsSync3(p) || !statSync(p).isFile()) throw new ValidationError(`file not found: ${f} (relative to the course folder)`);
+    const p = join5(courseDir, f);
+    if (!existsSync4(p) || !statSync(p).isFile()) throw new ValidationError(`file not found: ${f} (relative to the course folder)`);
   }
   return { ...r, assets: r.assets.map((x5) => x5.id === id2 ? { ...a3, files: [...files] } : x5) };
 }
@@ -28519,7 +28594,7 @@ function parseDuration(s) {
 }
 function listFiles(root, rel = "") {
   const out = [];
-  for (const e of readdirSync2(join5(root, rel), { withFileTypes: true })) {
+  for (const e of readdirSync2(join6(root, rel), { withFileTypes: true })) {
     if (e.name.startsWith(".") || e.name === "node_modules") continue;
     const r = rel ? `${rel}/${e.name}` : e.name;
     if (e.isDirectory()) out.push(...listFiles(root, r));
@@ -28549,7 +28624,7 @@ function computeSources(dir) {
       material.push({ path: f, role: "material" });
     }
   }
-  const external = has2.has("README.md") ? externalLinks(readFileSync7(join5(dir, "README.md"), "utf8")).map((path3) => ({ path: path3, role: "external" })) : [];
+  const external = has2.has("README.md") ? externalLinks(readFileSync7(join6(dir, "README.md"), "utf8")).map((path3) => ({ path: path3, role: "external" })) : [];
   return [...derived2, ...variant, ...source3, ...material, ...external];
 }
 function migrateV2(courseDir, o) {
@@ -28557,16 +28632,16 @@ function migrateV2(courseDir, o) {
   const dir = resolve3(courseDir);
   const actions = [];
   const questions = [];
-  const scratch = mkdtempSync(join5(tmpdir(), "migrate-"));
+  const scratch = mkdtempSync(join6(tmpdir(), "migrate-"));
   try {
     for (const rel of [...ID_COMMENT_FILES, "course.yaml"]) {
-      if (!existsSync4(join5(dir, rel))) continue;
-      mkdirSync2(dirname(join5(scratch, rel)), { recursive: true });
-      cpSync(join5(dir, rel), join5(scratch, rel));
+      if (!existsSync5(join6(dir, rel))) continue;
+      mkdirSync2(dirname(join6(scratch, rel)), { recursive: true });
+      cpSync(join6(dir, rel), join6(scratch, rel));
     }
     const synced = syncManifest(scratch, { write: true }).manifest;
-    const existing = existsSync4(join5(dir, "course.yaml")) ? loadManifest(dir) : void 0;
-    const fm = existsSync4(join5(dir, POSITIONING)) ? readFrontmatter(join5(dir, POSITIONING)).data : {};
+    const existing = existsSync5(join6(dir, "course.yaml")) ? loadManifest(dir) : void 0;
+    const fm = existsSync5(join6(dir, POSITIONING)) ? readFrontmatter(join6(dir, POSITIONING)).data : {};
     const extraNew = {};
     for (const [k, v2] of Object.entries(fm)) if (!MAPPED_KEYS.has(k)) extraNew[k] = v2;
     let target2;
@@ -28607,7 +28682,7 @@ function migrateV2(courseDir, o) {
     const computed = computeSources(dir);
     const kept = (existing?.sources ?? []).filter((s) => !computed.some((c3) => c3.path === s.path));
     target2.sources = [...computed, ...kept];
-    const present = (rel) => existsSync4(join5(dir, rel));
+    const present = (rel) => existsSync5(join6(dir, rel));
     const stages = {};
     for (const [k, rel] of Object.entries(STAGE_FILES)) stages[k] = present(rel) ? "present" : "missing";
     stages.materials = MATERIAL_STAGE_FILES.some(present) ? "present" : "missing";
@@ -28616,8 +28691,8 @@ function migrateV2(courseDir, o) {
     let registry2 = loadRegistry(dir);
     const imported = [];
     const registryActions = [];
-    const matDir = join5(dir, "04-materials");
-    const images = existsSync4(matDir) ? readdirSync2(matDir).filter((f) => IMAGE_EXT.test(f)).sort() : [];
+    const matDir = join6(dir, "04-materials");
+    const images = existsSync5(matDir) ? readdirSync2(matDir).filter((f) => IMAGE_EXT.test(f)).sort() : [];
     const now2 = (/* @__PURE__ */ new Date()).toISOString();
     for (const name of images) {
       const id2 = `IMG-${name.replace(/\.[^.]+$/, "")}`;
@@ -28651,20 +28726,20 @@ function migrateV2(courseDir, o) {
       if (!answered) questions.push({ id: `alt:${id2}`, text: `Alt text for 04-materials/${name}` });
     }
     imported.sort();
-    const probe = join5(scratch, "probe");
+    const probe = join6(scratch, "probe");
     mkdirSync2(probe);
     saveManifest(probe, target2);
-    const next = readFileSync7(join5(probe, "course.yaml"), "utf8");
-    const manifestChanged = !existing || readFileSync7(join5(dir, "course.yaml"), "utf8") !== next;
+    const next = readFileSync7(join6(probe, "course.yaml"), "utf8");
+    const manifestChanged = !existing || readFileSync7(join6(dir, "course.yaml"), "utf8") !== next;
     if (manifestChanged) actions.push("write course.yaml");
     actions.push(...registryActions);
-    const idChanges = ID_COMMENT_FILES.filter((rel) => existsSync4(join5(scratch, rel)) && existsSync4(join5(dir, rel)) && readFileSync7(join5(scratch, rel), "utf8") !== readFileSync7(join5(dir, rel), "utf8"));
+    const idChanges = ID_COMMENT_FILES.filter((rel) => existsSync5(join6(scratch, rel)) && existsSync5(join6(dir, rel)) && readFileSync7(join6(scratch, rel), "utf8") !== readFileSync7(join6(dir, rel), "utf8"));
     for (const rel of idChanges) actions.push(`insert ID comments in ${rel}`);
     if (!o.dryRun) {
       keepFresh(dir, () => {
-        if (manifestChanged) writeFileSync5(join5(dir, "course.yaml"), next);
+        if (manifestChanged) writeFileSync5(join6(dir, "course.yaml"), next);
         if (registryActions.length) saveRegistry(dir, registry2);
-        for (const rel of idChanges) writeFileSync5(join5(dir, rel), readFileSync7(join5(scratch, rel), "utf8"));
+        for (const rel of idChanges) writeFileSync5(join6(dir, rel), readFileSync7(join6(scratch, rel), "utf8"));
       });
     }
     return { manifest: target2, actions, questions, imported };
@@ -28675,13 +28750,13 @@ function migrateV2(courseDir, o) {
 
 // packages/course-kit/src/media/plan.ts
 var import_yaml5 = __toESM(require_dist(), 1);
-import { existsSync as existsSync5, mkdirSync as mkdirSync3, readFileSync as readFileSync8, writeFileSync as writeFileSync6 } from "node:fs";
-import { join as join6 } from "node:path";
+import { existsSync as existsSync6, mkdirSync as mkdirSync3, readFileSync as readFileSync8, writeFileSync as writeFileSync6 } from "node:fs";
+import { join as join7 } from "node:path";
 var FILE3 = ["05-media", "media-plan.yaml"];
 var DIAGRAM_ONLY = /* @__PURE__ */ new Set(["concept-map", "process-flow", "comparison", "hierarchy", "cycle", "timeline"]);
 function loadPlan(courseDir) {
-  const f = join6(courseDir, ...FILE3);
-  if (!existsSync5(f)) return { schema: "media-plan/v1", items: [] };
+  const f = join7(courseDir, ...FILE3);
+  if (!existsSync6(f)) return { schema: "media-plan/v1", items: [] };
   let raw;
   try {
     raw = (0, import_yaml5.parse)(readFileSync8(f, "utf8"));
@@ -28753,8 +28828,8 @@ function estimatePlan(p, pricing, quality) {
 }
 
 // packages/course-kit/src/media/pricing.ts
-import { existsSync as existsSync6, readFileSync as readFileSync9 } from "node:fs";
-import { join as join7 } from "node:path";
+import { existsSync as existsSync7, readFileSync as readFileSync9 } from "node:fs";
+import { join as join8 } from "node:path";
 
 // packages/course-kit/data/pricing.json
 var pricing_default = {
@@ -28769,8 +28844,8 @@ var pricing_default = {
 function loadPricing(dataDir2) {
   let raw = pricing_default;
   if (dataDir2) {
-    const f = join7(dataDir2, "pricing.json");
-    if (existsSync6(f)) {
+    const f = join8(dataDir2, "pricing.json");
+    if (existsSync7(f)) {
       try {
         raw = JSON.parse(readFileSync9(f, "utf8"));
       } catch {
@@ -28794,13 +28869,37 @@ function jsonFlag(raw, flag2) {
 function zodMsg(e) {
   return e.issues.map((i) => `${i.path.join(".") || "(root)"}: ${i.message}`).join("; ");
 }
+function stageArg(a3) {
+  const r = StageNameSchema.safeParse(requirePositional(a3, 0, "stage"));
+  if (!r.success) throw new UsageError(`unknown stage; one of ${STAGES.map((x5) => x5.name).join(", ")}`);
+  return r.data;
+}
 var coreCommands = {
   hash: (a3) => ({ hash: hashFile(requirePositional(a3, 0, "file")) }),
   stale: (a3) => checkStale(requirePositional(a3, 0, "output"), requireFlag(a3, "course")),
   "hash-write": (a3) => {
-    writeHashes(requirePositional(a3, 0, "output"), requireFlag(a3, "course"));
+    const output4 = requirePositional(a3, 0, "output");
+    const course = requireFlag(a3, "course");
+    if (a3.flags.sources !== void 0) {
+      if (typeof a3.flags.sources !== "string") throw new UsageError("--sources needs a JSON object");
+      const parsed = external_exports.record(external_exports.string(), external_exports.string()).safeParse(jsonFlag(a3.flags.sources, "sources"));
+      if (!parsed.success) throw new UsageError(`invalid --sources: ${zodMsg(parsed.error)}`);
+      const missing = Object.entries(parsed.data).filter(([, rel]) => !existsSync8(resolve4(course, rel)));
+      if (missing.length) {
+        throw new ValidationError(`source file not found: ${missing.map(([k, rel]) => `${k} (${rel})`).join(", ")}`);
+      }
+      if (!existsSync8(output4)) throw new ValidationError(`output not found: ${output4}`);
+      setSources(output4, parsed.data);
+    }
+    writeHashes(output4, course);
     return { ok: true };
   },
+  progress: (a3) => {
+    const course = requireFlag(a3, "course");
+    return a3.flags.write === true ? writeProgress(course) : computeProgress(course);
+  },
+  "progress skip": (a3) => setSkipped(requireFlag(a3, "course"), stageArg(a3), true),
+  "progress unskip": (a3) => setSkipped(requireFlag(a3, "course"), stageArg(a3), false),
   "manifest init": (a3) => {
     const course = requireFlag(a3, "course");
     let raw;
@@ -28813,7 +28912,7 @@ var coreCommands = {
     if (!parsed.success) {
       throw new UsageError(`invalid --json: ${parsed.error.issues.map((i) => `${i.path.join(".") || "(root)"}: ${i.message}`).join("; ")}`);
     }
-    if (existsSync7(join8(course, "course.yaml")) && a3.flags.force !== true) {
+    if (existsSync8(join9(course, "course.yaml")) && a3.flags.force !== true) {
       throw new UsageError(`course.yaml already exists in ${course}; pass --force to overwrite`);
     }
     const opts = parsed.data;
@@ -28901,8 +29000,8 @@ var coreCommands = {
 };
 
 // packages/course-kit/src/media/embed.ts
-import { existsSync as existsSync8, readFileSync as readFileSync10, writeFileSync as writeFileSync7 } from "node:fs";
-import { dirname as dirname2, join as join9, relative, sep } from "node:path";
+import { existsSync as existsSync9, readFileSync as readFileSync10, writeFileSync as writeFileSync7 } from "node:fs";
+import { dirname as dirname2, join as join10, relative, sep } from "node:path";
 var EMBED_FILES = [
   ["02-design", "lesson-plans.md"],
   ["04-materials", "student-handout.md"],
@@ -29001,14 +29100,14 @@ function embedAll(courseDir) {
   const reports = [];
   keepFresh(courseDir, () => {
     for (const parts of EMBED_FILES) {
-      const file2 = join9(courseDir, ...parts);
-      if (!existsSync8(file2)) continue;
+      const file2 = join10(courseDir, ...parts);
+      if (!existsSync9(file2)) continue;
       const original = readFileSync10(file2, "utf8");
       let text3 = original;
       const report = { file: parts.join("/"), embedded: [], placeholders: [] };
       for (const w2 of work) {
         if (!hasAnchor(text3, w2.module)) continue;
-        const rel = w2.files0 ? relative(dirname2(file2), join9(courseDir, w2.files0)).split(sep).join("/") : "";
+        const rel = w2.files0 ? relative(dirname2(file2), join10(courseDir, w2.files0)).split(sep).join("/") : "";
         const item = isApprovedAsset(w2.item) && !rel ? { ...w2.item, status: "generated" } : w2.item;
         text3 = embedAsset(text3, item, w2.module, rel);
         (isApprovedAsset(item) ? report.embedded : report.placeholders).push(w2.id);
@@ -29029,9 +29128,9 @@ function embedOne(courseDir, file2, id2, anchorId) {
   const p = loadPlan(courseDir).items.find((x5) => x5.id === id2);
   const item = a3 && a3.status === "approved" ? a3 : p ?? a3;
   if (!item) throw new ValidationError(`unknown asset or plan item ${id2}`);
-  if (!existsSync8(file2)) throw new ValidationError(`file not found: ${file2}`);
+  if (!existsSync9(file2)) throw new ValidationError(`file not found: ${file2}`);
   const first = embedFileOf(a3);
-  const rel = first ? relative(dirname2(file2), join9(courseDir, first)).split(sep).join("/") : "";
+  const rel = first ? relative(dirname2(file2), join10(courseDir, first)).split(sep).join("/") : "";
   const original = readFileSync10(file2, "utf8");
   const out = embedAsset(original, item, anchorId, rel);
   if (out !== original) keepFresh(courseDir, () => writeFileSync7(file2, out));
@@ -29040,8 +29139,8 @@ function embedOne(courseDir, file2, id2, anchorId) {
 
 // packages/course-kit/src/media/ledger.ts
 import { randomUUID } from "node:crypto";
-import { appendFileSync, closeSync, existsSync as existsSync9, mkdirSync as mkdirSync5, openSync, readFileSync as readFileSync11, statSync as statSync2, unlinkSync } from "node:fs";
-import { join as join10 } from "node:path";
+import { appendFileSync, closeSync, existsSync as existsSync10, mkdirSync as mkdirSync5, openSync, readFileSync as readFileSync11, statSync as statSync2, unlinkSync } from "node:fs";
+import { join as join11 } from "node:path";
 var LedgerEntrySchema = external_exports.object({
   at: external_exports.string(),
   assetId: external_exports.string(),
@@ -29057,8 +29156,8 @@ var LedgerEntrySchema = external_exports.object({
 var DIR = ".course";
 var FILE4 = "cost-ledger.jsonl";
 function readLedger(courseDir) {
-  const f = join10(courseDir, DIR, FILE4);
-  if (!existsSync9(f)) return [];
+  const f = join11(courseDir, DIR, FILE4);
+  if (!existsSync10(f)) return [];
   const out = [];
   readFileSync11(f, "utf8").split("\n").forEach((line4, i) => {
     if (!line4.trim()) return;
@@ -29121,16 +29220,16 @@ function recordSpend(courseDir, e) {
   if (!r.success) {
     throw new ValidationError(`invalid ledger entry: ${r.error.issues.map((x5) => `${x5.path.join(".") || "(root)"}: ${x5.message}`).join("; ")}`);
   }
-  mkdirSync5(join10(courseDir, DIR), { recursive: true });
-  appendFileSync(join10(courseDir, DIR, FILE4), JSON.stringify(r.data) + "\n");
+  mkdirSync5(join11(courseDir, DIR), { recursive: true });
+  appendFileSync(join11(courseDir, DIR, FILE4), JSON.stringify(r.data) + "\n");
 }
 var LOCK = "ledger.lock";
 var LOCK_STALE_MS = 2 * 6e4;
 var LOCK_WAIT_MS = 3e4;
 var sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 async function withLedgerLock(courseDir, fn) {
-  mkdirSync5(join10(courseDir, DIR), { recursive: true });
-  const lock = join10(courseDir, DIR, LOCK);
+  mkdirSync5(join11(courseDir, DIR), { recursive: true });
+  const lock = join11(courseDir, DIR, LOCK);
   const deadline = Date.now() + LOCK_WAIT_MS;
   for (let attempt = 0; ; attempt++) {
     let fd;
@@ -29203,7 +29302,7 @@ function releaseSpend(courseDir, reservationId) {
 
 // packages/course-kit/src/providers/codex.ts
 import { execFile } from "node:child_process";
-import { existsSync as existsSync10, mkdirSync as mkdirSync6, statSync as statSync3 } from "node:fs";
+import { existsSync as existsSync11, mkdirSync as mkdirSync6, statSync as statSync3 } from "node:fs";
 import { basename as basename2, dirname as dirname3 } from "node:path";
 var TIMEOUT_MS = 5 * 6e4;
 function childEnv() {
@@ -29213,11 +29312,11 @@ function childEnv() {
   return env;
 }
 function run(bin3, args, opts = {}) {
-  return new Promise((resolve7) => {
+  return new Promise((resolve8) => {
     execFile(bin3, args, { ...opts, env: childEnv(), maxBuffer: 64 * 1024 * 1024, windowsHide: true }, (error64, stdout, stderr) => {
-      if (!error64) return resolve7({ code: 0, stdout: String(stdout), stderr: String(stderr) });
+      if (!error64) return resolve8({ code: 0, stdout: String(stdout), stderr: String(stderr) });
       const code = typeof error64.code === "number" ? error64.code : null;
-      resolve7({ code, stdout: String(stdout), stderr: String(stderr), error: error64 });
+      resolve8({ code, stdout: String(stdout), stderr: String(stderr), error: error64 });
     });
   });
 }
@@ -29243,7 +29342,7 @@ async function requirePlanBilledCodex(codexBin = "codex") {
   }
 }
 function fileStamp(p) {
-  if (!existsSync10(p)) return null;
+  if (!existsSync11(p)) return null;
   const s = statSync3(p);
   return `${s.mtimeMs}:${s.size}`;
 }
@@ -29276,12 +29375,12 @@ async function generateImageCodex(o) {
 
 // packages/course-kit/src/providers/generate.ts
 import { createHash as createHash2 } from "node:crypto";
-import { existsSync as existsSync12, mkdirSync as mkdirSync8, readFileSync as readFileSync13, writeFileSync as writeFileSync9 } from "node:fs";
-import { join as join12 } from "node:path";
+import { existsSync as existsSync13, mkdirSync as mkdirSync8, readFileSync as readFileSync13, writeFileSync as writeFileSync9 } from "node:fs";
+import { join as join13 } from "node:path";
 
 // packages/course-kit/src/providers/openai.ts
-import { existsSync as existsSync11, mkdirSync as mkdirSync7, readFileSync as readFileSync12, writeFileSync as writeFileSync8 } from "node:fs";
-import { dirname as dirname4, join as join11 } from "node:path";
+import { existsSync as existsSync12, mkdirSync as mkdirSync7, readFileSync as readFileSync12, writeFileSync as writeFileSync8 } from "node:fs";
+import { dirname as dirname4, join as join12 } from "node:path";
 var ENDPOINT = "https://api.openai.com/v1/images/generations";
 var MODEL = "gpt-image-2";
 var API_QUALITY = { draft: "low", standard: "medium", high: "high" };
@@ -29291,8 +29390,8 @@ function resolveOpenAIKey(env, dataDir2) {
     if (v2 && v2.trim()) return v2.trim();
   }
   if (dataDir2) {
-    const f = join11(dataDir2, "openai.key");
-    if (existsSync11(f)) {
+    const f = join12(dataDir2, "openai.key");
+    if (existsSync12(f)) {
       const v2 = readFileSync12(f, "utf8").trim();
       if (v2) return v2;
     }
@@ -29385,13 +29484,13 @@ async function generateAssetImage(courseDir, assetId, provider, o) {
   if (prior && (prior.status === "approved" || prior.status === "imported")) {
     throw new ValidationError(`Asset ${assetId} is ${prior.status}; reject it first to regenerate (registry status ${assetId} rejected)`);
   }
-  const anchorsFile = join12(courseDir, "05-media", "style", "prompt-anchors.md");
-  if (!existsSync12(anchorsFile)) throw new ValidationError("Run generate-style-guide first.");
+  const anchorsFile = join13(courseDir, "05-media", "style", "prompt-anchors.md");
+  if (!existsSync13(anchorsFile)) throw new ValidationError("Run generate-style-guide first.");
   const anchors = readFileSync13(anchorsFile, "utf8");
   const prompt = composeImagePrompt(anchors, item.description);
   const source3 = `05-media/src/${assetId}.prompt.txt`;
-  mkdirSync8(join12(courseDir, "05-media", "src"), { recursive: true });
-  writeFileSync9(join12(courseDir, source3), prompt);
+  mkdirSync8(join13(courseDir, "05-media", "src"), { recursive: true });
+  writeFileSync9(join13(courseDir, source3), prompt);
   const pricing = provider === "openai" ? loadPricing(o.dataDir) : void 0;
   const estimate2 = pricing ? { usd: openaiPrice(pricing, o.quality), quota: 0 } : { usd: 0, quota: 1 };
   const reservationId = await reserveSpend(courseDir, manifest, {
@@ -29402,7 +29501,7 @@ async function generateAssetImage(courseDir, assetId, provider, o) {
     quotaUnits: estimate2.quota
   });
   const file2 = `05-media/out/${assetId}.png`;
-  const outPath = join12(courseDir, file2);
+  const outPath = join13(courseDir, file2);
   let model;
   try {
     if (provider === "openai") {
@@ -29442,8 +29541,8 @@ async function generateAssetImage(courseDir, assetId, provider, o) {
 
 // packages/course-kit/src/providers/record.ts
 var import_yaml6 = __toESM(require_dist(), 1);
-import { existsSync as existsSync13, mkdirSync as mkdirSync9, readFileSync as readFileSync14, writeFileSync as writeFileSync10 } from "node:fs";
-import { join as join13 } from "node:path";
+import { existsSync as existsSync14, mkdirSync as mkdirSync9, readFileSync as readFileSync14, writeFileSync as writeFileSync10 } from "node:fs";
+import { join as join14 } from "node:path";
 
 // packages/course-kit/data/providers.yaml
 var providers_default = '# Name patterns (glob, * = any text) that identify detected tools and skills for each capability.\nimage: ["*generate_image*", "*image_gen*"]\ndiagram: ["*Excalidraw*", "*Mermaid*"]\ndesignSkills: ["impeccable*", "design-taste-frontend*", "ui-ux-pro-max*", "frontend-design*"]\n';
@@ -29472,12 +29571,12 @@ function parseDetectedProviders(raw, what = "detected providers") {
 }
 function recordProviders(courseDir, d) {
   const data3 = parseDetectedProviders(d);
-  mkdirSync9(join13(courseDir, FILE5[0]), { recursive: true });
-  writeFileSync10(join13(courseDir, ...FILE5), JSON.stringify(data3, null, 2) + "\n");
+  mkdirSync9(join14(courseDir, FILE5[0]), { recursive: true });
+  writeFileSync10(join14(courseDir, ...FILE5), JSON.stringify(data3, null, 2) + "\n");
 }
 function loadProviders(courseDir) {
-  const f = join13(courseDir, ...FILE5);
-  if (!existsSync13(f)) return null;
+  const f = join14(courseDir, ...FILE5);
+  if (!existsSync14(f)) return null;
   let raw;
   try {
     raw = JSON.parse(readFileSync14(f, "utf8"));
@@ -29492,8 +29591,8 @@ function providerPatterns() {
 
 // packages/course-kit/src/render/deps.ts
 import { execFileSync } from "node:child_process";
-import { existsSync as existsSync14, mkdirSync as mkdirSync10 } from "node:fs";
-import { join as join14 } from "node:path";
+import { existsSync as existsSync15, mkdirSync as mkdirSync10 } from "node:fs";
+import { join as join15 } from "node:path";
 var PACKAGES = {
   "mermaid-cli": ["@mermaid-js/mermaid-cli@12.0.0"],
   "excalidraw-to-svg": ["excalidraw-to-svg@3.1.0", "@excalidraw/utils@0.1.2", "puppeteer@25.16.0"]
@@ -29502,14 +29601,14 @@ function isDepName(n) {
   return Object.hasOwn(PACKAGES, n);
 }
 function depPath(dataDir2, dep) {
-  const nm = join14(dataDir2, "node_modules");
+  const nm = join15(dataDir2, "node_modules");
   if (dep === "mermaid-cli") {
-    const p2 = join14(nm, ".bin", "mmdc");
-    return existsSync14(p2) ? p2 : null;
+    const p2 = join15(nm, ".bin", "mmdc");
+    return existsSync15(p2) ? p2 : null;
   }
-  const p = join14(nm, "excalidraw-to-svg");
-  const needed = [p, join14(nm, "@excalidraw", "utils", "dist", "excalidraw-utils.min.js"), join14(nm, "puppeteer")];
-  return needed.every((f) => existsSync14(f)) ? p : null;
+  const p = join15(nm, "excalidraw-to-svg");
+  const needed = [p, join15(nm, "@excalidraw", "utils", "dist", "excalidraw-utils.min.js"), join15(nm, "puppeteer")];
+  return needed.every((f) => existsSync15(f)) ? p : null;
 }
 function installDeps(dataDir2, deps, npmBin = "npm") {
   for (const d of deps) if (!isDepName(d)) throw new UsageError(`unknown dependency: ${d}`);
@@ -29527,7 +29626,7 @@ function installDeps(dataDir2, deps, npmBin = "npm") {
 // packages/course-kit/src/render/excalidraw.ts
 import { readFileSync as readFileSync15, writeFileSync as writeFileSync11 } from "node:fs";
 import { createRequire } from "node:module";
-import { join as join15, resolve as resolve4 } from "node:path";
+import { join as join16, resolve as resolve5 } from "node:path";
 var CHROME_FAILURE = /Target closed|Protocol error|Session closed|Execution context was destroyed|crash|disconnected/i;
 function classifyEvaluateError(err, ctx = {}) {
   const msg = err instanceof Error ? err.message : String(err);
@@ -29546,11 +29645,11 @@ async function renderExcalidraw(srcPath, outSvg, dataDir2) {
   if (!depPath(dataDir2, "excalidraw-to-svg")) {
     throw new ProviderUnavailableError("excalidraw-to-svg is not installed; run: deps install excalidraw-to-svg --data-dir <dir>");
   }
-  const root = resolve4(dataDir2);
-  const bundle2 = join15(root, "node_modules", "@excalidraw", "utils", "dist", "excalidraw-utils.min.js");
+  const root = resolve5(dataDir2);
+  const bundle2 = join16(root, "node_modules", "@excalidraw", "utils", "dist", "excalidraw-utils.min.js");
   let puppeteer;
   try {
-    puppeteer = createRequire(join15(root, "noop.js"))("puppeteer");
+    puppeteer = createRequire(join16(root, "noop.js"))("puppeteer");
   } catch {
     throw new ProviderUnavailableError("puppeteer is not installed; run: deps install excalidraw-to-svg --data-dir <dir>");
   }
@@ -29589,13 +29688,13 @@ async function renderExcalidraw(srcPath, outSvg, dataDir2) {
 
 // packages/course-kit/src/render/mermaid.ts
 import { execFileSync as execFileSync2 } from "node:child_process";
-import { existsSync as existsSync15, mkdtempSync as mkdtempSync2, rmSync as rmSync2, writeFileSync as writeFileSync12 } from "node:fs";
+import { existsSync as existsSync16, mkdtempSync as mkdtempSync2, rmSync as rmSync2, writeFileSync as writeFileSync12 } from "node:fs";
 import { tmpdir as tmpdir2 } from "node:os";
-import { join as join16 } from "node:path";
+import { join as join17 } from "node:path";
 async function renderMermaid(srcPath, outSvg, dataDir2, tokens = {}) {
   const mmdc = depPath(dataDir2, "mermaid-cli");
   if (!mmdc) throw new ProviderUnavailableError("mermaid-cli is not installed; run: deps install mermaid-cli --data-dir <dir>");
-  const tmp = mkdtempSync2(join16(tmpdir2(), "ck-mmd-"));
+  const tmp = mkdtempSync2(join17(tmpdir2(), "ck-mmd-"));
   try {
     const c3 = tokens.color ?? {};
     const themeVariables = {};
@@ -29604,11 +29703,11 @@ async function renderMermaid(srcPath, outSvg, dataDir2, tokens = {}) {
     if (c3.fg) themeVariables.lineColor = c3.fg;
     if (c3.bg) themeVariables.background = c3.bg;
     if (tokens.font?.body) themeVariables.fontFamily = tokens.font.body;
-    const cfg = join16(tmp, "config.json");
+    const cfg = join17(tmp, "config.json");
     writeFileSync12(cfg, JSON.stringify({ theme: "base", themeVariables }));
-    const pup = join16(tmp, "puppeteer.json");
+    const pup = join17(tmp, "puppeteer.json");
     writeFileSync12(pup, JSON.stringify({ args: ["--no-sandbox"] }));
-    if (!existsSync15(srcPath)) throw new ValidationError(`mermaid source not found: ${srcPath}`);
+    if (!existsSync16(srcPath)) throw new ValidationError(`mermaid source not found: ${srcPath}`);
     try {
       execFileSync2(mmdc, ["-i", srcPath, "-o", outSvg, "-c", cfg, "-p", pup, ...c3.bg ? ["-b", c3.bg] : []], { stdio: ["ignore", "ignore", "pipe"] });
     } catch (e) {
@@ -35281,17 +35380,17 @@ function loess(data3, x5, y5, bandwidth2) {
     const interval3 = [0, bw - 1];
     for (let i = 0; i < n; ++i) {
       const dx = xv[i], i0 = interval3[0], i1 = interval3[1], edge = dx - xv[i0] > xv[i1] - dx ? i0 : i1;
-      let W = 0, X4 = 0, Y4 = 0, XY = 0, X24 = 0;
+      let W2 = 0, X4 = 0, Y4 = 0, XY = 0, X24 = 0;
       const denom = 1 / Math.abs(xv[edge] - dx || 1);
       for (let k = i0; k <= i1; ++k) {
         const xk = xv[k], yk = yv[k], w2 = tricube(Math.abs(dx - xk) * denom) * robustWeights[k], xkw = xk * w2;
-        W += w2;
+        W2 += w2;
         X4 += xkw;
         Y4 += yk * w2;
         XY += yk * xkw;
         X24 += xk * xkw;
       }
-      const [a3, b10] = ols(X4 / W, Y4 / W, XY / W, X24 / W);
+      const [a3, b10] = ols(X4 / W2, Y4 / W2, XY / W2, X24 / W2);
       yhat[i] = a3 + b10 * dx;
       residuals[i] = Math.abs(yv[i] - yhat[i]);
       updateInterval(xv, i + 1, interval3);
@@ -35595,7 +35694,7 @@ function createMeasure(op, param2, name) {
 function compareIndex(a3, b10) {
   return a3.idx - b10.idx;
 }
-function resolve5(agg) {
+function resolve6(agg) {
   const map4 = {};
   agg.forEach((a3) => map4[a3.name] = a3);
   const getreqs = (a3) => {
@@ -35635,7 +35734,7 @@ function set3(t) {
   return t;
 }
 function compileMeasures(agg, field3) {
-  const get6 = field3 || identity, ops2 = resolve5(agg), out = agg.slice().sort(compareIndex);
+  const get6 = field3 || identity, ops2 = resolve6(agg), out = agg.slice().sort(compareIndex);
   function ctr(cell2) {
     this._ops = ops2;
     this._out = out;
@@ -42137,9 +42236,9 @@ var Tau = Math.PI * 2;
 var HalfSqrt3 = Math.sqrt(3) / 2;
 var segmentCache = {};
 var bezierCache = {};
-var join17 = [].join;
+var join18 = [].join;
 function segments(x5, y5, rx, ry, large, sweep, rotateX, ox, oy) {
-  const key2 = join17.call(arguments);
+  const key2 = join18.call(arguments);
   if (segmentCache[key2]) {
     return segmentCache[key2];
   }
@@ -42189,7 +42288,7 @@ function segments(x5, y5, rx, ry, large, sweep, rotateX, ox, oy) {
   return segmentCache[key2] = result;
 }
 function bezier(params2) {
-  const key2 = join17.call(params2);
+  const key2 = join18.call(params2);
   if (bezierCache[key2]) {
     return bezierCache[key2];
   }
@@ -59042,7 +59141,7 @@ function array3(seq) {
 function sequence2(seq) {
   return array3(seq) || (isString(seq) ? seq : null);
 }
-function join18(seq, ...args) {
+function join19(seq, ...args) {
   return array3(seq).join(...args);
 }
 function indexof(seq, ...args) {
@@ -59237,7 +59336,7 @@ var functionContext = {
   toNumber,
   toString,
   indexof,
-  join: join18,
+  join: join19,
   lastindexof,
   replace: replace2,
   reverse,
@@ -71962,11 +72061,11 @@ function assembleTopLevelSignals(model, signals) {
     const store = stringValue(name + STORE);
     const hasSg = signals.filter((s) => s.name === name);
     if (hasSg.length === 0) {
-      const resolve7 = selCmpt.resolve === "global" ? "union" : selCmpt.resolve;
+      const resolve8 = selCmpt.resolve === "global" ? "union" : selCmpt.resolve;
       const isPoint2 = selCmpt.type === "point" ? ", true, true)" : ")";
       signals.push({
         name: selCmpt.name,
-        update: `${VL_SELECTION_RESOLVE}(${store}, ${stringValue(resolve7)}${isPoint2}`
+        update: `${VL_SELECTION_RESOLVE}(${store}, ${stringValue(resolve8)}${isPoint2}`
       });
     }
     hasSelections = true;
@@ -74041,8 +74140,8 @@ function parseSelectionPredicate(model, pred, dfnode, datum2 = "datum") {
     }
   }
   const fn = selCmpt.project.hasSelectionId ? "vlSelectionIdTest(" : "vlSelectionTest(";
-  const resolve7 = selCmpt.resolve === "global" ? ")" : `, ${stringValue(selCmpt.resolve)})`;
-  const test2 = `${fn}${store}, ${datum2}${resolve7}`;
+  const resolve8 = selCmpt.resolve === "global" ? ")" : `, ${stringValue(selCmpt.resolve)})`;
+  const test2 = `${fn}${store}, ${datum2}${resolve8}`;
   const length2 = `length(data(${store}))`;
   return pred.empty === false ? `${length2} && ${test2}` : `!${length2} || ${test2}`;
 }
@@ -74902,16 +75001,16 @@ function defaultScaleResolve(channel, model) {
   }
   throw new Error("invalid model type for resolve");
 }
-function parseGuideResolve(resolve7, channel) {
-  const channelScaleResolve = resolve7.scale[channel];
+function parseGuideResolve(resolve8, channel) {
+  const channelScaleResolve = resolve8.scale[channel];
   const guide = isXorY(channel) ? "axis" : "legend";
   if (channelScaleResolve === "independent") {
-    if (resolve7[guide][channel] === "shared") {
+    if (resolve8[guide][channel] === "shared") {
       warn2(independentScaleMeansIndependentGuide(channel));
     }
     return "independent";
   }
-  return resolve7[guide][channel] || "shared";
+  return resolve8[guide][channel] || "shared";
 }
 var LEGEND_COMPONENT_PROPERTY_INDEX = {
   ...COMMON_LEGEND_PROPERTY_INDEX,
@@ -75317,15 +75416,15 @@ function parseLegendForChannel(model, channel) {
   return legendCmpt;
 }
 function parseNonUnitLegend(model) {
-  const { legends, resolve: resolve7 } = model.component;
+  const { legends, resolve: resolve8 } = model.component;
   for (const child of model.children) {
     parseLegend2(child);
     for (const channel of keys3(child.component.legends)) {
-      resolve7.legend[channel] = parseGuideResolve(model.component.resolve, channel);
-      if (resolve7.legend[channel] === "shared") {
+      resolve8.legend[channel] = parseGuideResolve(model.component.resolve, channel);
+      if (resolve8.legend[channel] === "shared") {
         legends[channel] = mergeLegendComponent(legends[channel], child.component.legends[channel]);
         if (!legends[channel]) {
-          resolve7.legend[channel] = "independent";
+          resolve8.legend[channel] = "independent";
           delete legends[channel];
         }
       }
@@ -75336,7 +75435,7 @@ function parseNonUnitLegend(model) {
       if (!child.component.legends[channel]) {
         continue;
       }
-      if (resolve7.legend[channel] === "shared") {
+      if (resolve8.legend[channel] === "shared") {
         delete child.component.legends[channel];
       }
     }
@@ -77239,8 +77338,8 @@ function parseUnitScaleDomain(model) {
       while (!isFacetModel(facetParent) && facetParent.parent) {
         facetParent = facetParent.parent;
       }
-      const resolve7 = facetParent.component.resolve.scale[channel];
-      if (resolve7 === "shared") {
+      const resolve8 = facetParent.component.resolve.scale[channel];
+      if (resolve8 === "shared") {
         for (const domain4 of domains.value) {
           if (isDataRefDomain(domain4)) {
             domain4.data = FACET_SCALE_PREFIX + domain4.data.replace(FACET_SCALE_PREFIX, "");
@@ -78923,19 +79022,19 @@ var scaleTypeTieBreaker = tieBreakByComparing((st1, st2) => scaleTypePrecedence(
 function parseNonUnitScaleCore(model) {
   const scaleComponents = model.component.scales = {};
   const scaleTypeWithExplicitIndex = {};
-  const resolve7 = model.component.resolve;
+  const resolve8 = model.component.resolve;
   for (const child of model.children) {
     parseScaleCore(child);
     for (const channel of keys3(child.component.scales)) {
-      resolve7.scale[channel] ??= defaultScaleResolve(channel, model);
-      if (resolve7.scale[channel] === "shared") {
+      resolve8.scale[channel] ??= defaultScaleResolve(channel, model);
+      if (resolve8.scale[channel] === "shared") {
         const explicitScaleType = scaleTypeWithExplicitIndex[channel];
         const childScaleType = child.component.scales[channel].getWithExplicit("type");
         if (explicitScaleType) {
           if (scaleCompatible(explicitScaleType.value, childScaleType.value)) {
             scaleTypeWithExplicitIndex[channel] = mergeValuesWithExplicit(explicitScaleType, childScaleType, "type", "scale", scaleTypeTieBreaker);
           } else {
-            resolve7.scale[channel] = "independent";
+            resolve8.scale[channel] = "independent";
             delete scaleTypeWithExplicitIndex[channel];
           }
         } else {
@@ -79007,7 +79106,7 @@ var Model = class {
   signalNameMap;
   component;
   view;
-  constructor(spec, type3, parent, parentGivenName, config2, resolve7, view) {
+  constructor(spec, type3, parent, parentGivenName, config2, resolve8, view) {
     this.type = type3;
     this.parent = parent;
     this.config = config2;
@@ -79038,7 +79137,7 @@ var Model = class {
         scale: {},
         axis: {},
         legend: {},
-        ...resolve7 ? duplicate(resolve7) : {}
+        ...resolve8 ? duplicate(resolve8) : {}
       },
       selection: null,
       scales: null,
@@ -79372,8 +79471,8 @@ var DensityTransformNode = class _DensityTransformNode extends DataFlowNode {
     this.transform = duplicate(transform5);
     const specifiedAs = this.transform.as ?? [void 0, void 0];
     this.transform.as = [specifiedAs[0] ?? "value", specifiedAs[1] ?? "density"];
-    const resolve7 = this.transform.resolve ?? "shared";
-    this.transform.resolve = resolve7;
+    const resolve8 = this.transform.resolve ?? "shared";
+    this.transform.resolve = resolve8;
   }
   dependentFields() {
     return /* @__PURE__ */ new Set([this.transform.density, ...this.transform.groupby ?? []]);
@@ -80183,12 +80282,12 @@ function parseChildrenLayoutSize(model) {
 function parseNonUnitLayoutSizeForChannel(model, layoutSizeType) {
   const sizeType = getSizeTypeFromLayoutSizeType(layoutSizeType);
   const channel = getPositionScaleChannel(sizeType);
-  const resolve7 = model.component.resolve;
+  const resolve8 = model.component.resolve;
   const layoutSizeCmpt = model.component.layoutSize;
   let mergedSize;
   for (const child of model.children) {
     const childSize = child.component.layoutSize.getWithExplicit(sizeType);
-    const scaleResolve = resolve7.scale[channel] ?? defaultScaleResolve(channel, model);
+    const scaleResolve = resolve8.scale[channel] ?? defaultScaleResolve(channel, model);
     if (scaleResolve === "independent" && childSize.value === "step") {
       mergedSize = void 0;
       break;
@@ -80545,9 +80644,9 @@ function makeHeaderComponent(model, channel, labels2) {
 function mergeChildAxis(model, channel) {
   const { child } = model;
   if (child.component.axes[channel]) {
-    const { layoutHeaders: layoutHeaders2, resolve: resolve7 } = model.component;
-    resolve7.axis[channel] = parseGuideResolve(resolve7, channel);
-    if (resolve7.axis[channel] === "shared") {
+    const { layoutHeaders: layoutHeaders2, resolve: resolve8 } = model.component;
+    resolve8.axis[channel] = parseGuideResolve(resolve8, channel);
+    if (resolve8.axis[channel] === "shared") {
       const headerChannel = channel === "x" ? "column" : "row";
       const layoutHeader = layoutHeaders2[headerChannel];
       for (const axisComponent of child.component.axes[channel]) {
@@ -81024,16 +81123,16 @@ var OPPOSITE_ORIENT = {
   right: "left"
 };
 function parseLayerAxes(model) {
-  const { axes, resolve: resolve7 } = model.component;
+  const { axes, resolve: resolve8 } = model.component;
   const axisCount = { top: 0, bottom: 0, right: 0, left: 0 };
   for (const child of model.children) {
     child.parseAxesAndHeaders();
     for (const channel of keys3(child.component.axes)) {
-      resolve7.axis[channel] = parseGuideResolve(model.component.resolve, channel);
-      if (resolve7.axis[channel] === "shared") {
+      resolve8.axis[channel] = parseGuideResolve(model.component.resolve, channel);
+      if (resolve8.axis[channel] === "shared") {
         axes[channel] = mergeAxisComponents(axes[channel], child.component.axes[channel]);
         if (!axes[channel]) {
-          resolve7.axis[channel] = "independent";
+          resolve8.axis[channel] = "independent";
           delete axes[channel];
         }
       }
@@ -81044,7 +81143,7 @@ function parseLayerAxes(model) {
       if (!child.component.axes[channel]) {
         continue;
       }
-      if (resolve7.axis[channel] === "independent") {
+      if (resolve8.axis[channel] === "independent") {
         axes[channel] = (axes[channel] ?? []).concat(child.component.axes[channel]);
         for (const axisComponent of child.component.axes[channel]) {
           const { value: orient2, explicit } = axisComponent.getWithExplicit("orient");
@@ -81062,7 +81161,7 @@ function parseLayerAxes(model) {
       }
       delete child.component.axes[channel];
     }
-    if (resolve7.axis[channel] === "independent" && axes[channel] && axes[channel].length > 1) {
+    if (resolve8.axis[channel] === "independent" && axes[channel] && axes[channel].length > 1) {
       for (const [index3, axisCmpt] of (axes[channel] || []).entries()) {
         if (index3 > 0 && !!axisCmpt.get("grid") && !axisCmpt.explicit.grid) {
           axisCmpt.implicit.grid = false;
@@ -82388,7 +82487,7 @@ var studioCommands = {
   },
   embed: (a3) => {
     const course = requireFlag(a3, "course");
-    return embedOne(course, resolve6(requirePositional(a3, 0, "file")), requireFlag(a3, "asset"), requireFlag(a3, "anchor"));
+    return embedOne(course, resolve7(requirePositional(a3, 0, "file")), requireFlag(a3, "asset"), requireFlag(a3, "anchor"));
   },
   "embed all": (a3) => ({ files: embedAll(requireFlag(a3, "course")) }),
   "providers probe-codex": () => probeCodex(),
@@ -82409,21 +82508,21 @@ var studioCommands = {
   "style tokens": (a3) => {
     const course = requireFlag(a3, "course");
     let brandPath;
-    if (typeof a3.flags.brand === "string") brandPath = resolve6(a3.flags.brand);
+    if (typeof a3.flags.brand === "string") brandPath = resolve7(a3.flags.brand);
     else {
       const rel = loadManifest(course).brand;
-      const theme = join19(course, "05-media", "style", "theme.yaml");
-      if (rel) brandPath = resolve6(course, rel);
-      else if (existsSync16(theme)) brandPath = theme;
+      const theme = join20(course, "05-media", "style", "theme.yaml");
+      if (rel) brandPath = resolve7(course, rel);
+      else if (existsSync17(theme)) brandPath = theme;
     }
     if (!brandPath) throw new UsageError("no brand file: pass --brand, set brand in course.yaml, or create 05-media/style/theme.yaml");
     const tokens = deriveTokens(loadBrand(brandPath));
     const issues = checkTokens(tokens);
     const errors = issues.filter((i) => i.level === "error");
     if (errors.length) throw new ValidationError(`brand tokens fail contrast checks: ${errors.map((i) => `${i.path}: ${i.message}`).join("; ")}`);
-    const dir = join19(course, "05-media", "style");
+    const dir = join20(course, "05-media", "style");
     mkdirSync11(dir, { recursive: true });
-    writeFileSync14(join19(dir, "tokens.json"), JSON.stringify(tokens, null, 2) + "\n");
+    writeFileSync14(join20(dir, "tokens.json"), JSON.stringify(tokens, null, 2) + "\n");
     return { tokens, issues };
   },
   "providers patterns": () => providerPatterns()

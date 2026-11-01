@@ -52,3 +52,31 @@ test('writeHashes then checkStale returns fresh and keeps the body and key order
   expect(Object.keys(fm.data)).toEqual(['title', 'sourceFiles', 'sourceHashes', 'zed']);
   expect((fm.data.sourceHashes as Record<string, string>).obj).toBe('90015098');
 });
+
+test('hash-write --sources sets sourceFiles and sourceHashes, then stale is fresh', async () => {
+  const { runCli } = await import('../src/cli/args.js');
+  const { coreCommands } = await import('../src/cli-core.js');
+  const { vi } = await import('vitest');
+  vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+  const code = await runCli(['hash-write', out, '--course', dir, '--sources', JSON.stringify({ b: '01-planning/learning-objectives.md', a: '01-planning/learning-objectives.md' })], coreCommands);
+  vi.restoreAllMocks();
+  expect(code).toBe(0);
+  const text = readFileSync(out, 'utf8');
+  expect(text.indexOf('  b:')).toBeLessThan(text.indexOf('  a:'));
+  expect(text).toContain('zed: 1');
+  expect(text.endsWith(originalBody)).toBe(true);
+  expect(checkStale(out, dir)).toEqual({ status: 'fresh', changed: [] });
+  expect(readFrontmatter(out, { strings: true }).data.sourceFiles).toEqual({ b: '01-planning/learning-objectives.md', a: '01-planning/learning-objectives.md' });
+});
+
+test('hash-write --sources with a missing source file is exit 2 and the file does not change', async () => {
+  const { runCli } = await import('../src/cli/args.js');
+  const { coreCommands } = await import('../src/cli-core.js');
+  const { vi } = await import('vitest');
+  const before = readFileSync(out, 'utf8');
+  vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+  const code = await runCli(['hash-write', out, '--course', dir, '--sources', JSON.stringify({ x: 'nope.md' })], coreCommands);
+  vi.restoreAllMocks();
+  expect(code).toBe(2);
+  expect(readFileSync(out, 'utf8')).toBe(before);
+});

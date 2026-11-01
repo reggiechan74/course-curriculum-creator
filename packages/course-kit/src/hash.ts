@@ -93,3 +93,8 @@ export function keepFresh<T>(courseDir: string, write: () => T): T {
   refreshOutputs(courseDir, fresh);
   return result;
 }
+
+/** Sets frontmatter `sourceFiles` (key order kept). Paths are relative to the course folder. */
+export function setSources(outputPath: string, sources: Record<string, string>): void {
+  updateFrontmatter(outputPath, { sourceFiles: sources });
+}

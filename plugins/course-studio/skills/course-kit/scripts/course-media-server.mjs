@@ -44170,7 +44170,23 @@ import { join as join3 } from "node:path";
 var ShapeSchema = external_exports.enum(["workshop", "cohort", "self-paced"]);
 var DeliverySchema = external_exports.enum(["in-person", "virtual", "hybrid", "async"]);
 var ObjectiveKindSchema = external_exports.enum(["cognitive", "affective", "orientation", "integration"]);
-var StageNameSchema = external_exports.enum(["positioning", "objectives", "rubrics", "outline", "lessonPlans", "materials"]);
+var StageNameSchema = external_exports.enum([
+  "positioning",
+  "needsAnalysis",
+  "learnerProfile",
+  "objectives",
+  "rubrics",
+  "outline",
+  "lessonPlans",
+  "preWork",
+  "materials",
+  "description",
+  "transferPlan",
+  "evaluationPlan",
+  "spacedPractice",
+  "virtualAdaptation"
+]);
+var StageStatusSchema = external_exports.enum(["present", "missing", "stale", "skipped"]);
 var SessionSchema = external_exports.object({ id: external_exports.string(), label: external_exports.string(), minutes: external_exports.number() });
 var ObjectiveSchema = external_exports.object({
   id: external_exports.string(),
@@ -44214,7 +44230,7 @@ var ManifestSchema = external_exports.object({
   style: external_exports.string().optional(),
   media: external_exports.object({ budgetUsd: external_exports.number(), maxPlanImages: external_exports.number(), approvalRequired: external_exports.boolean() }),
   sources: external_exports.array(SourceRefSchema).optional(),
-  stages: external_exports.partialRecord(StageNameSchema, external_exports.enum(["present", "missing"])).optional(),
+  stages: external_exports.partialRecord(StageNameSchema, StageStatusSchema).optional(),
   extra: external_exports.record(external_exports.string(), external_exports.unknown()).optional(),
   targets: external_exports.record(external_exports.string(), external_exports.unknown())
 });

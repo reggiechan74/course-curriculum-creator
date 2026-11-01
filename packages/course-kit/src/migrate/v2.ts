@@ -24,7 +24,7 @@ const V2_PLANNING = new Set([
   'README.md', 'course-positioning.md', 'course-description.md', 'learning-objectives.md',
   'training-needs-analysis.md', 'learner-profile.md', 'content-sources.md',
 ]);
-const STAGE_FILES: Record<Exclude<StageName, 'materials'>, string> = {
+const STAGE_FILES: Partial<Record<StageName, string>> = {
   positioning: POSITIONING,
   objectives: '01-planning/learning-objectives.md',
   rubrics: '03-assessment/rubrics.md',

@@ -1,11 +1,13 @@
 import { existsSync, mkdirSync, realpathSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 import { type CommandTable, requireFlag, requirePositional, runCli } from './cli/args.js';
 import { UsageError, ValidationError } from './errors.js';
-import { checkStale, hashFile, writeHashes } from './hash.js';
+import { checkStale, hashFile, setSources, writeHashes } from './hash.js';
+import { type StageName, StageNameSchema } from './manifest/schema.js';
 import { InitOptionsSchema, initManifest, loadManifest, saveManifest, validateManifest } from './manifest/io.js';
+import { STAGES, computeProgress, setSkipped, writeProgress } from './manifest/progress.js';
 import { summarizeManifest } from './manifest/summary.js';
 import { syncManifest } from './manifest/sync.js';
 import { migrateV2 } from './migrate/v2.js';
@@ -21,13 +23,38 @@ function zodMsg(e: { issues: { path: PropertyKey[]; message: string }[] }): stri
   return e.issues.map((i) => `${i.path.join('.') || '(root)'}: ${i.message}`).join('; ');
 }
 
+function stageArg(a: import('./cli/args.js').ParsedArgs): StageName {
+  const r = StageNameSchema.safeParse(requirePositional(a, 0, 'stage'));
+  if (!r.success) throw new UsageError(`unknown stage; one of ${STAGES.map((x) => x.name).join(', ')}`);
+  return r.data;
+}
+
 export const coreCommands: CommandTable = {
   hash: (a) => ({ hash: hashFile(requirePositional(a, 0, 'file')) }),
   stale: (a) => checkStale(requirePositional(a, 0, 'output'), requireFlag(a, 'course')),
   'hash-write': (a) => {
-    writeHashes(requirePositional(a, 0, 'output'), requireFlag(a, 'course'));
+    const output = requirePositional(a, 0, 'output');
+    const course = requireFlag(a, 'course');
+    if (a.flags.sources !== undefined) {
+      if (typeof a.flags.sources !== 'string') throw new UsageError('--sources needs a JSON object');
+      const parsed = z.record(z.string(), z.string()).safeParse(jsonFlag(a.flags.sources, 'sources'));
+      if (!parsed.success) throw new UsageError(`invalid --sources: ${zodMsg(parsed.error)}`);
+      const missing = Object.entries(parsed.data).filter(([, rel]) => !existsSync(resolve(course, rel)));
+      if (missing.length) {
+        throw new ValidationError(`source file not found: ${missing.map(([k, rel]) => `${k} (${rel})`).join(', ')}`);
+      }
+      if (!existsSync(output)) throw new ValidationError(`output not found: ${output}`);
+      setSources(output, parsed.data);
+    }
+    writeHashes(output, course);
     return { ok: true };
   },
+  progress: (a) => {
+    const course = requireFlag(a, 'course');
+    return a.flags.write === true ? writeProgress(course) : computeProgress(course);
+  },
+  'progress skip': (a) => setSkipped(requireFlag(a, 'course'), stageArg(a), true),
+  'progress unskip': (a) => setSkipped(requireFlag(a, 'course'), stageArg(a), false),
   'manifest init': (a) => {
     const course = requireFlag(a, 'course');
     let raw: unknown;
