@@ -1,6 +1,6 @@
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join, posix, resolve } from 'node:path';
+import { dirname, join, posix, relative, resolve, sep } from 'node:path';
 import { ValidationError } from '../errors.js';
 import { readFrontmatter } from '../frontmatter.js';
 import { keepFresh } from '../hash.js';
@@ -103,6 +103,20 @@ function computeSources(dir: string): SourceRef[] {
   return [...derived, ...variant, ...source, ...material, ...external];
 }
 
+const SKIP_ANYWHERE = new Set(['.git', 'node_modules']);
+const SKIP_AT_ROOT = new Set(['dist', '05-media/out']);
+
+/** cpSync filter for the simulation copy: leaves out VCS, dependency and build output folders. */
+export function simulationFilter(root: string): (src: string) => boolean {
+  const base = resolve(root);
+  return (src) => {
+    const rel = relative(base, resolve(src)).split(sep).join('/');
+    if (rel === '') return true;
+    if (rel.split('/').some((part) => SKIP_ANYWHERE.has(part))) return false;
+    return ![...SKIP_AT_ROOT].some((p) => rel === p || rel.startsWith(`${p}/`));
+  };
+}
+
 export function migrateV2(courseDir: string, o: { dryRun: boolean; answers?: Record<string, string> }): MigrationReport {
   const answers = o.answers ?? {};
   const dir = resolve(courseDir);
@@ -177,6 +191,10 @@ export function migrateV2(courseDir: string, o: { dryRun: boolean; answers?: Rec
       const level = typeof fm.audienceLevel === 'string' && fm.audienceLevel.trim() ? fm.audienceLevel.trim() : 'professional';
       target = initManifest({
         title, shape, delivery, sessions,
+        // The create-course defaults, so the required pre-work stage has a time budget to fill.
+        async: shape === 'self-paced'
+          ? { preWorkMinutes: 30, betweenSessionMinutes: 0, postWorkMinutes: 0 }
+          : { preWorkMinutes: 60, betweenSessionMinutes: shape === 'cohort' ? 60 : 0, postWorkMinutes: 90 },
         audienceLevel: level, audienceSummary: typeof fm.audience === 'string' ? fm.audience : '',
         budgetUsd: 20, maxPlanImages: 40,
       }, typeof fm.date === 'string' && /^\d{4}-\d\d-\d\d$/.test(fm.date) ? fm.date : new Date().toISOString().slice(0, 10));
@@ -266,7 +284,7 @@ export function migrateV2(courseDir: string, o: { dryRun: boolean; answers?: Rec
       for (const rel of idChanges) writeFileSync(join(root, rel), readFileSync(join(scratch, rel), 'utf8'));
     });
     const sim = join(scratch, 'sim');
-    cpSync(dir, sim, { recursive: true, filter: (src) => !/(^|[\\/])node_modules$/.test(src) });
+    cpSync(dir, sim, { recursive: true, filter: simulationFilter(dir) });
     apply(sim);
     const changes: MigrationChange[] = [];
     for (const file of listFiles(sim)) {

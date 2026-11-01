@@ -36,7 +36,8 @@ export function computeProgress(courseDir: string, manifest?: Manifest): Progres
   const m = manifest ?? loadManifest(courseDir);
   const stages: StageProgress[] = [];
   for (const def of STAGES) {
-    if (def.when === 'virtual-or-hybrid' && m.delivery !== 'virtual' && m.delivery !== 'hybrid') continue;
+    // A self-paced course has no live sessions to adapt, whatever its delivery says.
+    if (def.when === 'virtual-or-hybrid' && (m.shape === 'self-paced' || (m.delivery !== 'virtual' && m.delivery !== 'hybrid'))) continue;
     const existing = def.outputs.find((o) => existsSync(join(courseDir, o)));
     const output = existing ?? def.outputs[0];
     let status: StageProgress['status'];

@@ -117,3 +117,12 @@ test('progress CLI: prints progress, unknown stage is exit 1', async () => {
   expect((await run(['progress', 'unskip', 'learnerProfile', '--course', dir])).code).toBe(0);
   expect(loadManifest(dir).stages?.learnerProfile).toBeUndefined();
 });
+
+test('a self-paced course never lists virtualAdaptation, whatever its delivery', () => {
+  for (const delivery of ['virtual', 'hybrid', 'async'] as const) {
+    const dir = join(mkdtempSync(join(tmpdir(), 'kit-')), 'Course');
+    mkdirSync(dir, { recursive: true });
+    saveManifest(dir, initManifest({ ...opts, shape: 'self-paced', sessions: [], delivery }, '2026-10-31'));
+    expect(computeProgress(dir).stages.map((s) => s.name)).not.toContain('virtualAdaptation');
+  }
+});

@@ -80,3 +80,25 @@ test('hash-write --sources with a missing source file is exit 2 and the file doe
   expect(code).toBe(2);
   expect(readFileSync(out, 'utf8')).toBe(before);
 });
+
+test('stale and hash-write resolve a relative output against --course, not the cwd', async () => {
+  const { runCli } = await import('../src/cli/args.js');
+  const { coreCommands } = await import('../src/cli-core.js');
+  const { vi } = await import('vitest');
+  const logs: string[] = [];
+  vi.spyOn(process.stdout, 'write').mockImplementation((s: string | Uint8Array) => { logs.push(String(s)); return true; });
+  try {
+    expect(process.cwd()).not.toBe(dir);
+    const rel = '04-materials/student-handout.md';
+    expect(await runCli(['stale', rel, '--course', dir], coreCommands)).toBe(0);
+    expect(JSON.parse(logs.join(''))).toEqual({ status: 'stale', changed: ['obj'] });
+    expect(await runCli(['hash-write', rel, '--course', dir, '--sources', JSON.stringify({ obj: '01-planning/learning-objectives.md' })], coreCommands)).toBe(0);
+    expect(checkStale(out, dir).status).toBe('fresh');
+    logs.length = 0;
+    expect(await runCli(['stale', rel, '--course', dir], coreCommands)).toBe(0);
+    expect(JSON.parse(logs.join(''))).toEqual({ status: 'fresh', changed: [] });
+    logs.length = 0;
+    expect(await runCli(['stale', '04-materials/nope.md', '--course', dir], coreCommands)).toBe(0);
+    expect(JSON.parse(logs.join('')).status).toBe('missing-output');
+  } finally { vi.restoreAllMocks(); }
+});

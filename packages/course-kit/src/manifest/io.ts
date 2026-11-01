@@ -139,6 +139,12 @@ export function validateManifest(m: Manifest): ValidationIssue[] {
   if (m.shape === 'self-paced' && !m.timeBudget.async) {
     out.push({ level: 'warning', path: 'timeBudget.async', message: 'a self-paced course needs an async time budget' });
   }
+  if (m.shape === 'self-paced' && m.delivery !== 'async') {
+    out.push({
+      level: 'warning', path: 'delivery',
+      message: `a self-paced course has delivery "async"; "${m.delivery}" makes it look live`,
+    });
+  }
   if (m.shape === 'cohort' && sessions.length === 1) {
     out.push({
       level: 'warning', path: 'timeBudget.live.sessions',

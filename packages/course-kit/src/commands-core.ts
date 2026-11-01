@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, realpathSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 import { type CommandTable, requireFlag, requirePositional, runCli } from './cli/args.js';
@@ -30,12 +30,26 @@ function stageArg(a: import('./cli/args.js').ParsedArgs): StageName {
   return r.data;
 }
 
+/**
+ * A relative <output> is relative to the course folder, like --sources. The cwd is used only when
+ * the course-relative path does not exist and the cwd-relative one does (older skill wording).
+ */
+function outputPath(output: string, course: string): string {
+  if (isAbsolute(output)) return output;
+  const inCourse = resolve(course, output);
+  if (!existsSync(inCourse) && existsSync(resolve(output))) return resolve(output);
+  return inCourse;
+}
+
 export const coreCommands: CommandTable = {
   hash: (a) => ({ hash: hashFile(requirePositional(a, 0, 'file')) }),
-  stale: (a) => checkStale(requirePositional(a, 0, 'output'), requireFlag(a, 'course')),
-  'hash-write': (a) => {
-    const output = requirePositional(a, 0, 'output');
+  stale: (a) => {
     const course = requireFlag(a, 'course');
+    return checkStale(outputPath(requirePositional(a, 0, 'output'), course), course);
+  },
+  'hash-write': (a) => {
+    const course = requireFlag(a, 'course');
+    const output = outputPath(requirePositional(a, 0, 'output'), course);
     if (a.flags.sources !== undefined) {
       if (typeof a.flags.sources !== 'string') throw new UsageError('--sources needs a JSON object');
       const parsed = z.record(z.string(), z.string()).safeParse(jsonFlag(a.flags.sources, 'sources'));

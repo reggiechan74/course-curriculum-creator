@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { coreCommands } from '../src/cli-core.js';
 import { runCli } from '../src/cli/args.js';
-import { loadManifest } from '../src/manifest/io.js';
+import { initManifest, loadManifest, saveManifest, validateManifest } from '../src/manifest/io.js';
 import { insertIdComments, parseObjectives, parseOutline, syncManifest } from '../src/manifest/sync.js';
 
 const fx = (p: string) => join(import.meta.dirname, 'fixtures', p);
@@ -210,4 +210,38 @@ test('Integration Objective headings are kind integration', () => {
   expect(parseObjectives(md)).toMatchObject([
     { id: 'LO-1', title: 'Pause and connect', kind: 'integration' }, { id: 'LO-2', kind: 'cognitive' },
   ]);
+});
+
+test('sync keeps configured session minutes and labels; module minutes still come from the outline', () => {
+  const dir = join(mkdtempSync(join(tmpdir(), 'sync-')), 'Cohort');
+  mkdirSync(join(dir, '01-planning'), { recursive: true });
+  mkdirSync(join(dir, '02-design'), { recursive: true });
+  saveManifest(dir, initManifest({
+    title: 'Cohort', shape: 'cohort', delivery: 'virtual', audienceLevel: 'professional', audienceSummary: '',
+    budgetUsd: 20, maxPlanImages: 40,
+    sessions: [{ id: 'S1', label: 'Kickoff', minutes: 90 }, { id: 'S2', label: 'Wrap', minutes: 90 }, { id: 'S9', label: 'Spare', minutes: 45 }],
+  }, '2026-10-31'));
+  writeFileSync(join(dir, '01-planning/learning-objectives.md'), '### Objective 1: A\n\n### Objective 2: B\n\n### Objective 3: C\n');
+  const outline = [
+    '## Session 1: Rent Roll', '### Module 1: Reading (60 min)', '- Objective 1', '### Break (15 min)',
+    '### Between Sessions (60 min)', '## Session 2: Cash Flow', '### Module 2: Projecting (60 min)', '- Objective 2',
+    '## Session 3: Defense', '### Module 3: Defending (45 min)', '- Objective 3', '',
+  ].join('\n');
+  const f = join(dir, '02-design/course-outline.md');
+  writeFileSync(f, outline);
+  const r = syncManifest(dir, { write: true });
+  expect(r.manifest.timeBudget.live!.sessions).toEqual([
+    { id: 'S1', label: 'Kickoff', minutes: 90 }, { id: 'S2', label: 'Wrap', minutes: 90 },
+    { id: 'S3', label: 'Session 3: Defense', minutes: 45 }, { id: 'S9', label: 'Spare', minutes: 45 },
+  ]);
+  expect(r.issues.filter((i) => i.path.startsWith('timeBudget.live.sessions['))).toEqual([]);
+  expect(loadManifest(dir).timeBudget.live!.sessions[0].minutes).toBe(90);
+  writeFileSync(f, readFileSync(f, 'utf8').replace('### Break (15 min)', '### Module 4: Practice (60 min)\n- Objective 1\n### Break (15 min)'));
+  syncManifest(dir, { write: true });
+  const m = loadManifest(dir);
+  expect(m.timeBudget.live!.sessions[0].minutes).toBe(90);
+  expect(m.modules.find((x) => x.id === 'M4')).toMatchObject({ session: 'S1', minutes: 60 });
+  expect(validateManifest(m)).toContainEqual(expect.objectContaining({
+    level: 'warning', path: 'timeBudget.live.sessions[0]', message: expect.stringContaining('120 min'),
+  }));
 });

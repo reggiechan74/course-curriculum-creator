@@ -1,13 +1,13 @@
-import { cpSync, existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { beforeEach, expect, test, vi } from 'vitest';
 import { coreCommands } from '../src/cli-core.js';
 import { runCli } from '../src/cli/args.js';
 import { writeHashes } from '../src/hash.js';
 import { loadManifest, validateManifest } from '../src/manifest/io.js';
 import { loadRegistry } from '../src/media/registry.js';
-import { migrateV2, parseDuration } from '../src/migrate/v2.js';
+import { migrateV2, parseDuration, simulationFilter } from '../src/migrate/v2.js';
 
 let dir: string;
 beforeEach(() => {
@@ -222,4 +222,29 @@ test('migrate-course CLI prints the report', async () => {
   expect(code).toBe(0);
   expect(JSON.parse(out.join('')).imported).toEqual(['IMG-bmc', 'IMG-vpd']);
   expect(existsSync(join(dir, 'course.yaml'))).toBe(false);
+});
+
+test('a new course.yaml gets the create-course async defaults (cohort 60/60/90, self-paced 30/0/0)', () => {
+  const r = migrateV2(dir, { dryRun: true });
+  expect(r.manifest.timeBudget.async).toEqual({ preWorkMinutes: 60, betweenSessionMinutes: 60, postWorkMinutes: 90 });
+  setPositioning('duration: "4-day (two weekends)"', 'duration: "2-day"');
+  expect(migrateV2(dir, { dryRun: true }).manifest.timeBudget.async)
+    .toEqual({ preWorkMinutes: 60, betweenSessionMinutes: 0, postWorkMinutes: 90 });
+  setPositioning('duration: "2-day"', 'duration: "self-paced"');
+  expect(migrateV2(dir, { dryRun: true }).manifest.timeBudget.async)
+    .toEqual({ preWorkMinutes: 30, betweenSessionMinutes: 0, postWorkMinutes: 0 });
+});
+
+test('the simulation copy skips .git, node_modules, dist and 05-media/out', () => {
+  for (const rel of ['.git/HEAD', 'node_modules/x/index.js', 'dist/a.md', '05-media/out/big.md']) {
+    mkdirSync(join(dir, dirname(rel)), { recursive: true });
+    writeFileSync(join(dir, rel), 'x\n');
+  }
+  const filter = simulationFilter(dir);
+  for (const rel of ['.git', 'node_modules', 'dist', '05-media/out', 'sub/node_modules']) expect(filter(join(dir, rel))).toBe(false);
+  for (const rel of ['', '05-media', '05-media/registry.json', '02-design/course-outline.md', 'distribution.md']) expect(filter(join(dir, rel))).toBe(true);
+  const answers = { 'alt:IMG-bmc': 'a', 'alt:IMG-vpd': 'b' };
+  const dry = migrateV2(dir, { dryRun: true, answers });
+  expect(dry.changes.map((c) => c.file).filter((f) => /^(dist|05-media\/out)\//.test(f))).toEqual([]);
+  expect(migrateV2(dir, { dryRun: false, answers }).changes).toEqual(dry.changes);
 });

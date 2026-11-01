@@ -179,3 +179,11 @@ test('initManifest writes the async budget when it is given', () => {
   expect(m.timeBudget.async).toEqual(async);
   expect(initManifest(opts, '2026-10-31').timeBudget.async).toBeUndefined();
 });
+
+test('a self-paced course whose delivery is not async is a warning', () => {
+  expect(validateManifest(initManifest(spOpts, '2026-10-31'))).toEqual([]);
+  for (const delivery of ['in-person', 'virtual', 'hybrid'] as const) {
+    expect(validateManifest(initManifest({ ...spOpts, delivery }, '2026-10-31')))
+      .toContainEqual(expect.objectContaining({ level: 'warning', path: 'delivery', message: expect.stringContaining('async') }));
+  }
+});

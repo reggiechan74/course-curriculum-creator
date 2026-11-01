@@ -153,7 +153,18 @@ export function syncManifest(courseDir: string, opts: { write: boolean }): { man
   const hadManifest = existsSync(join(courseDir, 'course.yaml'));
   if (hadManifest) {
     manifest = loadManifest(courseDir);
-    if (sessions.length > 0) manifest.timeBudget = { ...manifest.timeBudget, live: { sessions } };
+    if (sessions.length > 0) {
+      // The outline's heading sums count breaks and between-session segments, so a configured
+      // session keeps its minutes and label; only sessions new in the outline take the parse.
+      const existing = manifest.timeBudget.live?.sessions ?? [];
+      const byId = new Map(existing.map((s) => [s.id, s]));
+      const parsedIds = new Set(sessions.map((s) => s.id));
+      const merged = [
+        ...sessions.map((s) => byId.get(s.id) ?? s),
+        ...existing.filter((s) => !parsedIds.has(s.id)),
+      ];
+      manifest.timeBudget = { ...manifest.timeBudget, live: { sessions: merged } };
+    }
   } else {
     const title = objMd?.match(/^##\s+Course:\s*(.+?)\s*\r?$/m)?.[1] ?? basename(resolve(courseDir));
     manifest = initManifest({
