@@ -396,22 +396,22 @@ For level definitions, verbs, example objectives, instructional strategies, and 
 
 ### Objective Quantity Guidelines
 
-Guideline: roughly 0.7 to 1.2 objectives per hour of learner time, with fewer at the higher levels. The two lists below are workshop examples.
+Guideline: use about one objective per 60-90 minutes of total learner time, at least 3 and at most 10 (the `generate-objectives` rule). The two lists below are workshop examples.
 
 **Workshop example, 1-day (6 hours instruction):**
-- Total objectives: 5-7
+- Total objectives: 4-6
 - Remember: 0-1 (minimize or pre-work)
 - Understand: 1-2 (opening foundation)
-- Apply: 3-4 (core focus)
+- Apply: 2-3 (core focus)
 - Analyze: 0-1 (optional, if time)
 - Evaluate: 0
 - Create: 0
 
 **Workshop example, 2-day (12 hours instruction):**
-- Total objectives: 8-12
+- Total objectives: 8-10
 - Remember: 0-1 (minimize or pre-work)
 - Understand: 1-2 (early foundation)
-- Apply: 4-5 (core)
+- Apply: 3-4 (core)
 - Analyze: 2-3 (middle sessions)
 - Evaluate: 1-2 (later sessions)
 - Create: 1 (final capstone)

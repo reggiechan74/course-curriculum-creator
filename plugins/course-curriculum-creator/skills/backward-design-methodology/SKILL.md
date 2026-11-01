@@ -20,7 +20,7 @@ Start by answering: "What should students be able to do by the end of this cours
 
 **Define learning outcomes:**
 - Use measurable, observable action verbs (see blooms-taxonomy skill)
-- Focus on about 1 core outcome per 1.2 to 2.5 hours of learner time. Workshop examples: 3-5 core outcomes for a 1-day workshop, 5-8 for a 2-day workshop
+- Set the outcome count with about one objective per 60-90 minutes of total learner time, at least 3 and at most 10 (the `generate-objectives` rule). Workshop examples: 4-6 for a 6-hour day, 8-10 for 12 hours
 - Align outcomes with student needs and market positioning
 - Ensure outcomes are achievable within the timeframe
 
@@ -191,7 +191,7 @@ When creating a course using this plugin, apply backward design systematically:
 
 **Step 1: Define outcomes** (`/course-curriculum-creator:generate-objectives`)
 - Use blooms-taxonomy skill to craft measurable objectives
-- Prioritize 3-8 outcomes based on the time budget
+- Set the outcome count by the same rule (about one per 60-90 minutes of learner time, 3 to 10)
 - Validate outcomes are achievable in timeframe
 
 **Step 2: Design assessments** (`/course-curriculum-creator:generate-rubrics`)
@@ -217,7 +217,7 @@ Use this checklist to validate backward design alignment:
 
 **Stage 1 (Outcomes):**
 - [ ] Outcomes use measurable action verbs (Bloom's taxonomy)
-- [ ] Outcome count is appropriate for the learner hours (workshop example: 3-5 for 1 day, 5-8 for 2 days)
+- [ ] Outcome count is appropriate for the learner hours (about one per 60-90 minutes, 3 to 10; workshop examples: 4-6 for 6 hours, 8-10 for 12 hours)
 - [ ] Outcomes are achievable within the time budget
 - [ ] Outcomes progress from lower to higher cognitive levels across the course
 - [ ] Outcomes align with course positioning and audience needs

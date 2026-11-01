@@ -16,7 +16,7 @@ This skill provides practical guidance for designing live sessions that work in 
 
 | Dimension | In-Person | Virtual | Hybrid |
 |---|---|---|---|
-| **Max live time per session** | 6 hours | 4 hours | 4 hours |
+| **Max live time per session** (hours per session, not per day) | 6 hours | 4 hours | 4 hours |
 | **Break frequency** | Every 60 min | Every 45 min | Every 45 min |
 | **Attention span per activity** | 20-30 min | 10-15 min | 10-15 min |
 | **Engagement check-ins** | Every 30 min | Every 15-20 min | Every 15-20 min |

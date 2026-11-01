@@ -50,7 +50,7 @@ Comprehensive guidance on designing assessments for time-limited courses (worksh
 - Generate new approaches
 - Synthesize multiple concepts
 
-**Capstone assessment for longer courses (about 12 hours or more of learner time).**
+**Capstone assessment for the final session or module; size it as about 10-20% of learner time (see Time Constraints).**
 
 ## Performance Task Design
 
@@ -326,7 +326,7 @@ Ensure assessment method matches outcome cognitive level:
 
 ### Time Constraints
 
-Scale by learner time: about 1 summative assessment per 2-3 hours, a formative check every 60-90 minutes, and a capstone of about 10-15% of learner time at most. The numbers below are workshop examples. Cohort: use the gaps between sessions for transfer assignments. Self-paced: make assessments auto-checkable items or self-assessment with model answers, and give a time-on-task estimate for each.
+Scale by learner time: about 1 summative assessment per 2-3 hours, a formative check every 60-90 minutes, and a capstone of about 10-20% of learner time at most. The numbers below are workshop examples. Cohort: use the gaps between sessions for transfer assignments. Self-paced: make assessments auto-checkable items or self-assessment with model answers, and give a time-on-task estimate for each.
 
 **Workshop example, 1-day:**
 - Maximum 2-3 summative assessments

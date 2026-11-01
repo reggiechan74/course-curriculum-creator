@@ -12,7 +12,7 @@ Universal Design for Learning (UDL) is a framework for designing learning experi
 
 In time-limited courses, designing for the "average" learner is a myth that loses people at both ends of the spectrum. Participants who process quickly get bored; those who need more time fall behind. Participants who thrive in discussion disengage during solo reading; those who think best in writing shut down during rapid-fire group brainstorming. The insight of UDL is that designing for the margins improves the experience for everyone. Captioned videos help not only deaf participants but also non-native speakers and anyone in a noisy room. Structured handouts help not only participants with processing differences but also everyone trying to follow along in a dense afternoon session.
 
-The course's shape and time budget come from the manifest summary (see `course-conventions` §Shape and time budget). In short, intensive courses (for example one- or two-day workshops), UDL is especially critical: there is no time for participants to "catch up later." If someone is excluded by a design choice in the first hours, they may never recover. Proactive inclusive design is not optional generosity; it is a prerequisite for effective instruction.
+The course's shape and time budget come from the manifest summary (see `course-conventions` §Shape and time budget). In short and intensive courses (for example one- or two-day workshops), UDL is especially critical: there is no time for participants to "catch up later." If someone is excluded by a design choice in the first hours, they may never recover. Proactive inclusive design is not optional generosity; it is a prerequisite for effective instruction.
 
 ## The Three UDL Principles
 
