@@ -4,6 +4,7 @@ description: Generate course outline with module structure and timing
 disable-model-invocation: true
 argument-hint: "[--modules N]"
 allowed-tools:
+  - AskUserQuestion
   - Bash
   - Read
   - Write
@@ -20,36 +21,38 @@ Create high-level course structure with modules, timing, and topics following ba
 - Must have `01-planning/learning-objectives.md`
 - Should have `03-assessment/rubrics.md` (recommended)
 
-## Staleness Check
+## Staleness
 
-Before generating, check if source files have changed since this file was last generated:
-
-1. If the output file `02-design/course-outline.md` already exists, read its YAML frontmatter `sourceHashes`
-2. Compute current hash of each source file: `md5sum 01-planning/learning-objectives.md | cut -c1-8`
-3. Compare hashes:
-   - If hashes match: sources are unchanged, proceed normally
-   - If hashes differ: warn the user: "⚠ Source file learning-objectives.md has changed since this file was last generated. Regenerating will incorporate these changes."
-   - If output file doesn't exist: skip check, proceed with generation
-
-When generating, always compute and write current source hashes to the output file's frontmatter.
+Staleness: follow `course-conventions` §Staleness. Output: `02-design/course-outline.md`. Sources: `learning-objectives` = `01-planning/learning-objectives.md`.
 
 ## Command Behavior
 
+0. **Conventions and course check**: Load the `course-curriculum-creator:course-conventions` skill first. Follow its §course.yaml is necessary, then run `KIT manifest summary --course "<dir>"` and apply every line in `rules` (§Shape and time budget). Ask the user questions as in `course-conventions` §Questions.
 1. Read learning objectives and time allocations
 2. Load universal-design-for-learning skill for accessibility and inclusive design guidance
 3. If course-positioning.md has `deliveryMode: virtual` or `deliveryMode: hybrid`, load `course-curriculum-creator:virtual-facilitation` skill for mode-specific timing and activity guidance
 4. Group objectives into logical modules
-5. Allocate timing for instruction, practice, breaks
-6. Generate structured outline
+5. Allocate timing for instruction, practice, breaks, using the time budget from `manifest summary` (see "Timing Allocation")
+6. Generate structured outline in the heading format for the course shape (see "Shape Structure" and `course-conventions` §IDs and heading formats)
 7. Write to `02-design/course-outline.md`
-8. Run `manifest sync --write` and show each issue to the user (see "Manifest Sync" below)
+8. Run `manifest sync --write`, then `manifest validate`, and show each issue to the user (see "Manifest Sync" below)
+9. **Report progress**: follow `course-conventions` §Progress
+
+## Shape Structure
+
+Read `shape` from `manifest summary`. Never assume a duration.
+
+- **workshop**: one `## Day N: Title` section for each session in `manifest summary`.
+- **cohort**: one `## Session N: Title` section for each session in `manifest summary`. Each session opens with a retrieval segment on the previous session (the first session opens with a prior-knowledge activation instead) and ends with a "Between sessions" segment: the assignment and discussion prompts, sized inside `asyncMinutes.betweenSessions`.
+- **self-paced**: a `## Modules` section with `### Module N: Title (est. NN min)` headings. Write no session headings and no clock times. Every module ends with a practice-and-feedback segment. Module minutes together equal the learner time (`estimatedHours` in `01-planning/course-positioning.md` × 60) minus `asyncMinutes.total`.
+
+Module minutes in one session must not be more than the session minutes.
 
 ## Module Structure Logic
 
-**1-day workshop:** 4-6 modules
-**2-day workshop:** 8-10 modules
+**Module count:** about one module for each 60-120 live minutes in a session (workshop example: a 420-minute day has 4-6 modules, so a 2-day workshop has 8-10).
 
-**Module duration:** 60-120 minutes each
+**Module duration (workshop and cohort):** 60-120 minutes each. Self-paced modules: 15-60 estimated minutes each.
 
 **Module components:**
 - Learning objective(s) addressed
@@ -59,13 +62,11 @@ When generating, always compute and write current source hashes to the output fi
 
 ## Timing Allocation
 
-**Total available:**
-- 1-day: 6 hours (360 minutes) instruction
-- 2-day: 12 hours (720 minutes) instruction
+**Total available:** `sessions[].minutes` from `manifest summary` for each session (self-paced: the module minutes above). Workshop example: a 420-minute day leaves about 360 minutes of module time after breaks and lunch.
 
-**Account for:**
+**Account for (workshop and cohort):**
 - Breaks: 15 min every 90-120 min
-- Lunch: 60 min (if full day)
+- Lunch: 60 min (if a full-day session)
 - Transitions: 5 min between modules
 - Buffer: 10-15% for overruns
 
@@ -87,14 +88,13 @@ Override default timing:
 - **Break frequency:** Every 45 minutes
 - **Break duration:** 10 minutes minimum
 - **Buffer time:** 15% (not 10%)
-- **Total instruction time (1-day):** ~5 hours across 2 sessions with extended lunch
-- **Total instruction time (2-day):** ~10 hours across 4 sessions
+- **Fit the session minutes** from `manifest summary`: when a session is longer than the maximum session length, ask the user whether to split it into more sessions (workshop example: a 1-day workshop becomes about 5 hours across 2 sessions with an extended lunch)
 
 Apply from virtual-facilitation skill:
 - Chunk large modules into 45-min segments
 - Add engagement checkpoints every 15-20 minutes within modules
 - Replace physical activities with virtual substitutes (breakout rooms, digital whiteboards, chat activities)
-- Add tech check slot at workshop start (15 min)
+- Add tech check slot at the start of the first session (15 min)
 - Add re-engagement activity after each break
 
 ### If deliveryMode is "hybrid"
@@ -129,14 +129,21 @@ sourceHashes:
 
 ## [Course Title]
 
-**Duration:** [1-day or 2-day]
+**Shape:** [workshop | cohort | self-paced]
+**Time:** [workshop/cohort: sessions × minutes; self-paced: estimated hours]
 **Total Instruction Time:** [Hours]
 
 ---
 
-## Day 1 [if 2-day]
+[Use ONE of the three layouts below, by shape.]
 
-### Module 1: [Title] (Time: 9:00-10:30, Duration: 90 min)
+## Day N: [Title]   (workshop; one section for each session)
+
+## Session N: [Title]  (cohort; one section for each session)
+
+## Modules  (self-paced; no session headings)
+
+### Module 1: [Title] (Time: 9:00-10:30, 90 min)  [workshop and cohort; self-paced: `### Module 1: [Title] (est. 30 min)` and no clock time]
 
 **Learning Objective(s):**
 - [Objective from learning-objectives.md]
@@ -159,23 +166,23 @@ sourceHashes:
 
 ---
 
-### Break (10:30-10:45, 15 min)
+### Break (10:30-10:45, 15 min)  [workshop and cohort only]
 
 ---
 
-### Module 2: [Title] (Time: 10:45-12:15, Duration: 90 min)
+### Module 2: [Title] (Time: 10:45-12:15, 90 min)
 
 [Repeat format]
 
 ---
 
-[Continue for all modules with breaks, lunch]
+[Cohort: end each session with a "Between sessions" segment: assignment + discussion prompts. Self-paced: end each module with a practice-and-feedback segment.]
 
 ---
 
-## Schedule Summary
+## Schedule Summary  (workshop and cohort; self-paced: a module table with estimated minutes only)
 
-### Day 1
+### [Day N or Session N]
 
 | Time | Module | Duration | Type |
 |------|--------|----------|------|
@@ -187,9 +194,9 @@ sourceHashes:
 | 2:45-3:00 | Break | 15 min | - |
 | 3:00-4:30 | Module 4: [Title] | 90 min | Assessment/Synthesis |
 
-**Total Day 1 Instruction:** 360 minutes (6 hours)
+**Total session instruction:** [sum of module minutes] minutes (workshop example: 360 minutes in a 420-minute day)
 
-[Repeat for Day 2 if applicable]
+[Repeat for each session]
 
 ---
 
@@ -202,17 +209,17 @@ sourceHashes:
 
 ## Manifest Sync
 
-**Last step: sync the manifest.** Run `manifest sync --write` (call form in the `course-kit` skill):
+**Sync the manifest and validate it.** Run `manifest sync --write` (call form in the `course-kit` skill):
 
 ```bash
 node "${CLAUDE_PLUGIN_ROOT}/skills/course-kit/scripts/course-kit.mjs" manifest sync --course "<course-dir>" --write
 ```
 
-It returns `{ manifest, issues }`. Show each issue to the user.
+It returns `{ manifest, issues }`. Show each issue to the user. Then run `manifest validate --course "<course-dir>"`. It warns when a session's module minutes are more than the session minutes (path `timeBudget.live.sessions[i]`) and gives an error when a self-paced module names a session. Fix the outline for each warning (shorten or move a module, or ask the user about a longer session), and run sync and validate again until there are no time-budget warnings.
 
 ## Post-Generation
 
-Prompt: "Review the outline. Would you like me to adjust module timing, regroup objectives, or modify the sequence?"
+Ask: "Review the outline. Would you like me to adjust module timing, regroup objectives, or modify the sequence?"
 
 Next: "Generate detailed lesson plans using `/course-curriculum-creator:generate-lesson-plans`"
 
@@ -222,7 +229,7 @@ After generating the outline, validate each module against UDL minimums:
 
 - **Representation**: Does each module use at least 2 representation modes? (e.g., not all lecture, not all reading)
   - Flag modules that rely on a single modality
-- **Engagement**: Does each half-day include at least one activity with learner choice?
+- **Engagement**: Does each half-day (or each session, or each self-paced module) include at least one activity with learner choice?
   - Flag half-days without choice opportunities
 - **Activity variety**: Do activity types rotate across the day? (individual → pair → group → individual)
   - Flag sequences of 3+ same-format activities
@@ -283,15 +290,15 @@ When invoked with `--update`, modify existing outline instead of regenerating:
 **Behavior:**
 1. Change module 3 duration to 120 minutes
 2. Recalculate schedule (break/lunch/transition times)
-3. Warn if total time exceeds workshop duration
+3. Warn if module minutes in the session exceed the session minutes (`manifest validate` does this check)
 
 ### Validation After Update
 
 After any incremental change:
 - Verify all learning objectives are still covered by at least one module
-- Verify total time fits within workshop duration (with buffer)
+- Verify total time fits within the session minutes from `manifest summary` (with buffer)
 - Verify Bloom's level progression is maintained
-- Update sourceHashes in frontmatter
+- Update sourceHashes in frontmatter (`KIT hash-write`, see Staleness)
 
 ---
 

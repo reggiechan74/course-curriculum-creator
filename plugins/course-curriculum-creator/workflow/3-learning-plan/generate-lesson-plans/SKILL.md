@@ -4,6 +4,7 @@ description: Generate detailed module-level lesson plans with activities and tim
 disable-model-invocation: true
 argument-hint: "[--module N]"
 allowed-tools:
+  - AskUserQuestion
   - Bash
   - Read
   - Write
@@ -21,30 +22,29 @@ Create detailed lesson plans for each module with activities, timing, materials,
 - Must have `01-planning/learning-objectives.md`
 - Should have `03-assessment/rubrics.md`
 
-## Staleness Check
+## Staleness
 
-Before generating, check if source files have changed since this file was last generated:
-
-1. If the output file `02-design/lesson-plans.md` already exists, read its YAML frontmatter `sourceHashes`
-2. Compute current hash of each source file:
-   - `md5sum 02-design/course-outline.md | cut -c1-8`
-   - `md5sum 01-planning/learning-objectives.md | cut -c1-8`
-3. Compare hashes:
-   - If hashes match: sources are unchanged, proceed normally
-   - If hashes differ: warn the user: "⚠ Source file [name] has changed since this file was last generated. Regenerating will incorporate these changes."
-   - If output file doesn't exist: skip check, proceed with generation
-
-When generating, always compute and write current source hashes to the output file's frontmatter.
+Staleness: follow `course-conventions` §Staleness. Output: `02-design/lesson-plans.md`. Sources: `course-outline` = `02-design/course-outline.md`, `learning-objectives` = `01-planning/learning-objectives.md`.
 
 ## Command Behavior
 
+0. **Conventions and course check**: Load the `course-curriculum-creator:course-conventions` skill first. Follow its §course.yaml is necessary, then run `KIT manifest summary --course "<dir>"` and apply every line in `rules` (§Shape and time budget). Ask the user questions as in `course-conventions` §Questions.
 1. Load `course-curriculum-creator:backward-design-methodology` skill for Stage 3 guidance
 2. Load universal-design-for-learning skill for accessibility and inclusive design
 3. If course-positioning.md has `deliveryMode: virtual` or `deliveryMode: hybrid`, load `course-curriculum-creator:virtual-facilitation` skill for platform-specific activity design
 4. Read course outline for module structure
 5. Read objectives and rubrics for alignment
-6. Generate detailed plans for each module
+6. Generate detailed plans for each module, with the shape additions below
 7. Write to `02-design/lesson-plans.md`
+8. **Report progress**: follow `course-conventions` §Progress
+
+## Shape Additions
+
+Read `shape` from `manifest summary`. Module durations come from the outline and `sessions[].minutes`, not from a fixed day length.
+
+- **workshop**: the module template below, grouped under the outline's `## Day N` sections.
+- **cohort**: write one plan section for each session in `manifest summary` (`## Session N: Title`) with the modules of that session. Each session plan has facilitator notes, a retrieval opener (retrieval practice on the previous session; the first session uses a prior-knowledge activation) and the between-session assignment (assignment + discussion prompts, sized inside `asyncMinutes.betweenSessions`).
+- **self-paced**: each module plan has worked examples, faded practice (scaffolding fades across modules), an end-of-module check with feedback, and a time-on-task estimate for each activity. The module estimates add up to the module minutes in the outline. Write no facilitator-led steps; every activity must work without a live instructor.
 
 ## Lesson Plan Detail Level
 
@@ -258,10 +258,10 @@ sourceHashes:
 
 ## [Course Title]
 
-**Purpose:** These lesson plans provide module-level guidance for delivering the workshop. Each plan includes learning objectives, activities, timing, materials, and instructor notes.
+**Purpose:** These lesson plans provide module-level guidance for delivering the course. Each plan includes learning objectives, activities, timing, materials, and instructor notes.
 
 **How to Use:**
-- Review plans before workshop
+- Review plans before delivery
 - Adjust examples to audience
 - Use timing as guide, not rigid constraint
 - Refer to rubrics during student practice
@@ -282,7 +282,9 @@ sourceHashes:
 
 ## Instructor Preparation Checklist
 
-### Before Workshop
+(Self-paced: skip the live-delivery items; keep the review and materials items.)
+
+### Before Delivery
 
 - [ ] Review all lesson plans
 - [ ] Customize examples for audience
@@ -297,7 +299,7 @@ sourceHashes:
 - [ ] Organize materials by module
 - [ ] Set up room/space
 
-### During Workshop
+### During Delivery
 
 - [ ] Start each module with objective preview
 - [ ] Monitor timing (use phone timer for major blocks)
@@ -305,7 +307,7 @@ sourceHashes:
 - [ ] Take notes on what works/struggles
 - [ ] Adjust pacing based on student progress
 
-### After Workshop
+### After Delivery
 
 - [ ] Debrief: what worked, what didn't
 - [ ] Note improvements for next delivery
@@ -326,8 +328,8 @@ Validate alignment:
 ```
 For each module:
 - Objective → Activity → Assessment chain is clear
-- Cognitive level appropriate for stage in workshop
-- Timing realistic (compare to past workshops if available)
+- Cognitive level appropriate for stage in the course
+- Timing realistic (compare to past deliveries if available)
 - Materials are specified
 - Instructor notes address common issues
 ```
@@ -339,7 +341,7 @@ After generating lesson plans, check if any modules reference third-party conten
 
 If the user agrees, read `01-planning/content-sources.md` and append entries using the Source Registry entry template for each referenced source.
 
-Prompt: "Review lesson plans. Would you like me to adjust any module's activities, timing, or instructional strategies?"
+Ask: "Review lesson plans. Would you like me to adjust any module's activities, timing, or instructional strategies?"
 
 Next: "Generate student and instructor materials using `/course-curriculum-creator:generate-artifacts`"
 
@@ -450,7 +452,7 @@ Inherit all virtual adjustments PLUS:
 
 ## Co-Facilitation Support
 
-When generating lesson plans for team-taught workshops, add co-facilitation structure to each module.
+When generating lesson plans for team-taught courses, add co-facilitation structure to each module.
 
 ### Argument
 
@@ -521,7 +523,7 @@ Add to the Instructor Preparation Checklist at the end of lesson plans:
 - [ ] Handoff protocol reviewed by both facilitators
 - [ ] Shared signals agreed (time warnings, need-help, take-over)
 - [ ] Communication channel established (text, Slack, hand signals)
-- [ ] Pre-workshop dry run: practice at least one handoff
+- [ ] Pre-delivery dry run: practice at least one handoff
 - [ ] Backup plan: if one facilitator is unavailable, which modules can be solo-delivered?
 ```
 

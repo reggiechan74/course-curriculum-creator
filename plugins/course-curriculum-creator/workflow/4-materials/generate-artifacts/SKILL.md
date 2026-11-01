@@ -4,6 +4,7 @@ description: Generate additional course materials (handouts, guides, slides, ass
 disable-model-invocation: true
 argument-hint: "--type [handout|instructor-guide|slides|pre-assessment|post-assessment|evaluation|pre-work|post-work|all]"
 allowed-tools:
+  - AskUserQuestion
   - Bash
   - Read
   - Write
@@ -19,12 +20,17 @@ Create supporting course materials beyond core curriculum documents.
 - Depends on artifact type
 - Most artifacts need lesson-plans.md and objectives.md
 
-## Settings Integration
+## Command Behavior
 
-Plugin settings (configured with `/plugin configure`). If the project has a `.claude/course-curriculum-creator.local.md` file, values in its YAML frontmatter override these. A value still shown as a literal `${user_config.…}` placeholder has not been set, so use its default:
-- `instructor_name` = `${user_config.instructor_name}` (default: not set): Use as facilitator name in instructor guide header and preparation checklists
+0. **Conventions and course check**: Load the `course-curriculum-creator:course-conventions` skill first. Follow its §course.yaml is necessary, then run `KIT manifest summary --course "<dir>"` and apply every line in `rules` (§Shape and time budget). Ask the user questions as in `course-conventions` §Questions.
+1. Pick the artifact type from `--type` (ask if missing).
+2. Read the prerequisite files and generate the artifact in the shape of the course (session labels from `manifest summary`: Day, Session or Module; self-paced materials have no facilitator or live-session sections). Pre-work artifacts fit `asyncMinutes.preWork`; post-work artifacts fit `asyncMinutes.postWork`.
+3. Write the output file.
+4. **Report progress**: follow `course-conventions` §Progress
 
-If a value is empty and not overridden, use sensible defaults or prompt user.
+## Settings
+
+Settings: see `course-conventions` (uses `instructor_name`).
 
 ## Artifact Types
 
@@ -52,17 +58,17 @@ Output: `04-materials/instructor-guide.md`
 Output: `04-materials/slide-deck-outline.md`
 
 ### --type pre-assessment
-**Pre-Workshop Assessment**
+**Pre-Course Assessment**
 - Baseline knowledge check
 - Confidence ratings
 - Learning goals survey
 Output: `04-materials/pre-assessment.md`
 
 ### --type post-assessment
-**Post-Workshop Assessment**
+**Post-Course Assessment**
 - Learning gains measurement
 - Confidence ratings (compare to pre)
-- Workshop evaluation
+- Course evaluation
 - Application planning
 Output: `04-materials/post-assessment.md`
 
@@ -78,12 +84,12 @@ Output: `04-materials/course-evaluation.md`
 **Pre-Course Preparation Materials**
 - Reading assignments or video links for foundational concepts
 - Self-assessment (current knowledge baseline)
-- Preparation exercises for Day 1 readiness
+- Preparation exercises for readiness at the start of the course
 - Environment/tool setup instructions (if applicable)
 - Pre-reading for technical vocabulary
 
 Derived from Remember/Understand-level objectives in `01-planning/learning-objectives.md`.
-Linked to specific Day 1 morning modules from `02-design/course-outline.md`.
+Linked to the opening modules from `02-design/course-outline.md`.
 Output: `04-materials/pre-work.md`
 
 ### --type post-work
@@ -116,7 +122,7 @@ lastUpdated: YYYY-MM-DD
 ## Student Workbook
 
 **Instructor:** [Name]
-**Duration:** [1-day or 2-day]
+**Time:** [sessions × minutes, or estimated hours, from `manifest summary`]
 
 ---
 
@@ -128,7 +134,7 @@ lastUpdated: YYYY-MM-DD
 
 ## Learning Objectives
 
-By the end of this workshop, you will:
+By the end of this course, you will:
 
 - [Objective 1]
 - [Objective 2]
@@ -178,7 +184,7 @@ By the end of this workshop, you will:
 
 ---
 
-## Post-Workshop Action Plan
+## Post-Course Action Plan
 
 **What I will apply first:**
 
@@ -205,7 +211,7 @@ lastUpdated: YYYY-MM-DD
 
 ---
 
-## Pre-Workshop Preparation
+## Pre-Course Preparation
 
 ### 2 Weeks Before
 
@@ -227,7 +233,7 @@ lastUpdated: YYYY-MM-DD
 
 ---
 
-## Workshop Delivery Guidance
+## Delivery Guidance
 
 ### Module-by-Module Tips
 
@@ -289,7 +295,7 @@ lastUpdated: YYYY-MM-DD
 
 ---
 
-## Post-Workshop
+## Post-Course
 
 ### Follow-Up
 
@@ -313,7 +319,7 @@ date: YYYY-MM-DD
 version: 0.1.0
 courseVersion: [match]
 lastUpdated: YYYY-MM-DD
-dueDate: [2 business days before workshop]
+dueDate: [2 business days before the course starts]
 estimatedTime: [30-60 minutes]
 ---
 
@@ -321,7 +327,7 @@ estimatedTime: [30-60 minutes]
 
 ## [Course Title]
 
-**Workshop Date:** [Date]
+**Course Start Date:** [Date]
 **Please complete by:** [Due date — 2 business days before]
 **Estimated time:** [30-60 minutes]
 
@@ -329,7 +335,7 @@ estimatedTime: [30-60 minutes]
 
 ## Welcome
 
-[Brief welcome explaining why pre-work matters and how it will make the workshop more effective]
+[Brief welcome explaining why pre-work matters and how it will make the course more effective]
 
 ---
 
@@ -349,7 +355,7 @@ Rate your current confidence with these topics (1 = No experience, 5 = Very conf
 
 ### Required Reading (15-20 minutes)
 
-[Brief summaries or links to foundational content that maps to Remember/Understand objectives. Keep concise — focus on vocabulary and key concepts that will be built upon in the workshop.]
+[Brief summaries or links to foundational content that maps to Remember/Understand objectives. Keep concise — focus on vocabulary and key concepts that will be built upon in the course.]
 
 **Reading 1:** [Title]
 [2-3 paragraph summary or link]
@@ -363,7 +369,7 @@ Rate your current confidence with these topics (1 = No experience, 5 = Very conf
 
 ## 3. Preparation Exercise (10-15 minutes)
 
-[A simple exercise that activates prior knowledge and prepares learners for Day 1 activities]
+[A simple exercise that activates prior knowledge and prepares learners for the first session or module]
 
 **Exercise:** [Description]
 
@@ -393,7 +399,7 @@ Rate your current confidence with these topics (1 = No experience, 5 = Very conf
 
 ## Questions?
 
-Contact [instructor name] at [contact method] if you have questions about the pre-work or need accommodations for the workshop.
+Contact [instructor name] at [contact method] if you have questions about the pre-work or need accommodations for the course.
 ```
 
 ## Post-Work Structure
@@ -411,14 +417,14 @@ lastUpdated: YYYY-MM-DD
 
 ## [Course Title]
 
-**Workshop Completed:** [Date]
+**Course Completed:** [Date]
 **Reinforcement Period:** 30 days
 
 ---
 
 ## Your Learning Journey Continues
 
-The workshop gave you foundational skills. This guide helps you apply and deepen them over the next 30 days. Research shows that applying new skills within 48 hours dramatically improves retention.
+The course gave you foundational skills. This guide helps you apply and deepen them over the next 30 days. Research shows that applying new skills within 48 hours dramatically improves retention.
 
 ---
 
@@ -426,7 +432,7 @@ The workshop gave you foundational skills. This guide helps you apply and deepen
 
 ### Priority Actions
 
-Pick ONE thing from the workshop to apply this week:
+Pick ONE thing from the course to apply this week:
 
 **Objective:** [From Apply-level objective]
 **Exercise:** [Specific application task related to their work]
@@ -452,7 +458,7 @@ After applying the skill, note:
 ## Week 3: Integration (Days 15-21)
 
 **Objective:** [From Evaluate/Create-level objective, if exists]
-**Exercise:** [Integration task combining multiple workshop skills]
+**Exercise:** [Integration task combining multiple course skills]
 **Success indicator:** [Observable outcome]
 
 ---
@@ -501,8 +507,8 @@ For each artifact:
 - Check completeness
 - Ensure formatting is ready for use
 
-Prompt: "Artifacts generated in 04-materials/. Review for completeness and alignment with curriculum."
+Ask: "Artifacts generated in 04-materials/. Review for completeness and alignment with curriculum."
 
 ---
 
-Generate practical, ready-to-use materials that support effective workshop delivery and student learning.
+Generate practical, ready-to-use materials that support effective course delivery and student learning.

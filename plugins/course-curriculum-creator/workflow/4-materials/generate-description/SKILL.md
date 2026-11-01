@@ -4,6 +4,7 @@ description: Generate student-facing course description for marketing and enroll
 disable-model-invocation: true
 argument-hint: "[--tone professional|conversational|technical]"
 allowed-tools:
+  - AskUserQuestion
   - Bash
   - Read
   - Write
@@ -19,20 +20,9 @@ Create compelling student-facing course description for marketing, course catalo
 - Must have `01-planning/course-positioning.md`
 - Must have `01-planning/learning-objectives.md`
 
-## Staleness Check
+## Staleness
 
-Before generating, check if source files have changed since this file was last generated:
-
-1. If the output file `01-planning/course-description.md` already exists, read its YAML frontmatter `sourceHashes`
-2. Compute current hash of each source file:
-   - `md5sum 01-planning/course-positioning.md | cut -c1-8`
-   - `md5sum 01-planning/learning-objectives.md | cut -c1-8`
-3. Compare hashes:
-   - If hashes match: sources are unchanged, proceed normally
-   - If hashes differ: warn the user: "⚠ Source file [name] has changed since this file was last generated. Regenerating will incorporate these changes."
-   - If output file doesn't exist: skip check, proceed with generation
-
-When generating, always compute and write current source hashes to the output file's frontmatter.
+Staleness: follow `course-conventions` §Staleness. Output: `01-planning/course-description.md`. Sources: `course-positioning` = `01-planning/course-positioning.md`, `learning-objectives` = `01-planning/learning-objectives.md`.
 
 ## Error Handling
 
@@ -44,19 +34,16 @@ When generating, always compute and write current source hashes to the output fi
 
 ## Command Behavior
 
+0. **Conventions and course check**: Load the `course-curriculum-creator:course-conventions` skill first. Follow its §course.yaml is necessary, then run `KIT manifest summary --course "<dir>"` and apply every line in `rules` (§Shape and time budget). Ask the user questions as in `course-conventions` §Questions.
 1. Read course positioning and objectives
 2. Determine tone (default: professional)
 3. Generate student-facing description
 4. Write to `01-planning/course-description.md`
+5. **Report progress**: follow `course-conventions` §Progress
 
-## Settings Integration
+## Settings
 
-Plugin settings (configured with `/plugin configure`). If the project has a `.claude/course-curriculum-creator.local.md` file, values in its YAML frontmatter override these. A value still shown as a literal `${user_config.…}` placeholder has not been set, so use its default:
-- `instructor_name` = `${user_config.instructor_name}` (default: not set): Populate the "About the Instructor" section
-- `instructor_bio` = `${user_config.instructor_bio}` (default: not set): Populate the "About the Instructor" section with credentials and experience
-- `organization` = `${user_config.organization}` (default: not set): Include in course details and registration information
-
-If a value is empty and not overridden, use sensible defaults or prompt user.
+Settings: see `course-conventions` (uses `instructor_name`, `instructor_bio`, `organization`).
 
 ## Description Components
 
@@ -64,7 +51,7 @@ If a value is empty and not overridden, use sensible defaults or prompt user.
 - Compelling overview (what students will learn)
 - Target audience (who should attend)
 - Learning outcomes (what students will achieve)
-- Workshop format and structure
+- Course format, shape and time
 - Prerequisites (if any)
 - What's included (materials, certificate, etc.)
 - Instructor information (from settings)
@@ -81,7 +68,7 @@ If a value is empty and not overridden, use sensible defaults or prompt user.
 **Conversational**:
 - Approachable, engaging language
 - Focus on benefits and transformation
-- Suitable for public workshops
+- Suitable for public courses
 
 **Technical**:
 - Precise, detailed language
@@ -111,15 +98,15 @@ sourceHashes:
 
 ## Course Overview
 
-[2-3 paragraph compelling description of the workshop]
+[2-3 paragraph compelling description of the course]
 
 [First paragraph: Hook - the problem or opportunity]
-[Second paragraph: Solution - what this workshop provides]
+[Second paragraph: Solution - what this course provides]
 [Third paragraph: Outcome - transformation students will experience]
 
 ## Who Should Attend
 
-This workshop is designed for:
+This course is designed for:
 
 - [Audience type 1 with brief context]
 - [Audience type 2 with brief context]
@@ -133,36 +120,34 @@ This workshop is designed for:
 
 ## What You'll Learn
 
-By the end of this workshop, you will be able to:
+By the end of this course, you will be able to:
 
 - [Objective 1 - reworded for student benefit]
 - [Objective 2 - reworded for student benefit]
 - [Objective 3 - reworded for student benefit]
 [Continue for all objectives]
 
-## Workshop Format
+## Course Format
 
-**Duration:** [1-day (6 hours) or 2-day (12 hours)]
+**Shape:** [workshop | cohort | self-paced, from `manifest summary`]
 
-**Delivery:** In-person intensive workshop with hands-on practice
+**Time:** [Workshop and cohort: sessions × minutes (e.g. "2 sessions × 420 minutes", "6 sessions × 90 minutes"), plus the async minutes from `asyncMinutes`. Self-paced: estimated hours (`estimatedHours`, or the module minutes in `manifest summary`)]
+
+**Delivery:** [From `deliveryMode` and shape: e.g. in-person intensive workshop, live cohort sessions with assignments between them, or self-paced online modules, with hands-on practice]
 
 **Learning Approach:**
 [Brief description of instructional approach - lab-heavy, lecture-heavy, or balanced]
 
-### Day 1 [if 2-day]
-
-[High-level topics covered]
-
-### Day 2 [if 2-day]
+### [Day N | Session N | Module group] [one for each session in `manifest summary`; self-paced: group the modules]
 
 [High-level topics covered]
 
 ## What's Included
 
-- Comprehensive workshop materials and handouts
+- Comprehensive course materials and handouts
 - Hands-on exercises and case studies
 - Reference guides and templates
-- Access to instructor for questions during workshop
+- Access to instructor for questions during the course
 - [Certificate of completion - if applicable]
 - [Any other inclusions]
 
@@ -174,8 +159,8 @@ By the end of this workshop, you will be able to:
 
 ## Course Details
 
-- **Duration:** [1-day or 2-day]
-- **Format:** In-person
+- **Time:** [sessions × minutes, or estimated hours]
+- **Format:** [In-person | Virtual | Hybrid | Self-paced online]
 - **Class Size:** [If specified]
 - **Language:** [If specified]
 - **Level:** [Beginner/Intermediate/Advanced]
@@ -210,8 +195,8 @@ For promotional posts with link to full description
 
 ## Post-Generation
 
-Prompt: "Review the course description. Would you like me to adjust the tone, emphasize different aspects, or create additional versions (short/social)?"
+Ask: "Review the course description. Would you like me to adjust the tone, emphasize different aspects, or create additional versions (short/social)?"
 
 ---
 
-Generate compelling course descriptions that attract the right students and clearly communicate value, outcomes, and workshop structure.
+Generate compelling course descriptions that attract the right students and clearly communicate value, outcomes, and course structure.

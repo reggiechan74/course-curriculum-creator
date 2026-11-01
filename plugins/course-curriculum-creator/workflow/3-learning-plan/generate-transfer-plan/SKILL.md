@@ -1,9 +1,10 @@
 ---
 name: generate-transfer-plan
-description: Generate a post-workshop transfer plan with action items, manager briefings, job aids, and follow-up touchpoints to bridge learning to workplace application
+description: Generate a post-course transfer plan with action items, manager briefings, job aids, and follow-up touchpoints to bridge learning to workplace application
 disable-model-invocation: true
 argument-hint: "[--format full|manager-brief|job-aids-only]"
 allowed-tools:
+  - AskUserQuestion
   - Bash
   - Read
   - Write
@@ -13,11 +14,11 @@ allowed-tools:
 
 # Generate Transfer Plan Command
 
-Create a comprehensive transfer-of-learning plan that bridges workshop learning to workplace application. Research shows 70% of training content is forgotten within 24 hours without reinforcement — this command designs the reinforcement ecosystem.
+Create a comprehensive transfer-of-learning plan that bridges course learning to workplace application. Research shows 70% of training content is forgotten within 24 hours without reinforcement — this command designs the reinforcement ecosystem.
 
 ## Why This Matters
 
-Kirkpatrick Level 3 (behavior change) is what organizations actually pay for. A workshop without transfer mechanisms is entertainment, not training. This command ensures every learning objective has a concrete path from classroom to workplace.
+Kirkpatrick Level 3 (behavior change) is what organizations actually pay for. A course without transfer mechanisms is entertainment, not training. This command ensures every learning objective has a concrete path from classroom to workplace.
 
 ## Prerequisites
 
@@ -25,28 +26,17 @@ Kirkpatrick Level 3 (behavior change) is what organizations actually pay for. A 
 - Should have `02-design/lesson-plans.md` (for activity context)
 - Should have `03-assessment/rubrics.md` (for success criteria)
 
-## Staleness Check
+## Staleness
 
-Before generating, check if source files have changed since this file was last generated:
+Staleness: follow `course-conventions` §Staleness. Output: `04-materials/transfer-plan.md`. Sources: `learning-objectives` = `01-planning/learning-objectives.md`, `lesson-plans` = `02-design/lesson-plans.md` (if the file exists).
 
-1. If the output file `04-materials/transfer-plan.md` already exists, read its YAML frontmatter `sourceHashes`
-2. Compute current hash of each source file:
-   - `md5sum 01-planning/learning-objectives.md | cut -c1-8`
-   - `md5sum 02-design/lesson-plans.md | cut -c1-8` (if exists)
-3. Compare hashes and warn if changed
+## Settings
 
-When generating, always compute and write current source hashes to the output file's frontmatter.
-
-## Settings Integration
-
-Plugin settings (configured with `/plugin configure`). If the project has a `.claude/course-curriculum-creator.local.md` file, values in its YAML frontmatter override these. A value still shown as a literal `${user_config.…}` placeholder has not been set, so use its default:
-- `instructor_name` = `${user_config.instructor_name}` (default: not set): Use as workshop facilitator in follow-up materials
-- `organization` = `${user_config.organization}` (default: not set): Use in manager briefing header
-
-If a value is empty and not overridden, use sensible defaults or prompt user.
+Settings: see `course-conventions` (uses `instructor_name`, `organization`).
 
 ## Command Behavior
 
+0. **Conventions and course check**: Load the `course-curriculum-creator:course-conventions` skill first. Follow its §course.yaml is necessary, then run `KIT manifest summary --course "<dir>"` and apply every line in `rules` (§Shape and time budget). Ask the user questions as in `course-conventions` §Questions.
 1. Load `course-curriculum-creator:backward-design-methodology` skill for outcomes alignment
 2. Read learning objectives to identify transfer targets
 3. Classify each objective by transfer type:
@@ -54,6 +44,7 @@ If a value is empty and not overridden, use sensible defaults or prompt user.
    - **Far transfer** (Analyze/Evaluate/Create): Adaptation of principles to new contexts
 4. Generate transfer plan components based on `--format` flag
 5. Write to `04-materials/transfer-plan.md`
+6. **Report progress**: follow `course-conventions` §Progress
 
 ## Format Options
 
@@ -61,7 +52,7 @@ If a value is empty and not overridden, use sensible defaults or prompt user.
 Generates all components: 30/60/90-day action plan, manager briefing, job aids, follow-up schedule, performance support tools.
 
 ### --format manager-brief
-Generates only the manager briefing document — suitable for sending to participants' managers before or after the workshop.
+Generates only the manager briefing document — suitable for sending to participants' managers before or after the course.
 
 ### --format job-aids-only
 Generates only the quick-reference job aids — one per Apply+ level objective.
@@ -90,7 +81,7 @@ sourceHashes:
 
 ## [Course Title]
 
-**Purpose:** Bridge workshop learning to workplace application through structured reinforcement, manager support, and performance tools.
+**Purpose:** Bridge course learning to workplace application through structured reinforcement, manager support, and performance tools.
 
 **Key Principle:** Apply new skills within 48 hours for maximum retention.
 
@@ -101,7 +92,7 @@ sourceHashes:
 ### Participant Action Plan Template
 
 **Name:** _______________
-**Workshop Date:** _______________
+**Course End Date:** _______________
 **Manager:** _______________
 
 #### Week 1 (Days 1-7): Immediate Application
@@ -113,7 +104,7 @@ For each Apply-level objective, provide:
 | [Objective from learning-objectives.md] | [Specific workplace task] | [Observable outcome] | [Date] |
 
 **Instructions to participant:**
-- Pick your highest-priority skill from the workshop
+- Pick your highest-priority skill from the course
 - Apply it to a real work task within 48 hours
 - Note what worked and what was difficult
 - Share results with your manager using the talking points below
@@ -141,19 +132,19 @@ For Create-level objectives (if applicable):
 | [Objective] | [Original work combining skills] | [Deliverable] | [Date] |
 
 **Instructions to participant:**
-- Combine multiple workshop skills in a real project
-- Self-assess using the workshop rubrics
+- Combine multiple course skills in a real project
+- Self-assess using the course rubrics
 - Document lessons learned
-- Share with peers who attended the workshop
+- Share with peers who attended the course
 
 ---
 
 ## Part 2: Manager Briefing
 
-### For: Managers of Workshop Participants
+### For: Managers of Course Participants
 ### Re: [Course Title] — Supporting Your Employee's Learning
 
-**Workshop Overview:**
+**Course Overview:**
 [2-3 sentence summary derived from course-positioning.md]
 
 **What Your Employee Learned:**
@@ -165,14 +156,14 @@ For Create-level objectives (if applicable):
 
 **Your Role in Transfer Success:**
 
-1. **Week 1**: Ask about the workshop within 2 days. Use: "What's one thing you learned that you want to apply this week?"
-2. **Month 1**: Assign a task that uses workshop skills. Provide feedback on application.
-3. **Month 2-3**: Include workshop skills in performance conversations. Recognize application.
+1. **Week 1**: Ask about the course within 2 days. Use: "What's one thing you learned that you want to apply this week?"
+2. **Month 1**: Assign a task that uses course skills. Provide feedback on application.
+3. **Month 2-3**: Include course skills in performance conversations. Recognize application.
 
 **Warning Signs Transfer Is Failing:**
 - Employee hasn't mentioned applying anything after 2 weeks
 - No visible change in work approach
-- Employee says "the workshop was good but doesn't apply to my work"
+- Employee says "the course was good but doesn't apply to my work"
 
 **If Transfer Is Failing:**
 - Schedule 15-minute conversation about application barriers
@@ -216,7 +207,7 @@ For each Apply+ level objective, create a one-page job aid:
 
 | Timing | Channel | Content | Owner |
 |---|---|---|---|
-| Day 1 post-workshop | Email | Thank you + action plan reminder + job aids attached | Instructor |
+| Day 1 after the course ends | Email | Thank you + action plan reminder + job aids attached | Instructor |
 | Day 7 | Email | "How's your first application going?" + quick tip | Instructor |
 | Day 14 | Survey (2 min) | Application progress check + barrier identification | L&D team |
 | Day 30 | Email | Month 1 practice task reminder + peer learning invite | Instructor |
@@ -268,7 +259,7 @@ After generating the transfer plan:
 
 1. **Summarize components**: "Transfer plan generated with [N] job aids, manager briefing, 30/60/90-day action plan, and follow-up schedule."
 
-2. **Recommend distribution**: "Distribute the manager briefing 1 week before the workshop. Send the action plan and job aids to participants on Day 1 post-workshop."
+2. **Recommend distribution**: "Distribute the manager briefing 1 week before the course. Send the action plan and job aids to participants on Day 1 after the course ends."
 
 3. **Suggest next step**: "Generate evaluation plan to measure transfer effectiveness: `/course-curriculum-creator:generate-evaluation-plan`"
 
@@ -308,9 +299,9 @@ TZ='America/New_York' date '+%Y-%m-%d'
 **DO NOT:**
 - Generate generic "keep practicing!" advice — every recommendation must be specific
 - Create job aids for Remember-level objectives (these are reference materials, not transfer tools)
-- Assume the manager attended the workshop — briefing must be self-contained
+- Assume the manager attended the course — briefing must be self-contained
 - Skip follow-up touchpoints — they are the primary transfer mechanism
 
 ---
 
-Generate transfer plans that turn workshop learning into sustained workplace behavior change. Every objective deserves a concrete path from classroom to workplace.
+Generate transfer plans that turn course learning into sustained workplace behavior change. Every objective deserves a concrete path from classroom to workplace.
