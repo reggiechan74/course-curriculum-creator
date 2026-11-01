@@ -44226,7 +44226,12 @@ var InitOptionsSchema = external_exports.object({
   audienceLevel: external_exports.string(),
   audienceSummary: external_exports.string(),
   budgetUsd: external_exports.number(),
-  maxPlanImages: external_exports.number()
+  maxPlanImages: external_exports.number(),
+  async: external_exports.object({
+    preWorkMinutes: external_exports.number(),
+    betweenSessionMinutes: external_exports.number(),
+    postWorkMinutes: external_exports.number()
+  }).optional()
 });
 
 // packages/course-kit/src/manifest/io.ts

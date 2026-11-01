@@ -27369,7 +27369,12 @@ var InitOptionsSchema = external_exports.object({
   audienceLevel: external_exports.string(),
   audienceSummary: external_exports.string(),
   budgetUsd: external_exports.number(),
-  maxPlanImages: external_exports.number()
+  maxPlanImages: external_exports.number(),
+  async: external_exports.object({
+    preWorkMinutes: external_exports.number(),
+    betweenSessionMinutes: external_exports.number(),
+    postWorkMinutes: external_exports.number()
+  }).optional()
 });
 
 // packages/course-kit/src/manifest/io.ts
@@ -27392,7 +27397,7 @@ function initManifest(opts, today) {
     audience: { level: opts.audienceLevel, summary: opts.audienceSummary },
     timeBudget: {
       ...hasLive ? { live: { sessions: opts.sessions } } : {},
-      ...async ? { async: { preWorkMinutes: 0, betweenSessionMinutes: 0, postWorkMinutes: 0 } } : {}
+      ...opts.async ? { async: opts.async } : async ? { async: { preWorkMinutes: 0, betweenSessionMinutes: 0, postWorkMinutes: 0 } } : {}
     },
     objectives: [],
     modules: [],
@@ -27458,7 +27463,13 @@ function validateManifest(m) {
         out.push({ level: "error", path: `modules[${i}].objectives[${j}]`, message: `unknown objective ${id}` });
       }
     });
-    if (mod.session !== void 0) {
+    if (mod.session !== void 0 && m.shape === "self-paced") {
+      out.push({
+        level: "error",
+        path: `modules[${i}].session`,
+        message: `module ${mod.id} names session ${mod.session}, but a self-paced course has no sessions`
+      });
+    } else if (mod.session !== void 0) {
       const s = sessionById.get(mod.session);
       if (!s) {
         out.push({ level: "error", path: `modules[${i}].session`, message: `unknown session ${mod.session}` });
@@ -27481,7 +27492,80 @@ function validateManifest(m) {
       message: `a workshop has at most 2 sessions; ${sessions.length} sessions suggests shape "cohort"`
     });
   }
+  if (m.shape === "self-paced" && !m.timeBudget.async) {
+    out.push({ level: "warning", path: "timeBudget.async", message: "a self-paced course needs an async time budget" });
+  }
+  if (m.shape === "cohort" && sessions.length === 1) {
+    out.push({
+      level: "warning",
+      path: "timeBudget.live.sessions",
+      message: 'a cohort has at least 2 sessions; 1 session suggests shape "workshop"'
+    });
+  }
+  if ((m.shape === "workshop" || m.shape === "cohort") && sessions.length === 0) {
+    out.push({ level: "warning", path: "timeBudget.live", message: `a ${m.shape} has no live sessions` });
+  }
+  sessions.forEach((s, i) => {
+    if (s.minutes <= 0) return;
+    const total = m.modules.filter((x) => x.session === s.id).reduce((n, x) => n + (x.minutes ?? 0), 0);
+    if (total > s.minutes) {
+      out.push({
+        level: "warning",
+        path: `timeBudget.live.sessions[${i}]`,
+        message: `modules in session ${s.id} add up to ${total} min, more than the session's ${s.minutes} min`
+      });
+    }
+  });
   return out;
+}
+
+// packages/course-kit/src/manifest/summary.ts
+var SHAPE_RULES = {
+  workshop: [
+    "Workshop: 1 or 2 live sessions. Give pre-work before the first session and spaced practice after the last session."
+  ],
+  cohort: [
+    "Cohort: open each session with retrieval practice on the previous session.",
+    "Cohort: give a transfer assignment and discussion prompts between sessions.",
+    "Cohort: write facilitator notes for each session."
+  ],
+  "self-paced": [
+    "Self-paced: there are no live sessions. The learner hub is the primary delivery surface.",
+    "Self-paced: use more worked examples, and fade the scaffolding across modules.",
+    "Self-paced: end every module with interactive practice and feedback.",
+    "Self-paced: give a time-on-task estimate for every module and activity.",
+    "Self-paced: make assessments auto-checkable items, or self-assessment with model answers."
+  ]
+};
+function summarizeManifest(m) {
+  const live = m.timeBudget.live?.sessions ?? [];
+  const sessionIds = new Set(live.map((s) => s.id));
+  const a = m.timeBudget.async;
+  const preWork = a?.preWorkMinutes ?? 0;
+  const betweenSessions = a?.betweenSessionMinutes ?? 0;
+  const postWork = a?.postWorkMinutes ?? 0;
+  return {
+    id: m.id,
+    title: m.title,
+    shape: m.shape,
+    delivery: m.delivery,
+    sessions: live.map((s) => {
+      const mods = m.modules.filter((x) => x.session === s.id);
+      return {
+        id: s.id,
+        label: s.label,
+        minutes: s.minutes,
+        modules: mods.map((x) => x.id),
+        plannedMinutes: mods.reduce((n, x) => n + (x.minutes ?? 0), 0)
+      };
+    }),
+    liveMinutes: live.reduce((n, s) => n + s.minutes, 0),
+    asyncMinutes: { preWork, betweenSessions, postWork, total: preWork + betweenSessions + postWork },
+    unscheduledModules: m.modules.filter((x) => x.session === void 0 || !sessionIds.has(x.session)).map((x) => x.id),
+    objectives: m.objectives.length,
+    modules: m.modules.length,
+    rules: SHAPE_RULES[m.shape]
+  };
 }
 
 // packages/course-kit/src/manifest/sync.ts
@@ -27532,9 +27616,9 @@ function parseOutline(markdown) {
     if (/^##\s/.test(text)) {
       module = void 0;
       const label = text.replace(/^##\s+/, "").trim();
-      if (/\bDay\s+(\d+)\b/.test(label) && !/Schedule Summary/i.test(label)) {
-        const n = label.match(/\bDay\s+(\d+)\b/)[1];
-        sessions.push(session = { id: `S${n}`, label, minutes: 0 });
+      const num = /Schedule Summary/i.test(label) ? null : label.match(/\bDay\s+(\d+)\b/) ?? label.match(/\bSession\s+(\d+)\b/) ?? label.match(/\bWeek\s+(\d+)\b/);
+      if (num) {
+        sessions.push(session = { id: `S${num[1]}`, label, minutes: 0 });
       } else {
         session = void 0;
       }
@@ -28177,6 +28261,7 @@ var coreCommands = {
     return migrateV2(requireFlag(a, "course"), { dryRun: a.flags["dry-run"] === true, ...answers ? { answers } : {} });
   },
   "manifest sync": (a) => syncManifest(requireFlag(a, "course"), { write: a.flags.write === true }),
+  "manifest summary": (a) => summarizeManifest(loadManifest(requireFlag(a, "course"))),
   "manifest validate": (a) => {
     const issues = validateManifest(loadManifest(requireFlag(a, "course")));
     if (issues.some((i) => i.level === "error")) throw new ValidationError(JSON.stringify({ issues }));

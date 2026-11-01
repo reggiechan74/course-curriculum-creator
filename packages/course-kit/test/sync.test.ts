@@ -192,3 +192,15 @@ test('a missing objectives or outline file keeps the existing manifest list and 
   expect(b.manifest.timeBudget).toEqual(first.timeBudget);
   expect(b.issues).toContainEqual(expect.objectContaining({ level: 'warning', path: 'modules', message: expect.stringMatching(/course-outline\.md not found/) }));
 });
+
+test('cohort outline headings make sessions', () => {
+  const md = [
+    '## Session 1: Kickoff', '### Module 1: A (30 min)',
+    '## Week 2: Cash flows', '### Module 2: B (30 min)',
+    '## Weekend 1, Day 3 (Saturday): Tools', '### Module 3: C (30 min)',
+    '## Week Gap (5 business days)', '',
+  ].join('\n');
+  const { sessions, modules } = parseOutline(md);
+  expect(sessions.map((s) => s.id)).toEqual(['S1', 'S2', 'S3']);
+  expect(modules.map((m) => m.session)).toEqual(['S1', 'S2', 'S3']);
+});

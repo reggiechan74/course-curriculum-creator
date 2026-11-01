@@ -120,3 +120,62 @@ test('manifest init refuses to overwrite course.yaml unless --force', async () =
   expect(f.code).toBe(0);
   expect(loadManifest(dir).id).toBe('proptech-fundamentals');
 });
+
+const spOpts: InitOptions = { ...opts, shape: 'self-paced', delivery: 'async', sessions: [] };
+
+test('a self-paced module that names a session is an error', () => {
+  const m = initManifest(spOpts, '2026-10-31');
+  m.modules = [
+    { id: 'M1', title: 'A', session: 'S1', objectives: [] },
+    { id: 'M2', title: 'B', objectives: [] },
+    { id: 'M3', title: 'C', session: 'S2', objectives: [] },
+  ];
+  const errs = validateManifest(m).filter((i) => i.level === 'error');
+  expect(errs).toHaveLength(2);
+  expect(errs.map((e) => e.path)).toEqual(['modules[0].session', 'modules[2].session']);
+  expect(errs[0].message).toContain('self-paced');
+});
+
+test('a self-paced course with no async time budget is a warning', () => {
+  const m = initManifest(spOpts, '2026-10-31');
+  expect(validateManifest(m)).toEqual([]);
+  delete m.timeBudget.async;
+  expect(validateManifest(m)).toContainEqual(expect.objectContaining({ level: 'warning', path: 'timeBudget.async' }));
+});
+
+test('a cohort with fewer than 2 sessions is a warning', () => {
+  const m = initManifest({ ...opts, shape: 'cohort' }, '2026-10-31');
+  expect(validateManifest(m)).toContainEqual(expect.objectContaining({ level: 'warning', path: 'timeBudget.live.sessions' }));
+  m.timeBudget.live!.sessions.push({ id: 'S2', label: 'Day 2', minutes: 60 });
+  expect(validateManifest(m)).toEqual([]);
+});
+
+test('a workshop or cohort with no sessions is a warning', () => {
+  for (const shape of ['workshop', 'cohort'] as const) {
+    const m = initManifest({ ...opts, shape, sessions: [] }, '2026-10-31');
+    expect(validateManifest(m)).toContainEqual(expect.objectContaining({ level: 'warning', path: 'timeBudget.live' }));
+  }
+});
+
+test('module minutes in one session above the session minutes is a warning', () => {
+  const m = make();
+  m.timeBudget.live!.sessions = [{ id: 'S1', label: 'Day 1', minutes: 90 }];
+  m.modules = [
+    { id: 'M1', title: 'A', session: 'S1', objectives: [], minutes: 60 },
+    { id: 'M2', title: 'B', session: 'S1', objectives: [], minutes: 60 },
+  ];
+  const w = validateManifest(m).filter((i) => i.level === 'warning');
+  expect(w).toHaveLength(1);
+  expect(w[0].path).toBe('timeBudget.live.sessions[0]');
+  expect(w[0].message).toContain('120');
+  expect(w[0].message).toContain('90');
+  m.timeBudget.live!.sessions[0].minutes = 0;
+  expect(validateManifest(m).filter((i) => i.path.startsWith('timeBudget.live.sessions['))).toEqual([]);
+});
+
+test('initManifest writes the async budget when it is given', () => {
+  const async = { preWorkMinutes: 30, betweenSessionMinutes: 0, postWorkMinutes: 45 };
+  const m = initManifest({ ...opts, async }, '2026-10-31');
+  expect(m.timeBudget.async).toEqual(async);
+  expect(initManifest(opts, '2026-10-31').timeBudget.async).toBeUndefined();
+});

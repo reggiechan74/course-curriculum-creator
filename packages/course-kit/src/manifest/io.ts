@@ -31,7 +31,9 @@ export function initManifest(opts: InitOptions, today: string): Manifest {
     audience: { level: opts.audienceLevel, summary: opts.audienceSummary },
     timeBudget: {
       ...(hasLive ? { live: { sessions: opts.sessions } } : {}),
-      ...(async ? { async: { preWorkMinutes: 0, betweenSessionMinutes: 0, postWorkMinutes: 0 } } : {}),
+      ...(opts.async
+        ? { async: opts.async }
+        : async ? { async: { preWorkMinutes: 0, betweenSessionMinutes: 0, postWorkMinutes: 0 } } : {}),
     },
     objectives: [],
     modules: [],
@@ -107,7 +109,12 @@ export function validateManifest(m: Manifest): ValidationIssue[] {
         out.push({ level: 'error', path: `modules[${i}].objectives[${j}]`, message: `unknown objective ${id}` });
       }
     });
-    if (mod.session !== undefined) {
+    if (mod.session !== undefined && m.shape === 'self-paced') {
+      out.push({
+        level: 'error', path: `modules[${i}].session`,
+        message: `module ${mod.id} names session ${mod.session}, but a self-paced course has no sessions`,
+      });
+    } else if (mod.session !== undefined) {
       const s = sessionById.get(mod.session);
       if (!s) {
         out.push({ level: 'error', path: `modules[${i}].session`, message: `unknown session ${mod.session}` });
@@ -129,5 +136,27 @@ export function validateManifest(m: Manifest): ValidationIssue[] {
       message: `a workshop has at most 2 sessions; ${sessions.length} sessions suggests shape "cohort"`,
     });
   }
+  if (m.shape === 'self-paced' && !m.timeBudget.async) {
+    out.push({ level: 'warning', path: 'timeBudget.async', message: 'a self-paced course needs an async time budget' });
+  }
+  if (m.shape === 'cohort' && sessions.length === 1) {
+    out.push({
+      level: 'warning', path: 'timeBudget.live.sessions',
+      message: 'a cohort has at least 2 sessions; 1 session suggests shape "workshop"',
+    });
+  }
+  if ((m.shape === 'workshop' || m.shape === 'cohort') && sessions.length === 0) {
+    out.push({ level: 'warning', path: 'timeBudget.live', message: `a ${m.shape} has no live sessions` });
+  }
+  sessions.forEach((s, i) => {
+    if (s.minutes <= 0) return;
+    const total = m.modules.filter((x) => x.session === s.id).reduce((n, x) => n + (x.minutes ?? 0), 0);
+    if (total > s.minutes) {
+      out.push({
+        level: 'warning', path: `timeBudget.live.sessions[${i}]`,
+        message: `modules in session ${s.id} add up to ${total} min, more than the session's ${s.minutes} min`,
+      });
+    }
+  });
   return out;
 }

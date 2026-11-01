@@ -59,5 +59,8 @@ export interface ValidationIssue { level: 'error' | 'warning'; path: string; mes
 export const InitOptionsSchema = z.object({
   title: z.string().min(1), shape: ShapeSchema, delivery: DeliverySchema, sessions: z.array(SessionSchema),
   audienceLevel: z.string(), audienceSummary: z.string(), budgetUsd: z.number(), maxPlanImages: z.number(),
+  async: z.object({
+    preWorkMinutes: z.number(), betweenSessionMinutes: z.number(), postWorkMinutes: z.number(),
+  }).optional(),
 });
 export type InitOptions = z.infer<typeof InitOptionsSchema>;

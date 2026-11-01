@@ -63,9 +63,10 @@ export function parseOutline(markdown: string): { sessions: ParsedSession[]; mod
     if (/^##\s/.test(text)) {
       module = undefined;
       const label = text.replace(/^##\s+/, '').trim();
-      if (/\bDay\s+(\d+)\b/.test(label) && !/Schedule Summary/i.test(label)) {
-        const n = label.match(/\bDay\s+(\d+)\b/)![1];
-        sessions.push(session = { id: `S${n}`, label, minutes: 0 });
+      const num = /Schedule Summary/i.test(label) ? null
+        : (label.match(/\bDay\s+(\d+)\b/) ?? label.match(/\bSession\s+(\d+)\b/) ?? label.match(/\bWeek\s+(\d+)\b/));
+      if (num) {
+        sessions.push(session = { id: `S${num[1]}`, label, minutes: 0 });
       } else {
         session = undefined;
       }

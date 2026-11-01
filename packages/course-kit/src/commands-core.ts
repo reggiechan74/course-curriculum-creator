@@ -6,6 +6,7 @@ import { type CommandTable, requireFlag, requirePositional, runCli } from './cli
 import { UsageError, ValidationError } from './errors.js';
 import { checkStale, hashFile, writeHashes } from './hash.js';
 import { InitOptionsSchema, initManifest, loadManifest, saveManifest, validateManifest } from './manifest/io.js';
+import { summarizeManifest } from './manifest/summary.js';
 import { syncManifest } from './manifest/sync.js';
 import { migrateV2 } from './migrate/v2.js';
 import { estimatePlan, loadPlan, validatePlan } from './media/plan.js';
@@ -58,6 +59,7 @@ export const coreCommands: CommandTable = {
     return migrateV2(requireFlag(a, 'course'), { dryRun: a.flags['dry-run'] === true, ...(answers ? { answers } : {}) });
   },
   'manifest sync': (a) => syncManifest(requireFlag(a, 'course'), { write: a.flags.write === true }),
+  'manifest summary': (a) => summarizeManifest(loadManifest(requireFlag(a, 'course'))),
   'manifest validate': (a) => {
     const issues = validateManifest(loadManifest(requireFlag(a, 'course')));
     if (issues.some((i) => i.level === 'error')) throw new ValidationError(JSON.stringify({ issues }));
