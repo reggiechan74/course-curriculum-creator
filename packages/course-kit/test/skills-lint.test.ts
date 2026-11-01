@@ -54,6 +54,17 @@ describe('skills lint', () => {
     }
   });
 
+  test('workflow skills allow Skill', () => {
+    // They load course-conventions with the Skill tool, so allowed-tools must list it.
+    for (const f of allFiles().filter(isWorkflowSkill)) {
+      const fm = /^---\n([\s\S]*?)\n---/.exec(read(f))?.[1] ?? '';
+      const block = /^allowed-tools:[ \t]*(.*)\n((?:[ \t]+-.*\n?)*)/m.exec(fm);
+      const tools = block ? [...block[1].replace(/[[\]]/g, '').split(','), ...block[2].split('\n').map((l) => l.replace(/^\s*-\s*/, ''))]
+        .map((t) => t.trim()).filter(Boolean) : [];
+      expect(tools, f).toContain('Skill');
+    }
+  });
+
   test('no fixed 1-2 day duration', () => {
     const banned = [/1-2[ -]day/i, /1-day or 2-day/i, /1-day vs 2-day/i];
     for (const f of allFiles().filter((x) => (isSkill(x) || x.startsWith('agents/')) && isChecked(x))) {

@@ -9,6 +9,7 @@ allowed-tools:
   - Read
   - Write
   - Edit
+  - Skill
 ---
 
 # Create Course Command
@@ -31,16 +32,12 @@ Load the `course-curriculum-creator:course-conventions` skill first. This comman
 2. **Create directory structure** following categorized format:
    ```
    CourseName-YYYY-MM-DD/
+   ├── README.md
    ├── 01-planning/
    │   ├── course-positioning.md
-   │   ├── course-description.md
-   │   ├── learning-objectives.md
    │   └── content-sources.md
    ├── 02-design/
-   │   ├── course-outline.md
-   │   └── lesson-plans.md
    ├── 03-assessment/
-   │   └── rubrics.md
    ├── 04-materials/
    │   └── README.md
    └── 05-media/
@@ -48,6 +45,7 @@ Load the `course-curriculum-creator:course-conventions` skill first. This comman
        ├── out/
        └── style/
    ```
+   Create only these files. Do not create placeholder stage files (`learning-objectives.md`, `course-description.md`, `course-outline.md`, `lesson-plans.md`, `rubrics.md` and so on): `progress` would show those stages as present. Each stage's skill writes its own file.
 
 3. **Generate initial files**:
    - `course-positioning.md` with YAML frontmatter and template content
@@ -69,7 +67,7 @@ Use AskUserQuestion to gather missing information:
 - Cohort: number of sessions (`--sessions`, default 6), minutes for each session (`--session-minutes`, default 90) and minutes of work between sessions (default 60)
 - Self-paced: total learner hours (default 4)
 - Target audience description
-- Delivery mode: in-person (default), virtual, or hybrid
+- Delivery mode (workshop and cohort only): in-person (default), virtual, or hybrid. Do not ask it for self-paced: a self-paced course is always `async`
 - Output location (default from settings or prompt user)
 - Prerequisites (optional)
 
@@ -97,7 +95,7 @@ node "${CLAUDE_PLUGIN_ROOT}/skills/course-kit/scripts/course-kit.mjs" manifest i
 `<options>` is a JSON object: `{"title", "shape", "delivery", "sessions": [{"id","label","minutes"}], "audienceLevel", "audienceSummary", "budgetUsd": 20, "maxPlanImages": 40, "async": {"preWorkMinutes", "betweenSessionMinutes", "postWorkMinutes"}}`.
 
 - **shape**: ask the user for the shape first (workshop, cohort, self-paced). If they give none, use `default_shape`.
-- **delivery**: the `--mode` value (`in-person`, `virtual`, `hybrid`); default `in-person`.
+- **delivery**: workshop and cohort: the `--mode` value (`in-person`, `virtual`, `hybrid`); default `in-person`. Self-paced: always `async` (ignore `--mode` and do not ask; `manifest validate` warns on a self-paced course with any other delivery).
 - **sessions** (ids `S1`, `S2`, ...):
   - workshop: duration from `--duration`, else `default_duration`. 1-day = one session of 420 minutes, label `Day 1`. 2-day = two sessions of 420 minutes each, labels `Day 1` and `Day 2`.
   - cohort: ask for the number of sessions (default 6) and the minutes in each session (default 90). Labels are `Session 1`, `Session 2`, and so on. Ask for the minutes of work between sessions (default 60).
@@ -154,7 +152,7 @@ In the completion message, add:
 Series: [series-name] (Level [N] of [total])
 Prerequisites from Level [N-1]: [list handoff outcomes]
 
-Next: Generate objectives within this level's Bloom's bands using /course-curriculum-creator:generate-objectives
+Next: follow `next` from `KIT progress` (learnerProfile for a new course). When you reach objectives, keep them within this level's Bloom's bands.
 ```
 
 ## Delivery Mode
@@ -498,25 +496,19 @@ After successful creation, output to user:
 ✓ Course project created: [full-path]/CourseName-YYYY-MM-DD/
 
 Structure created:
+  ├── README.md (✓ created)
   ├── 01-planning/
   │   ├── course-positioning.md (✓ initialized)
-  │   ├── course-description.md (pending)
-  │   ├── learning-objectives.md (pending)
   │   └── content-sources.md (✓ initialized)
-  ├── 02-design/
-  │   ├── course-outline.md (pending)
-  │   └── lesson-plans.md (pending)
-  ├── 03-assessment/
-  │   └── rubrics.md (pending)
+  ├── 02-design/ (empty)
+  ├── 03-assessment/ (empty)
   ├── 04-materials/
   │   └── README.md (✓ created)
   ├── 05-media/ (src/, out/, style/ created)
   └── course.yaml (✓ initialized)
 
-Next Steps (Backward Design):
-1. Define learning objectives: /course-curriculum-creator:generate-objectives
-2. Design assessments: /course-curriculum-creator:generate-rubrics
-3. Plan learning activities: /course-curriculum-creator:generate-outline then /course-curriculum-creator:generate-lesson-plans
+Next step: [the `next` stage and skill from `KIT progress`; for a new course this is learnerProfile → /course-curriculum-creator:generate-learner-profile]
+Run `KIT progress --course "<dir>"` at any time and follow `next`.
 
 Or use autonomous generation:
   Ask: "Design a complete curriculum for [topic]"

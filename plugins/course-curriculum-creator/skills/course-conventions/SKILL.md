@@ -55,7 +55,8 @@ Run `KIT manifest summary --course "<dir>"`. Use its `shape`, `sessions`, `liveM
 
 ## 6. Staleness
 
-- Before you regenerate an output: `KIT stale <output> --course "<dir>"`. If it is `stale`, tell the user which sources changed (`changed`) and that regeneration includes those changes.
+- All paths, `<output>` and the `--sources` paths alike, are relative to the course folder (for example `04-materials/pre-work.md`).
+- Before you regenerate an output: `KIT stale <output> --course "<dir>"`. If it is `stale`, tell the user which sources changed (`changed`) and that regeneration includes those changes. `missing-output` means a first generation: no warning is needed.
 - After you write an output: `KIT hash-write <output> --course "<dir>" --sources '{"<key>":"<path>",…}'`, with the source files the skill read.
 - Never compute hashes with shell commands.
 

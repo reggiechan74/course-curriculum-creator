@@ -8,6 +8,7 @@ allowed-tools:
   - Bash
   - Read
   - Write
+  - Skill
 ---
 
 # Save As Template Command
@@ -98,7 +99,7 @@ Leave every other field as it is. The copy is not a valid course until `create-f
 
 **Parameterize:**
 - Course title → [COURSE_TITLE]
-- Specific examples → [EXAMPLE]
+- Specific examples → `{{EXAMPLE: ...}}`
 - Date references → [DATE]
 - Instructor name → [INSTRUCTOR]
 

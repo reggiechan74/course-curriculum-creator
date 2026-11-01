@@ -21,8 +21,8 @@ Always quote paths; course folders may contain spaces. Output is JSON on stdout.
 ## Commands
 
 - `hash <file>`: print the 8-hex-character MD5 hash of a file.
-- `stale <file> --course "<dir>"`: compare `sourceHashes` in the file's frontmatter with current source files; reports `fresh` or `stale` with the changed files.
-- `hash-write <file> --course "<dir>" [--sources '{"key":"path"}']`: write `sourceFiles` (from `--sources`), then `sourceHashes`, into the file's frontmatter. A missing source or output file is exit 2.
+- `stale <file> --course "<dir>"`: compare `sourceHashes` in the file's frontmatter with current source files; reports `fresh` or `stale` with the changed files, or `missing-output` when the file does not exist yet (a first generation).
+- `hash-write <file> --course "<dir>" [--sources '{"key":"path"}']`: write `sourceFiles` (from `--sources`), then `sourceHashes`, into the file's frontmatter. A missing source or output file is exit 2. For `stale` and `hash-write`, a relative `<file>` and the `--sources` paths are relative to the course folder.
 - `manifest init --course "<dir>" --json '<options>' [--force]`: create `course.yaml`. Refuses to overwrite without `--force`.
 - `manifest validate --course "<dir>"`: validate `course.yaml`; exit 2 on errors.
 - `manifest sync --course "<dir>" [--write]`: parse the objectives and outline markdown, assign stable IDs, update `course.yaml`; `--write` also writes `<!-- id: ... -->` comments into the objectives file and outline, and module ID comments (`## Module 1:` becomes `M1`) into `02-design/lesson-plans.md`, `04-materials/student-handout.md` and `04-materials/instructor-guide.md` when they exist. Safe to run repeatedly.
@@ -30,7 +30,7 @@ Always quote paths; course folders may contain spaces. Output is JSON on stdout.
 - `progress --course "<dir>" [--write]`: print the workflow stages (`present`, `missing`, `stale` or `skipped`) and the `next` stage; `--write` saves them in `course.yaml`.
 - `progress skip|unskip <stage> --course "<dir>"`: leave out an optional stage, or put it back.
 - `audit --course "<dir>"`: check the course (manifest, objective coverage, stale outputs, media links, alt text, long descriptions, UDL representation); prints `{ok, issues, counts}`; exit 2 only if `course.yaml` is bad.
-- `migrate-course --course "<dir>" [--dry-run] [--answers '<json>']`: migrate a v2 course folder: writes `course.yaml`, registers `.png`/`.jpg`/`.svg` files in `04-materials/` in the media registry as `imported`, and inserts ID comments. Prints `{manifest, actions, changes, questions, imported}`; `changes` lists each file as `create` or `modify` with `added` and `removed` line counts. `--dry-run` writes nothing. Answers are keyed by question id: `shape`, `delivery`, `sessionMinutes`, `objectives:<asset id>`, `alt:<id>`. Never moves or deletes files; a second run reports no actions.
+- `migrate-course --course "<dir>" [--dry-run] [--answers '<json>']`: migrate a v2 course folder: writes `course.yaml` (a new one gets the create-course async budget defaults), registers `.png`/`.jpg`/`.svg` files in `04-materials/` in the media registry as `imported`, and inserts ID comments. Prints `{manifest, actions, changes, questions, imported}`; `changes` lists each file as `create` or `modify` with `added` and `removed` line counts. `--dry-run` writes nothing. Answers are keyed by question id: `shape`, `delivery`, `sessionMinutes`, `objectives:<asset id>`, `alt:<id>`. Never moves or deletes files; a second run reports no actions.
 
 Media plan and registry (also in this bundle; the course-studio plugin uses them most):
 
@@ -44,6 +44,7 @@ Media generation, rendering and embedding commands are in the course-studio plug
 
 - Top-level keys that the schema does not know (for example a hand-added `notes:`) are moved into `extra` the next time a command saves `course.yaml`. They are kept there, not lost. Put your own fields under `extra` to begin with.
 - If the objectives or outline markdown file is missing, `manifest sync` keeps the objectives or modules already in `course.yaml` and reports a warning.
+- `manifest sync` keeps the `minutes` and `label` of each session already in `course.yaml` (the outline's heading sums include breaks); only sessions new in the outline take the outline's minutes. Module minutes and session assignments come from the outline.
 - `manifest sync --write` and `migrate-course` change the objectives, outline and lesson files (ID comments). Outputs whose `sourceHashes` were fresh before are re-hashed after, so they stay fresh; outputs that were already stale stay stale.
 
 ## Exit codes

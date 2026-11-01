@@ -8,6 +8,7 @@ allowed-tools:
   - Read
   - Write
   - Glob
+  - Skill
 ---
 
 # Export Curriculum Command

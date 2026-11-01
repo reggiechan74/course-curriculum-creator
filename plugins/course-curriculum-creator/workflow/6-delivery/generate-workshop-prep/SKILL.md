@@ -8,6 +8,7 @@ allowed-tools:
   - Bash
   - Read
   - Write
+  - Skill
 ---
 
 # Generate Workshop Prep Command

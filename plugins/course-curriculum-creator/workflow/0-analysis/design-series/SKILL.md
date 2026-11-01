@@ -9,6 +9,7 @@ allowed-tools:
   - Read
   - Write
   - Glob
+  - Skill
 ---
 
 # Design Series Command

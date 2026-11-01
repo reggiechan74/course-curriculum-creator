@@ -19,12 +19,14 @@ Validate an existing curriculum for quality, backward design alignment, and peda
 
 When user invokes `/course-curriculum-creator:review-curriculum [course-code-or-path]`:
 
-0. **Conventions and course check**: Load the `course-curriculum-creator:course-conventions` skill first. Follow its §course.yaml is necessary, then run `KIT manifest summary --course "<dir>"` and apply every line in `rules` (§Shape and time budget).
+0. **Conventions**: Load the `course-curriculum-creator:course-conventions` skill first.
 
 1. **Locate the curriculum to review:**
    - If a course code is provided (e.g., `021-2-201`), search for a matching directory
    - If a path is provided, use that directory directly
    - If no argument is given, look for curriculum files in the current working directory
+
+   **Course check** (now that `<dir>` is known): follow `course-conventions` §course.yaml is necessary, then run `KIT manifest summary --course "<dir>"` and apply every line in `rules` (§Shape and time budget).
 
    Then run `KIT audit --course "<dir>"` (see the `course-kit` skill). Keep the result `{ok, issues, counts}`: each issue has `level` (error, warning or info), `check`, `path` and `message`. The checks are manifest, objective-coverage, stale, media-links, media-alt, media-long-description and udl-representation.
 

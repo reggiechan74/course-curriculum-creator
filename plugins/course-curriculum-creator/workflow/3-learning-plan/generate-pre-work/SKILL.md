@@ -46,12 +46,20 @@ Staleness: follow `course-conventions` §Staleness. Output: `04-materials/pre-wo
 
 ## Micro-Learning Unit Design Rules
 
-- **Total completion time** = `asyncMinutes.preWork` from `manifest summary` (do not exceed it). Use as many units as fit, about 10-15 minutes each. If `preWork` is 0, write no units and no emails and tell the user there is no pre-work time; still do step 8 for a cohort with `betweenSessions` > 0. Workshop example: a 30-minute budget gives at most 3 units
+- **Total completion time** = `asyncMinutes.preWork` from `manifest summary` (do not exceed it). Use as many units as fit, about 10-15 minutes each. If `preWork` is 0, write no units, no self-assessment and no emails, but still write `04-materials/pre-work.md` (see §No pre-work budget below) so the stage completes; still do step 8 for a cohort with `betweenSessions` > 0, then write the hashes and report progress as usual. Workshop example: a 30-minute budget gives at most 3 units
 - Each unit: **10-15 minutes**, single concept focus, one self-check question at end
 - Two paths per unit:
   - **Fast track:** Already familiar — read 2-sentence summary, take self-check quiz, done (2-3 min)
   - **Full path:** Concept explanation + 1-2 examples + self-check quiz (10-15 min)
 - Units ordered by **dependency** (if concept B requires concept A, unit A comes first)
+
+## No pre-work budget
+
+When `asyncMinutes.preWork` is 0, `04-materials/pre-work.md` is the template's frontmatter (with `totalEstimatedTime: "0 minutes"`), the `# Pre-Work Materials` and `## [Course Title]` headings, and this note:
+
+> This course has no pre-work time budget. To add pre-work, set `timeBudget.async.preWorkMinutes` in `course.yaml` and run this skill again.
+
+For a cohort with `betweenSessions` > 0, add the `## Between Sessions` blocks after the note. Then write the hashes (§Staleness) and report progress (§Progress) as for any other output; `progress` then shows `preWork` as present. Tell the user there is no pre-work time.
 
 ## Readiness Self-Assessment
 

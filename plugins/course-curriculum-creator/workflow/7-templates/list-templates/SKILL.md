@@ -7,6 +7,7 @@ allowed-tools:
   - Bash
   - Read
   - Glob
+  - Skill
 ---
 
 # List Templates Command

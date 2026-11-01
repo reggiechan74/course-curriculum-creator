@@ -9,6 +9,7 @@ allowed-tools:
   - Read
   - Write
   - Edit
+  - Skill
 ---
 
 # Generate Learner Profile Command

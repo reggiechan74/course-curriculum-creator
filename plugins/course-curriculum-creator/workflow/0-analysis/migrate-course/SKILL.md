@@ -7,6 +7,7 @@ allowed-tools:
   - AskUserQuestion
   - Bash
   - Read
+  - Skill
 ---
 
 # Migrate Course Command

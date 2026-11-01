@@ -8,6 +8,7 @@ allowed-tools:
   - Bash
   - Read
   - Write
+  - Skill
 ---
 
 # Process Workshop Feedback Command

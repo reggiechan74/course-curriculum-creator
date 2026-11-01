@@ -21,11 +21,16 @@ Always quote paths; course folders may contain spaces. Output is JSON on stdout.
 Core:
 
 - `hash <file>`: print the 8-hex-character MD5 hash of a file.
-- `stale <file> --course "<dir>"`: compare `sourceHashes` in the file's frontmatter with current source files.
-- `hash-write <file> --course "<dir>"`: recompute and write `sourceHashes` into the file's frontmatter.
-- `manifest init --course "<dir>" --json '<options>' [--force]`: create `course.yaml`.
+- `stale <file> --course "<dir>"`: compare `sourceHashes` in the file's frontmatter with current source files; reports `fresh` or `stale` with the changed files, or `missing-output` when the file does not exist yet (a first generation).
+- `hash-write <file> --course "<dir>" [--sources '{"key":"path"}']`: write `sourceFiles` (from `--sources`), then `sourceHashes`, into the file's frontmatter. A missing source or output file is exit 2. For `stale` and `hash-write`, a relative `<file>` and the `--sources` paths are relative to the course folder.
+- `manifest init --course "<dir>" --json '<options>' [--force]`: create `course.yaml`. Refuses to overwrite without `--force`.
 - `manifest validate --course "<dir>"`: validate `course.yaml`; exit 2 on errors.
-- `manifest sync --course "<dir>" [--write]`: parse objectives and outline, assign stable IDs, update `course.yaml`. Without `--write` it is a read-only dry run; with `--write` it saves `course.yaml` and the ID comments in the objectives file, the outline, and (module IDs only, from `Module <n>:` headings) `02-design/lesson-plans.md`, `04-materials/student-handout.md` and `04-materials/instructor-guide.md` when they exist. Running it again does not duplicate anything.
+- `manifest sync --course "<dir>" [--write]`: parse the objectives and outline markdown, assign stable IDs, update `course.yaml`; `--write` also writes `<!-- id: ... -->` comments into the objectives file and outline, and module ID comments (`## Module 1:` becomes `M1`) into `02-design/lesson-plans.md`, `04-materials/student-handout.md` and `04-materials/instructor-guide.md` when they exist. Safe to run repeatedly.
+- `manifest summary --course "<dir>"`: print `{id,title,shape,delivery,sessions,liveMinutes,asyncMinutes,unscheduledModules,objectives,modules,rules}`; the time budget for the course.
+- `progress --course "<dir>" [--write]`: print the workflow stages (`present`, `missing`, `stale` or `skipped`) and the `next` stage; `--write` saves them in `course.yaml`.
+- `progress skip|unskip <stage> --course "<dir>"`: leave out an optional stage, or put it back.
+- `audit --course "<dir>"`: check the course (manifest, objective coverage, stale outputs, media links, alt text, long descriptions, UDL representation); prints `{ok, issues, counts}`; exit 2 only if `course.yaml` is bad.
+- `migrate-course --course "<dir>" [--dry-run] [--answers '<json>']`: migrate a v2 course folder: writes `course.yaml` (a new one gets the create-course async budget defaults), registers `.png`/`.jpg`/`.svg` files in `04-materials/` in the media registry as `imported`, and inserts ID comments. Prints `{manifest, actions, changes, questions, imported}`; `changes` lists each file as `create` or `modify` with `added` and `removed` line counts. `--dry-run` writes nothing. Answers are keyed by question id: `shape`, `delivery`, `sessionMinutes`, `objectives:<asset id>`, `alt:<id>`. Never moves or deletes files; a second run reports no actions.
 
 Media plan and registry:
 
@@ -71,6 +76,7 @@ Providers, brand and style:
 
 - Top-level keys that the schema does not know (for example a hand-added `notes:`) are moved into `extra` the next time a command saves `course.yaml`. They are kept there, not lost.
 - If the objectives or outline markdown file is missing, `manifest sync` keeps the objectives or modules already in `course.yaml` and reports a warning.
+- `manifest sync` keeps the `minutes` and `label` of each session already in `course.yaml` (the outline's heading sums include breaks); only sessions new in the outline take the outline's minutes. Module minutes and session assignments come from the outline.
 - `manifest sync --write`, `migrate-course`, `embed` and `embed all` write into source files (ID comments, media blocks). Outputs whose `sourceHashes` were fresh before are re-hashed after, so they stay fresh; outputs that were already stale stay stale.
 
 ## course-media MCP tools
