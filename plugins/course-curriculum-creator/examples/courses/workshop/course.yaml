@@ -3,7 +3,7 @@ id: lease-basics
 title: Lease Basics
 version: 0.1.0
 status: draft
-created: 2026-11-01
+created: 2026-10-31
 shape: workshop
 delivery: in-person
 audience:
@@ -15,6 +15,10 @@ timeBudget:
       - id: S1
         label: "Day 1: Reading and Abstracting a Lease"
         minutes: 420
+  async:
+    preWorkMinutes: 60
+    betweenSessionMinutes: 0
+    postWorkMinutes: 90
 objectives:
   - id: LO-1
     title: Identify Lease Components

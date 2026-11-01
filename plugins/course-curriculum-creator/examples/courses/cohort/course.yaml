@@ -3,7 +3,7 @@ id: underwriting-lab
 title: Underwriting Lab
 version: 0.1.0
 status: draft
-created: 2026-11-01
+created: 2026-10-31
 shape: cohort
 delivery: virtual
 audience:
@@ -25,9 +25,9 @@ timeBudget:
         label: "Session 4: Committee Defense"
         minutes: 90
   async:
-    preWorkMinutes: 0
-    betweenSessionMinutes: 0
-    postWorkMinutes: 0
+    preWorkMinutes: 60
+    betweenSessionMinutes: 60
+    postWorkMinutes: 90
 objectives:
   - id: LO-1
     title: Build a Rent Roll Summary

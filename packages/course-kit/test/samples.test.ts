@@ -77,3 +77,9 @@ test('self-paced has no sessions, 3 unscheduled modules and async minutes', () =
   expect(s.unscheduledModules).toHaveLength(3);
   expect(s.asyncMinutes.total).toBeGreaterThan(0);
 });
+
+test('workshop and cohort samples have a pre-work budget, so the preWork stage has something to write', () => {
+  expect(loadManifest(copy('workshop')).timeBudget.async).toEqual({ preWorkMinutes: 60, betweenSessionMinutes: 0, postWorkMinutes: 90 });
+  expect(loadManifest(copy('cohort')).timeBudget.async).toEqual({ preWorkMinutes: 60, betweenSessionMinutes: 60, postWorkMinutes: 90 });
+  expect(loadManifest(copy('workshop')).created).toBe('2026-10-31');
+});

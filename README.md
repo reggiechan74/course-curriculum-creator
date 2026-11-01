@@ -17,7 +17,7 @@ This plugin helps independent consultants, trainers, and instructional designers
 - **Backward Design Framework**: Start with learning outcomes, design assessments, then plan activities
 - **Bloom's Taxonomy Integration**: Create measurable learning objectives at appropriate cognitive levels
 - **Rapid Course Creation**: Generate complete curricula autonomously or step-by-step
-- **Modular Architecture**: Create courses optimized for 1-2 day weekend workshops
+- **Modular Architecture**: Create courses in three shapes: workshops, multi-session cohorts and self-paced courses
 - **Professional Outputs**: Course descriptions, outlines, lesson plans, rubrics, student materials
 - **Template System**: Save and reuse course structures for variants and iterations
 - **Staleness Warnings**: Commands flag downstream files that may need regeneration when sources change
@@ -237,7 +237,7 @@ Autonomous agent that designs complete course curricula from high-level requirem
 Validates curriculum quality by checking:
 - Alignment between outcomes, assessments, and activities
 - Appropriate Bloom's taxonomy usage
-- Realistic timing for 1-2 day format
+- Realistic timing for the course's shape and time budget
 - Assessment-objective correspondence
 - Overall pedagogical soundness
 
@@ -284,9 +284,9 @@ Values in this file take precedence over your plugin settings. See `examples/cou
 
 v3.0.0 is a breaking release. Every core workflow skill now reads `course.yaml` (the course manifest) and stops if it is missing.
 
-**Upgrading a v2 course:** run `/course-curriculum-creator:migrate-course <folder>` once per course. It does not change your content files. It writes:
+**Upgrading a v2 course:** run `/course-curriculum-creator:migrate-course <folder>` once per course. It never moves or deletes files. It adds ID comments under headings and refreshes frontmatter source hashes; otherwise your content is unchanged. It writes:
 
-- `course.yaml` with the delivery shape, audience level, session plan (from session counts), objectives, modules and stage progress
+- `course.yaml` with the delivery shape, audience level, session plan (from session counts), the default async time budget (as `create-course` sets it), objectives, modules and stage progress
 - stable IDs (`<!-- id: M1 -->`) under module and objective headings, and Integration Objective headings
 - `05-media/registry.json` entries for existing images, with their objective links and alt text (it asks for any alt text it cannot find)
 - refreshed source hashes, and a `changes` summary of what it did
@@ -301,7 +301,7 @@ Run it with `--dry-run` first to see the plan and questions. These skills do not
 
 - `manifest summary`: shape, objectives, modules and time budget at a glance
 - `progress [--write]`, `progress skip|unskip <stage>`: which stages are done, stale or skipped
-- `audit`: checks objective coverage, alignment and time budget; errors cap the review rating
+- `audit`: checks objective coverage, alignment and manifest validation issues (including time budget warnings); errors cap the review rating
 - `hash-write --sources`: refreshes source hashes after an edit
 
 `curriculum-architect` can now resume a course from its progress, offers the optional stages, and stops after one stage or four. `quality-reviewer` and `review-curriculum` run `manifest validate` and `audit` first.
@@ -384,7 +384,7 @@ Update version in `course-positioning.md` frontmatter when making changes.
 1. **Start with outcomes**: Clearly define what students should achieve before designing content
 2. **Align rigorously**: Ensure assessments measure objectives, and activities support both
 3. **Scaffold appropriately**: Progress from lower to higher Bloom's levels across the workshop
-4. **Time realistically**: Account for breaks, setup, troubleshooting in 1-2 day formats
+4. **Time realistically**: Account for breaks, setup and troubleshooting within each session's time budget
 5. **Review regularly**: Use quality-reviewer agent to validate alignment after changes
 6. **Version deliberately**: Increment versions when making substantial changes
 7. **Template strategically**: Save proven structures for course families
