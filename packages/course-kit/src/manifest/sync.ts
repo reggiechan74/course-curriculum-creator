@@ -35,6 +35,8 @@ export function parseObjectives(markdown: string): ParsedObjective[] {
     let m: RegExpMatchArray | null;
     if ((m = text.match(/^###\s+Affective Objective\s+([A-Za-z0-9]+)\s*:\s*(.*?)\s*$/))) {
       out.push(current = { id: `LO-${m[1]}`, title: m[2], kind: 'affective', line });
+    } else if ((m = text.match(/^###\s+Integration Objective\s+([A-Za-z0-9]+)\s*:\s*(.*?)\s*$/))) {
+      out.push(current = { id: `LO-${m[1]}`, title: m[2], kind: 'integration', line });
     } else if ((m = text.match(/^###\s+Objective\s+(\d+)\s*:\s*(.*?)\s*$/))) {
       out.push(current = { id: `LO-${m[1]}`, title: m[2], kind: 'cognitive', line });
     } else if ((m = text.match(/^##\s+Level\s+0\s*:\s*(.*?)\s*$/))) {

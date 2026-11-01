@@ -204,3 +204,10 @@ test('cohort outline headings make sessions', () => {
   expect(sessions.map((s) => s.id)).toEqual(['S1', 'S2', 'S3']);
   expect(modules.map((m) => m.session)).toEqual(['S1', 'S2', 'S3']);
 });
+
+test('Integration Objective headings are kind integration', () => {
+  const md = '### Integration Objective 1: Pause and connect\n\n### Objective 2: Next\n';
+  expect(parseObjectives(md)).toMatchObject([
+    { id: 'LO-1', title: 'Pause and connect', kind: 'integration' }, { id: 'LO-2', kind: 'cognitive' },
+  ]);
+});

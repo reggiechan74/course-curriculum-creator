@@ -8,12 +8,16 @@ import {
   type Manifest, type Shape, type SourceRef, type StageName, ShapeSchema,
   initManifest, loadManifest, saveManifest,
 } from '../manifest/io.js';
+import { computeProgress } from '../manifest/progress.js';
 import { syncManifest } from '../manifest/sync.js';
 import { addAsset, loadRegistry, saveRegistry } from '../media/registry.js';
 import type { Asset } from '../media/schema.js';
 
 export interface MigrationQuestion { id: string; text: string; default?: string }
-export interface MigrationReport { manifest: Manifest; actions: string[]; questions: MigrationQuestion[]; imported: string[] }
+export interface MigrationChange { file: string; change: 'create' | 'modify'; added: number; removed: number }
+export interface MigrationReport {
+  manifest: Manifest; actions: string[]; questions: MigrationQuestion[]; imported: string[]; changes: MigrationChange[];
+}
 
 const POSITIONING = '01-planning/course-positioning.md';
 const ID_COMMENT_FILES = [
@@ -24,23 +28,39 @@ const V2_PLANNING = new Set([
   'README.md', 'course-positioning.md', 'course-description.md', 'learning-objectives.md',
   'training-needs-analysis.md', 'learner-profile.md', 'content-sources.md',
 ]);
-const STAGE_FILES: Partial<Record<StageName, string>> = {
-  positioning: POSITIONING,
-  objectives: '01-planning/learning-objectives.md',
-  rubrics: '03-assessment/rubrics.md',
-  outline: '02-design/course-outline.md',
-  lessonPlans: '02-design/lesson-plans.md',
-};
 const MATERIAL_STAGE_FILES = ['04-materials/student-handout.md', '04-materials/instructor-guide.md'];
 const IMAGE_EXT = /\.(png|jpe?g|svg)$/i;
-const MAPPED_KEYS = new Set(['title', 'status', 'audience', 'version', 'date']);
+const MAPPED_KEYS = new Set(['title', 'status', 'audience', 'version', 'date', 'deliveryMode', 'delivery', 'audienceLevel']);
 
-export function parseDuration(s: string): { shape: Shape; days?: number } {
+export function parseDuration(s: string): { shape: Shape; days?: number; sessions?: number } {
+  if (/self-paced|on-demand|asynchronous/i.test(s)) return { shape: 'self-paced' };
+  const c = /(\d+)\s*-?\s*(?:sessions?|weeks?)\b/i.exec(s);
+  if (c) return { shape: 'cohort', sessions: Number(c[1]) };
   const n = /(\d+)\s*-?\s*day/i.exec(s);
   const days = n ? Number(n[1]) : undefined;
   if (days !== undefined) return { shape: days > 2 || /week/i.test(s) ? 'cohort' : 'workshop', days };
   if (/week/i.test(s)) return { shape: 'cohort' };
   return { shape: 'workshop' };
+}
+
+const DELIVERIES = ['in-person', 'virtual', 'hybrid'] as const;
+
+/** Count of lines in `b` not in `a` (multiset difference). */
+function lineDiff(a: string, b: string): { added: number; removed: number } {
+  const count = new Map<string, number>();
+  for (const l of a === '' ? [] : a.split('\n')) count.set(l, (count.get(l) ?? 0) + 1);
+  let added = 0;
+  for (const l of b === '' ? [] : b.split('\n')) {
+    const n = count.get(l) ?? 0;
+    if (n > 0) count.set(l, n - 1); else added++;
+  }
+  let removed = 0;
+  for (const n of count.values()) removed += n;
+  return { added, removed };
+}
+
+function parseIds(s: string): string[] {
+  return s.split(',').map((x) => x.trim()).filter(Boolean);
 }
 
 function listFiles(root: string, rel = ''): string[] {
@@ -123,10 +143,41 @@ export function migrateV2(courseDir: string, o: { dryRun: boolean; answers?: Rec
         if (!s.success) throw new ValidationError(`answer "shape" must be one of workshop, cohort, self-paced`);
         shape = s.data;
       }
-      const sessions = shape === 'self-paced' ? [] : synced.timeBudget.live?.sessions ?? [];
+      let delivery: Manifest['delivery'] = 'in-person';
+      const rawDelivery = fm.deliveryMode ?? fm.delivery;
+      if (typeof rawDelivery === 'string' && rawDelivery.trim() !== '') {
+        const d = rawDelivery.trim().toLowerCase();
+        if ((DELIVERIES as readonly string[]).includes(d)) delivery = d as Manifest['delivery'];
+        else if (answers.delivery === undefined) {
+          questions.push({ id: 'delivery', text: 'What is the delivery mode: in-person, virtual or hybrid?', default: 'in-person' });
+        }
+      }
+      if (answers.delivery !== undefined) {
+        if (!(DELIVERIES as readonly string[]).includes(answers.delivery)) {
+          throw new ValidationError('answer "delivery" must be one of in-person, virtual, hybrid');
+        }
+        delivery = answers.delivery as Manifest['delivery'];
+      }
+      let sessions = shape === 'self-paced' ? [] : synced.timeBudget.live?.sessions ?? [];
+      const count = parsed.days ?? parsed.sessions;
+      if (shape !== 'self-paced' && sessions.length === 0 && count !== undefined && count > 0) {
+        const fromDays = parsed.days !== undefined;
+        const fallback = fromDays ? '420' : '90';
+        let minutes = Number(fallback);
+        if (answers.sessionMinutes === undefined) {
+          questions.push({ id: 'sessionMinutes', text: 'How many minutes is each live session?', default: fallback });
+        } else {
+          if (!/^\d+$/.test(answers.sessionMinutes.trim()) || Number(answers.sessionMinutes) <= 0) {
+            throw new ValidationError('answer "sessionMinutes" must be a positive integer');
+          }
+          minutes = Number(answers.sessionMinutes);
+        }
+        sessions = Array.from({ length: count }, (_, i) => ({ id: `S${i + 1}`, label: `${fromDays ? 'Day' : 'Session'} ${i + 1}`, minutes }));
+      }
+      const level = typeof fm.audienceLevel === 'string' && fm.audienceLevel.trim() ? fm.audienceLevel.trim() : 'professional';
       target = initManifest({
-        title, shape, delivery: 'in-person', sessions,
-        audienceLevel: 'professional', audienceSummary: typeof fm.audience === 'string' ? fm.audience : '',
+        title, shape, delivery, sessions,
+        audienceLevel: level, audienceSummary: typeof fm.audience === 'string' ? fm.audience : '',
         budgetUsd: 20, maxPlanImages: 40,
       }, typeof fm.date === 'string' && /^\d{4}-\d\d-\d\d$/.test(fm.date) ? fm.date : new Date().toISOString().slice(0, 10));
       target.objectives = synced.objectives;
@@ -139,11 +190,7 @@ export function migrateV2(courseDir: string, o: { dryRun: boolean; answers?: Rec
     const kept = (existing?.sources ?? []).filter((s) => !computed.some((c) => c.path === s.path));
     target.sources = [...computed, ...kept];
 
-    const present = (rel: string) => existsSync(join(dir, rel));
-    const stages: Manifest['stages'] = {};
-    for (const [k, rel] of Object.entries(STAGE_FILES)) stages[k as StageName] = present(rel) ? 'present' : 'missing';
-    stages.materials = MATERIAL_STAGE_FILES.some(present) ? 'present' : 'missing';
-    target.stages = stages;
+    target.stages = Object.fromEntries(computeProgress(dir, target).stages.map((st) => [st.name, st.status]));
     target.extra = { ...extraNew, ...(existing?.extra ?? {}) };
 
     // Registry: imported images.
@@ -160,23 +207,44 @@ export function migrateV2(courseDir: string, o: { dryRun: boolean; answers?: Rec
       const answered = answers[`alt:${id}`];
       const found = registry.assets.find((a) => a.id === id);
       if (found) {
-        if (found.alt === '' && answered) {
+        const objAnswer = answers[`objectives:${id}`];
+        if (objAnswer !== undefined && found.objectives.length === 0) {
+          const ids = parseIds(objAnswer);
+          if (ids.length) {
+            registry = { ...registry, assets: registry.assets.map((a) => (a.id === id ? { ...a, objectives: ids } : a)) };
+            registryActions.push(`set objectives on registry asset ${id}`);
+          }
+        }
+        const cur = registry.assets.find((a) => a.id === id)!;
+        if (cur.alt === '' && answered) {
           registry = { ...registry, assets: registry.assets.map((a) => (a.id === id ? { ...a, alt: answered } : a)) };
           registryActions.push(`set alt on registry asset ${id}`);
-        } else if (found.alt === '') {
+        } else if (cur.alt === '') {
           questions.push({ id: `alt:${id}`, text: `Alt text for 04-materials/${name}` });
         }
         continue;
       }
+      const objIds = parseIds(answers[`objectives:${id}`] ?? '');
       const asset: Asset = {
-        id, kind: 'image', objectives: [], provider: 'imported', files: [`04-materials/${name}`],
+        id, kind: 'image', objectives: objIds, provider: 'imported', files: [`04-materials/${name}`],
         alt: answered ?? '', status: 'imported', costUsd: 0, quotaUnits: 0, createdAt: now,
       };
       registry = addAsset(registry, asset);
       registryActions.push(`add registry asset ${id}`);
       if (!answered) questions.push({ id: `alt:${id}`, text: `Alt text for 04-materials/${name}` });
+      if (answers[`objectives:${id}`] === undefined) {
+        questions.push({ id: `objectives:${id}`, text: `Which objectives does 04-materials/${name} support? Give IDs separated by commas, for example LO-1, LO-3. Leave it empty for none.` });
+      }
     }
     imported.sort();
+
+    const known = new Set(target.objectives.map((x) => x.id));
+    for (const [k, v] of Object.entries(answers)) {
+      if (!k.startsWith('objectives:')) continue;
+      for (const oid of parseIds(v)) {
+        if (!known.has(oid)) throw new ValidationError(`answer "${k}": unknown objective ID ${oid}`);
+      }
+    }
 
     // Diff against the current files.
     const probe = join(scratch, 'probe');
@@ -190,6 +258,18 @@ export function migrateV2(courseDir: string, o: { dryRun: boolean; answers?: Rec
       && readFileSync(join(scratch, rel), 'utf8') !== readFileSync(join(dir, rel), 'utf8'));
     for (const rel of idChanges) actions.push(`insert ID comments in ${rel}`);
 
+    const changes: MigrationChange[] = [];
+    const oldText = (rel: string) => (existsSync(join(dir, rel)) ? readFileSync(join(dir, rel), 'utf8') : '');
+    const addChange = (file: string, text: string) => {
+      changes.push({ file, change: existsSync(join(dir, file)) ? 'modify' : 'create', ...lineDiff(oldText(file), text) });
+    };
+    if (manifestChanged) addChange('course.yaml', next);
+    if (registryActions.length) {
+      saveRegistry(probe, registry);
+      addChange('05-media/registry.json', readFileSync(join(probe, '05-media/registry.json'), 'utf8'));
+    }
+    for (const rel of idChanges) addChange(rel, readFileSync(join(scratch, rel), 'utf8'));
+
     if (!o.dryRun) {
       keepFresh(dir, () => {
         if (manifestChanged) writeFileSync(join(dir, 'course.yaml'), next);
@@ -197,7 +277,7 @@ export function migrateV2(courseDir: string, o: { dryRun: boolean; answers?: Rec
         for (const rel of idChanges) writeFileSync(join(dir, rel), readFileSync(join(scratch, rel), 'utf8'));
       });
     }
-    return { manifest: target, actions, questions, imported };
+    return { manifest: target, actions, questions, imported, changes };
   } finally {
     rmSync(scratch, { recursive: true, force: true });
   }

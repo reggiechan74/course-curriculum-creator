@@ -28526,6 +28526,8 @@ function parseObjectives(markdown) {
     let m3;
     if (m3 = text3.match(/^###\s+Affective Objective\s+([A-Za-z0-9]+)\s*:\s*(.*?)\s*$/)) {
       out.push(current2 = { id: `LO-${m3[1]}`, title: m3[2], kind: "affective", line: line4 });
+    } else if (m3 = text3.match(/^###\s+Integration Objective\s+([A-Za-z0-9]+)\s*:\s*(.*?)\s*$/)) {
+      out.push(current2 = { id: `LO-${m3[1]}`, title: m3[2], kind: "integration", line: line4 });
     } else if (m3 = text3.match(/^###\s+Objective\s+(\d+)\s*:\s*(.*?)\s*$/)) {
       out.push(current2 = { id: `LO-${m3[1]}`, title: m3[2], kind: "cognitive", line: line4 });
     } else if (m3 = text3.match(/^##\s+Level\s+0\s*:\s*(.*?)\s*$/)) {
@@ -28715,22 +28717,35 @@ var V2_PLANNING = /* @__PURE__ */ new Set([
   "learner-profile.md",
   "content-sources.md"
 ]);
-var STAGE_FILES = {
-  positioning: POSITIONING,
-  objectives: "01-planning/learning-objectives.md",
-  rubrics: "03-assessment/rubrics.md",
-  outline: "02-design/course-outline.md",
-  lessonPlans: "02-design/lesson-plans.md"
-};
 var MATERIAL_STAGE_FILES = ["04-materials/student-handout.md", "04-materials/instructor-guide.md"];
 var IMAGE_EXT = /\.(png|jpe?g|svg)$/i;
-var MAPPED_KEYS = /* @__PURE__ */ new Set(["title", "status", "audience", "version", "date"]);
+var MAPPED_KEYS = /* @__PURE__ */ new Set(["title", "status", "audience", "version", "date", "deliveryMode", "delivery", "audienceLevel"]);
 function parseDuration(s) {
+  if (/self-paced|on-demand|asynchronous/i.test(s)) return { shape: "self-paced" };
+  const c3 = /(\d+)\s*-?\s*(?:sessions?|weeks?)\b/i.exec(s);
+  if (c3) return { shape: "cohort", sessions: Number(c3[1]) };
   const n = /(\d+)\s*-?\s*day/i.exec(s);
   const days = n ? Number(n[1]) : void 0;
   if (days !== void 0) return { shape: days > 2 || /week/i.test(s) ? "cohort" : "workshop", days };
   if (/week/i.test(s)) return { shape: "cohort" };
   return { shape: "workshop" };
+}
+var DELIVERIES = ["in-person", "virtual", "hybrid"];
+function lineDiff(a3, b10) {
+  const count2 = /* @__PURE__ */ new Map();
+  for (const l of a3 === "" ? [] : a3.split("\n")) count2.set(l, (count2.get(l) ?? 0) + 1);
+  let added = 0;
+  for (const l of b10 === "" ? [] : b10.split("\n")) {
+    const n = count2.get(l) ?? 0;
+    if (n > 0) count2.set(l, n - 1);
+    else added++;
+  }
+  let removed = 0;
+  for (const n of count2.values()) removed += n;
+  return { added, removed };
+}
+function parseIds(s) {
+  return s.split(",").map((x5) => x5.trim()).filter(Boolean);
 }
 function listFiles(root, rel = "") {
   const out = [];
@@ -28803,13 +28818,44 @@ function migrateV2(courseDir, o) {
         if (!s.success) throw new ValidationError(`answer "shape" must be one of workshop, cohort, self-paced`);
         shape2 = s.data;
       }
-      const sessions = shape2 === "self-paced" ? [] : synced.timeBudget.live?.sessions ?? [];
+      let delivery = "in-person";
+      const rawDelivery = fm.deliveryMode ?? fm.delivery;
+      if (typeof rawDelivery === "string" && rawDelivery.trim() !== "") {
+        const d = rawDelivery.trim().toLowerCase();
+        if (DELIVERIES.includes(d)) delivery = d;
+        else if (answers.delivery === void 0) {
+          questions.push({ id: "delivery", text: "What is the delivery mode: in-person, virtual or hybrid?", default: "in-person" });
+        }
+      }
+      if (answers.delivery !== void 0) {
+        if (!DELIVERIES.includes(answers.delivery)) {
+          throw new ValidationError('answer "delivery" must be one of in-person, virtual, hybrid');
+        }
+        delivery = answers.delivery;
+      }
+      let sessions = shape2 === "self-paced" ? [] : synced.timeBudget.live?.sessions ?? [];
+      const count2 = parsed.days ?? parsed.sessions;
+      if (shape2 !== "self-paced" && sessions.length === 0 && count2 !== void 0 && count2 > 0) {
+        const fromDays = parsed.days !== void 0;
+        const fallback2 = fromDays ? "420" : "90";
+        let minutes = Number(fallback2);
+        if (answers.sessionMinutes === void 0) {
+          questions.push({ id: "sessionMinutes", text: "How many minutes is each live session?", default: fallback2 });
+        } else {
+          if (!/^\d+$/.test(answers.sessionMinutes.trim()) || Number(answers.sessionMinutes) <= 0) {
+            throw new ValidationError('answer "sessionMinutes" must be a positive integer');
+          }
+          minutes = Number(answers.sessionMinutes);
+        }
+        sessions = Array.from({ length: count2 }, (_, i) => ({ id: `S${i + 1}`, label: `${fromDays ? "Day" : "Session"} ${i + 1}`, minutes }));
+      }
+      const level = typeof fm.audienceLevel === "string" && fm.audienceLevel.trim() ? fm.audienceLevel.trim() : "professional";
       target2 = initManifest({
         title: title2,
         shape: shape2,
-        delivery: "in-person",
+        delivery,
         sessions,
-        audienceLevel: "professional",
+        audienceLevel: level,
         audienceSummary: typeof fm.audience === "string" ? fm.audience : "",
         budgetUsd: 20,
         maxPlanImages: 40
@@ -28822,11 +28868,7 @@ function migrateV2(courseDir, o) {
     const computed = computeSources(dir);
     const kept = (existing?.sources ?? []).filter((s) => !computed.some((c3) => c3.path === s.path));
     target2.sources = [...computed, ...kept];
-    const present = (rel) => existsSync6(join7(dir, rel));
-    const stages = {};
-    for (const [k, rel] of Object.entries(STAGE_FILES)) stages[k] = present(rel) ? "present" : "missing";
-    stages.materials = MATERIAL_STAGE_FILES.some(present) ? "present" : "missing";
-    target2.stages = stages;
+    target2.stages = Object.fromEntries(computeProgress(dir, target2).stages.map((st) => [st.name, st.status]));
     target2.extra = { ...extraNew, ...existing?.extra ?? {} };
     let registry2 = loadRegistry(dir);
     const imported = [];
@@ -28841,18 +28883,28 @@ function migrateV2(courseDir, o) {
       const answered = answers[`alt:${id2}`];
       const found = registry2.assets.find((a3) => a3.id === id2);
       if (found) {
-        if (found.alt === "" && answered) {
+        const objAnswer = answers[`objectives:${id2}`];
+        if (objAnswer !== void 0 && found.objectives.length === 0) {
+          const ids = parseIds(objAnswer);
+          if (ids.length) {
+            registry2 = { ...registry2, assets: registry2.assets.map((a3) => a3.id === id2 ? { ...a3, objectives: ids } : a3) };
+            registryActions.push(`set objectives on registry asset ${id2}`);
+          }
+        }
+        const cur = registry2.assets.find((a3) => a3.id === id2);
+        if (cur.alt === "" && answered) {
           registry2 = { ...registry2, assets: registry2.assets.map((a3) => a3.id === id2 ? { ...a3, alt: answered } : a3) };
           registryActions.push(`set alt on registry asset ${id2}`);
-        } else if (found.alt === "") {
+        } else if (cur.alt === "") {
           questions.push({ id: `alt:${id2}`, text: `Alt text for 04-materials/${name}` });
         }
         continue;
       }
+      const objIds = parseIds(answers[`objectives:${id2}`] ?? "");
       const asset = {
         id: id2,
         kind: "image",
-        objectives: [],
+        objectives: objIds,
         provider: "imported",
         files: [`04-materials/${name}`],
         alt: answered ?? "",
@@ -28864,8 +28916,18 @@ function migrateV2(courseDir, o) {
       registry2 = addAsset(registry2, asset);
       registryActions.push(`add registry asset ${id2}`);
       if (!answered) questions.push({ id: `alt:${id2}`, text: `Alt text for 04-materials/${name}` });
+      if (answers[`objectives:${id2}`] === void 0) {
+        questions.push({ id: `objectives:${id2}`, text: `Which objectives does 04-materials/${name} support? Give IDs separated by commas, for example LO-1, LO-3. Leave it empty for none.` });
+      }
     }
     imported.sort();
+    const known = new Set(target2.objectives.map((x5) => x5.id));
+    for (const [k, v2] of Object.entries(answers)) {
+      if (!k.startsWith("objectives:")) continue;
+      for (const oid of parseIds(v2)) {
+        if (!known.has(oid)) throw new ValidationError(`answer "${k}": unknown objective ID ${oid}`);
+      }
+    }
     const probe = join7(scratch, "probe");
     mkdirSync3(probe);
     saveManifest(probe, target2);
@@ -28875,6 +28937,17 @@ function migrateV2(courseDir, o) {
     actions.push(...registryActions);
     const idChanges = ID_COMMENT_FILES.filter((rel) => existsSync6(join7(scratch, rel)) && existsSync6(join7(dir, rel)) && readFileSync8(join7(scratch, rel), "utf8") !== readFileSync8(join7(dir, rel), "utf8"));
     for (const rel of idChanges) actions.push(`insert ID comments in ${rel}`);
+    const changes = [];
+    const oldText = (rel) => existsSync6(join7(dir, rel)) ? readFileSync8(join7(dir, rel), "utf8") : "";
+    const addChange = (file2, text3) => {
+      changes.push({ file: file2, change: existsSync6(join7(dir, file2)) ? "modify" : "create", ...lineDiff(oldText(file2), text3) });
+    };
+    if (manifestChanged) addChange("course.yaml", next);
+    if (registryActions.length) {
+      saveRegistry(probe, registry2);
+      addChange("05-media/registry.json", readFileSync8(join7(probe, "05-media/registry.json"), "utf8"));
+    }
+    for (const rel of idChanges) addChange(rel, readFileSync8(join7(scratch, rel), "utf8"));
     if (!o.dryRun) {
       keepFresh(dir, () => {
         if (manifestChanged) writeFileSync6(join7(dir, "course.yaml"), next);
@@ -28882,7 +28955,7 @@ function migrateV2(courseDir, o) {
         for (const rel of idChanges) writeFileSync6(join7(dir, rel), readFileSync8(join7(scratch, rel), "utf8"));
       });
     }
-    return { manifest: target2, actions, questions, imported };
+    return { manifest: target2, actions, questions, imported, changes };
   } finally {
     rmSync(scratch, { recursive: true, force: true });
   }
