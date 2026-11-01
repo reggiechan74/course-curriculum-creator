@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: objectives-workshop
+context:
+  scaffold_script: scaffold.sh
