@@ -1,0 +1,77 @@
+schema: course/v3
+id: underwriting-lab
+title: Underwriting Lab
+version: 0.1.0
+status: draft
+created: 2026-11-01
+shape: cohort
+delivery: virtual
+audience:
+  level: professional
+  summary: Real estate analysts
+timeBudget:
+  live:
+    sessions:
+      - id: S1
+        label: "Session 1: Rent Roll and Occupancy"
+        minutes: 90
+      - id: S2
+        label: "Session 2: Operating Cash Flow"
+        minutes: 90
+      - id: S3
+        label: "Session 3: Sensitivity Analysis"
+        minutes: 90
+      - id: S4
+        label: "Session 4: Committee Defense"
+        minutes: 90
+  async:
+    preWorkMinutes: 0
+    betweenSessionMinutes: 0
+    postWorkMinutes: 0
+objectives:
+  - id: LO-1
+    title: Build a Rent Roll Summary
+    kind: cognitive
+    bloom: apply
+  - id: LO-2
+    title: Project Operating Cash Flow
+    kind: cognitive
+    bloom: apply
+  - id: LO-3
+    title: Analyze Sensitivity
+    kind: cognitive
+    bloom: analyze
+  - id: LO-4
+    title: Defend an Underwriting Case
+    kind: cognitive
+    bloom: evaluate
+modules:
+  - id: M1
+    title: Reading the Rent Roll
+    session: S1
+    objectives:
+      - LO-1
+    minutes: 90
+  - id: M2
+    title: Projecting Net Operating Income
+    session: S2
+    objectives:
+      - LO-2
+    minutes: 90
+  - id: M3
+    title: Stress Testing the Model
+    session: S3
+    objectives:
+      - LO-3
+    minutes: 90
+  - id: M4
+    title: Defending the Case
+    session: S4
+    objectives:
+      - LO-4
+    minutes: 90
+media:
+  budgetUsd: 20
+  maxPlanImages: 40
+  approvalRequired: true
+targets: {}

@@ -1,0 +1,54 @@
+schema: course/v3
+id: lease-basics
+title: Lease Basics
+version: 0.1.0
+status: draft
+created: 2026-11-01
+shape: workshop
+delivery: in-person
+audience:
+  level: professional
+  summary: Junior property administrators
+timeBudget:
+  live:
+    sessions:
+      - id: S1
+        label: "Day 1: Reading and Abstracting a Lease"
+        minutes: 420
+objectives:
+  - id: LO-1
+    title: Identify Lease Components
+    kind: cognitive
+    bloom: remember
+  - id: LO-2
+    title: Explain Rent and Recoveries
+    kind: cognitive
+    bloom: understand
+  - id: LO-3
+    title: Abstract a Lease
+    kind: cognitive
+    bloom: apply
+modules:
+  - id: M1
+    title: Anatomy of a Commercial Lease
+    session: S1
+    objectives:
+      - LO-1
+    minutes: 140
+  - id: M2
+    title: Rent, Escalations and Recoveries
+    session: S1
+    objectives:
+      - LO-2
+    minutes: 160
+  - id: M3
+    title: Abstracting a Lease
+    session: S1
+    objectives:
+      - LO-3
+    minutes: 120
+media:
+  budgetUsd: 20
+  maxPlanImages: 40
+  approvalRequired: true
+targets: {}

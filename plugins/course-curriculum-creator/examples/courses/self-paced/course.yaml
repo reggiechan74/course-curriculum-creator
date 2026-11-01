@@ -1,0 +1,50 @@
+schema: course/v3
+id: cap-rates-for-new-analysts
+title: Cap Rates for New Analysts
+version: 0.1.0
+status: draft
+created: 2026-11-01
+shape: self-paced
+delivery: async
+audience:
+  level: beginner
+  summary: New analysts
+timeBudget:
+  async:
+    preWorkMinutes: 10
+    betweenSessionMinutes: 0
+    postWorkMinutes: 20
+objectives:
+  - id: LO-1
+    title: Calculate a Cap Rate
+    kind: cognitive
+    bloom: apply
+  - id: LO-2
+    title: Interpret Market Cap Rates
+    kind: cognitive
+    bloom: understand
+  - id: LO-3
+    title: Challenge a Cap Rate Assumption
+    kind: cognitive
+    bloom: evaluate
+modules:
+  - id: M1
+    title: Calculating a Cap Rate
+    objectives:
+      - LO-1
+    minutes: 40
+  - id: M2
+    title: Reading the Market
+    objectives:
+      - LO-2
+    minutes: 45
+  - id: M3
+    title: Challenging an Assumption
+    objectives:
+      - LO-3
+    minutes: 35
+media:
+  budgetUsd: 20
+  maxPlanImages: 40
+  approvalRequired: true
+targets: {}
