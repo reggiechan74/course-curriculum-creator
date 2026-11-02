@@ -1,0 +1,22 @@
+schema: media-plan/v1
+items:
+  - id: A-M1-01
+    module: M1
+    objectives: [LO-1]
+    function: process-flow
+    kind: diagram
+    description: Order of the sections in a commercial lease
+    provider: svg
+    estimateUsd: 0
+    quotaUnits: 0
+    status: approved
+  - id: A-M2-01
+    module: M2
+    objectives: [LO-2]
+    function: data-viz
+    kind: chart
+    description: Annual cost per square foot of gross, net and percentage rent
+    provider: vegalite
+    estimateUsd: 0
+    quotaUnits: 0
+    status: approved

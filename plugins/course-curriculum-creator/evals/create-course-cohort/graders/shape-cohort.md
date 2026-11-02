@@ -1,5 +1,5 @@
 ---
 type: regex
-target: { source: file, path: "**/course.yaml" }
-pattern: "shape:\\s*cohort"
+target: trace
+pattern: "shape.{1,4}:.{1,4}cohort"
 ---

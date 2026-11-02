@@ -1,6 +1,5 @@
 ---
-type: regex
-target: { source: file, path: course/course.yaml }
-pattern: "\\S"
-match: "count:0"
+type: file_exists
+path: "course/course.yaml"
+exists: false
 ---

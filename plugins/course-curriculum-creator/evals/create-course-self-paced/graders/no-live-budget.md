@@ -1,6 +1,5 @@
 ---
 type: regex
-target: { source: file, path: "**/course.yaml" }
-pattern: "live:"
-match: "count:0"
+target: trace
+pattern: "liveMinutes.{1,4}:\\s*0[,}]"
 ---

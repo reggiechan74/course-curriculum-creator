@@ -1,4 +1,4 @@
 schema_version: "1.1"
-name: review-then-embed
+name: embed-media-after-review
 context:
   scaffold_script: scaffold.sh

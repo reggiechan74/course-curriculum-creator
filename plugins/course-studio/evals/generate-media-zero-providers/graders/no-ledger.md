@@ -1,6 +1,5 @@
 ---
-type: regex
-target: { source: file, path: lease-course/.course/cost-ledger.jsonl }
-pattern: "\\S"
-match: "count:0"
+type: file_exists
+path: "lease-course/.course/cost-ledger.jsonl"
+exists: false
 ---

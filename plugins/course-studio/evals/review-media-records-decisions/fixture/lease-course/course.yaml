@@ -1,0 +1,68 @@
+schema: course/v3
+id: intro-to-lease-abstraction
+title: Intro to Lease Abstraction
+version: 0.1.0
+status: draft
+created: 2026-10-31
+shape: workshop
+delivery: in-person
+audience:
+  level: professional
+  summary: ""
+timeBudget:
+  live:
+    sessions:
+      - id: S1
+        label: Day 1
+        minutes: 195
+      - id: S2
+        label: Day 2
+        minutes: 195
+objectives:
+  - id: LO-1
+    title: Identify Lease Components
+    kind: cognitive
+    bloom: remember
+  - id: LO-2
+    title: Explain Rent Structures
+    kind: cognitive
+    bloom: understand
+  - id: LO-3
+    title: Apply Abstraction Templates
+    kind: cognitive
+    bloom: apply
+  - id: LO-4
+    title: Evaluate Abstract Quality
+    kind: cognitive
+    bloom: evaluate
+modules:
+  - id: M1
+    title: Lease Anatomy
+    session: S1
+    objectives:
+      - LO-1
+    minutes: 90
+  - id: M2
+    title: Rent Structures
+    session: S1
+    objectives:
+      - LO-2
+      - LO-3
+    minutes: 90
+  - id: M3
+    title: Abstraction Practice
+    session: S2
+    objectives:
+      - LO-3
+    minutes: 90
+  - id: M4
+    title: Quality Review
+    session: S2
+    objectives:
+      - LO-4
+    minutes: 90
+media:
+  budgetUsd: 20
+  maxPlanImages: 40
+  approvalRequired: true
+targets: {}
